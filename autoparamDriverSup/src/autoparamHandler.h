@@ -97,24 +97,30 @@ template <typename T> struct Handlers {
     Handlers() : writeHandler(NULL), readHandler(NULL) {}
 };
 
+typedef std::string const &Octet;
+
 typedef Handlers<epicsInt32> Int32Handlers;
 template <> struct AsynType<epicsInt32> {
     static const asynParamType value = asynParamInt32;
 };
+
 typedef Handlers<epicsInt64> Int64Handlers;
 template <> struct AsynType<epicsInt64> {
     static const asynParamType value = asynParamInt64;
 };
+
 typedef Handlers<epicsUInt32> UInt32DigitalHandlers;
 template <> struct AsynType<epicsUInt32> {
     static const asynParamType value = asynParamUInt32Digital;
 };
+
 typedef Handlers<epicsFloat64> Float64Handlers;
 template <> struct AsynType<epicsFloat64> {
     static const asynParamType value = asynParamFloat64;
 };
-typedef Handlers<std::string> OctetHandlers;
-template <> struct AsynType<std::string> {
+
+typedef Handlers<Octet> OctetHandlers;
+template <> struct AsynType<Octet> {
     static const asynParamType value = asynParamOctet;
 };
 
@@ -122,28 +128,30 @@ typedef Handlers<Array<epicsInt8> > Int8ArrayHandlers;
 template <> struct AsynType<Array<epicsInt8> > {
     static const asynParamType value = asynParamInt8Array;
 };
+
 typedef Handlers<Array<epicsInt16> > Int16ArrayHandlers;
 template <> struct AsynType<Array<epicsInt16> > {
     static const asynParamType value = asynParamInt16Array;
 };
+
 typedef Handlers<Array<epicsInt32> > Int32ArrayHandlers;
 template <> struct AsynType<Array<epicsInt32> > {
     static const asynParamType value = asynParamInt32Array;
 };
+
 typedef Handlers<Array<epicsInt64> > Int64ArrayHandlers;
 template <> struct AsynType<Array<epicsInt64> > {
     static const asynParamType value = asynParamInt64Array;
 };
+
 typedef Handlers<Array<epicsFloat32> > Float32ArrayHandlers;
 template <> struct AsynType<Array<epicsFloat32> > {
     static const asynParamType value = asynParamFloat32Array;
 };
+
 typedef Handlers<Array<epicsFloat64> > Float64ArrayHandlers;
 template <> struct AsynType<Array<epicsFloat64> > {
     static const asynParamType value = asynParamFloat64Array;
 };
-
-// Ne verjamem, da se nam na tej točki splača zafrkavat z enumi in podobno. Bomo
-// videli.
 
 } // namespace Autoparam
