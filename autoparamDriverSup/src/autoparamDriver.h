@@ -27,7 +27,7 @@ class Driver : public asynPortDriver {
                           typename Handlers<T>::WriteHandler writer) {
         getHandlerMap<T>()[function].readHandler = reader;
         getHandlerMap<T>()[function].writeHandler = writer;
-        m_functionTypes[function] = AsynType<T>::value;
+        m_functionTypes[function] = Handlers<T>::type;
     }
 
     // Priročni overloadi za uporabo io-interrupt recordov v derived driverju.
@@ -199,10 +199,21 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
 
     typename Handlers<T>::ReadResult result;
     try {
-        result = getHandlerMap<T>().at(reason->function()).readHandler(*reason);
+        typename Handlers<T>::ReadHandler handler =
+            getHandlerMap<T>().at(reason->function()).readHandler;
+        if (handler) {
+            handler(*reason);
+        } else {
+            throw std::out_of_range("No handler registered");
+        }
     } catch (std::out_of_range const &) {
-        // nimamo handlerja, parameter pa obstaja. Branje takega ni kul,
-        // zato pustimo, da result vsebuje soft alarm.
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                  "%s: port=%s no read handler registered for '%s' of type %s",
+                  driverName, portName, reason->function().c_str(),
+                  AsynType<T>::name);
+        result.status = asynError;
+        result.alarmStatus = epicsAlarmSoft;
+        result.alarmSeverity = epicsSevInvalid;
     }
 
     handleResultStatus(pasynUser, result);
@@ -221,13 +232,21 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
 
     typename Handlers<T>::WriteResult result;
     try {
-        result = getHandlerMap<T>()
-                     .at(reason->function())
-                     .writeHandler(*reason, value);
+        typename Handlers<T>::WriteHandler handler =
+            getHandlerMap<T>().at(reason->function()).writeHandler;
+        if (handler) {
+            handler(*reason, value);
+        } else {
+            throw std::out_of_range("No handler registered");
+        }
     } catch (std::out_of_range const &) {
-        // TODO
-        // nimamo handlerja, parameter pa obstaja. Pisanje v takega ni kul,
-        // zato pustimo, da result vsebuje soft alarm.
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                  "%s: port=%s no write handler registered for '%s' of type %s",
+                  driverName, portName, reason->function().c_str(),
+                  AsynType<T>::name);
+        result.status = asynError;
+        result.alarmStatus = epicsAlarmSoft;
+        result.alarmSeverity = epicsSevInvalid;
     }
 
     handleResultStatus(pasynUser, result);
@@ -248,11 +267,21 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
 
     typename Handlers<Array<T> >::ReadResult result;
     try {
-        result = getHandlerMap<Array<T> >()
-                     .at(reason->function())
-                     .readHandler(*reason, maxSize);
+        typename Handlers<Array<T> >::ReadHandler handler =
+            getHandlerMap<Array<T> >().at(reason->function()).readHandler;
+        if (handler) {
+            handler(*reason, maxSize);
+        } else {
+            throw std::out_of_range("No handler registered");
+        }
     } catch (std::out_of_range const &) {
-        // No handler
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                  "%s: port=%s no read handler registered for '%s' of type %s",
+                  driverName, portName, reason->function().c_str(),
+                  AsynType<Array<T> >::name);
+        result.status = asynError;
+        result.alarmStatus = epicsAlarmSoft;
+        result.alarmSeverity = epicsSevInvalid;
     }
 
     handleResultStatus(pasynUser, result);
@@ -273,11 +302,21 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
     Array<T> arrayRef(value, size);
     typename Handlers<Array<T> >::WriteResult result;
     try {
-        result = getHandlerMap<Array<T> >()
-                     .at(reason->function())
-                     .writeHandler(*reason, arrayRef);
+        typename Handlers<Array<T> >::WriteHandler handler =
+            getHandlerMap<Array<T> >().at(reason->function()).writeHandler;
+        if (handler) {
+            handler(*reason, arrayRef);
+        } else {
+            throw std::out_of_range("No handler registered");
+        }
     } catch (std::out_of_range const &) {
-        // No handler
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                  "%s: port=%s no write handler registered for '%s' of type %s",
+                  driverName, portName, reason->function().c_str(),
+                  AsynType<Array<T> >::name);
+        result.status = asynError;
+        result.alarmStatus = epicsAlarmSoft;
+        result.alarmSeverity = epicsSevInvalid;
     }
 
     handleResultStatus(pasynUser, result);

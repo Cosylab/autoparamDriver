@@ -73,8 +73,8 @@ struct ResultBase {
     epicsAlarmSeverity alarmSeverity;
 
     ResultBase()
-        : status(asynStatus((-1))), alarmStatus(epicsAlarmCondition(-1)),
-          alarmSeverity(epicsAlarmSeverity(-1)) {}
+        : status(asynSuccess), alarmStatus(epicsAlarmNone),
+          alarmSeverity(epicsSevNone) {}
 };
 
 template <typename T = void> struct Result : ResultBase {
@@ -115,6 +115,7 @@ template <typename T> struct Handlers<Array<T>, true> {
     typedef ReadResult (*ReadHandler)(Reason &, size_t);
 
     static const asynParamType type = AsynType<Array<T> >::value;
+
     WriteHandler writeHandler;
     ReadHandler readHandler;
 
@@ -127,56 +128,78 @@ struct Octet {};
 typedef Handlers<epicsInt32> Int32Handlers;
 template <> struct AsynType<epicsInt32> {
     static const asynParamType value = asynParamInt32;
+    static char const *name;
 };
+char const *AsynType<epicsInt32>::name = "Int32";
 
 typedef Handlers<epicsInt64> Int64Handlers;
 template <> struct AsynType<epicsInt64> {
     static const asynParamType value = asynParamInt64;
+    static char const *name;
 };
+char const *AsynType<epicsInt64>::name = "Int64";
 
 typedef Handlers<epicsUInt32> UInt32DigitalHandlers;
 template <> struct AsynType<epicsUInt32> {
     static const asynParamType value = asynParamUInt32Digital;
+    static char const *name;
 };
+char const *AsynType<epicsUInt32>::name = "UInt32Digital";
 
 typedef Handlers<epicsFloat64> Float64Handlers;
 template <> struct AsynType<epicsFloat64> {
     static const asynParamType value = asynParamFloat64;
+    static char const *name;
 };
+char const *AsynType<epicsFloat64>::name = "Float64";
 
 typedef Handlers<Octet> OctetHandlers;
 template <> struct AsynType<Octet> {
     static const asynParamType value = asynParamOctet;
+    static char const *name;
 };
+char const *AsynType<Octet>::name = "Octet";
 
 typedef Handlers<Array<epicsInt8> > Int8ArrayHandlers;
 template <> struct AsynType<Array<epicsInt8> > {
     static const asynParamType value = asynParamInt8Array;
+    static char const *name;
 };
+char const *AsynType<Array<epicsInt8> >::name = "Int8Array";
 
 typedef Handlers<Array<epicsInt16> > Int16ArrayHandlers;
 template <> struct AsynType<Array<epicsInt16> > {
     static const asynParamType value = asynParamInt16Array;
+    static char const *name;
 };
+char const *AsynType<Array<epicsInt16> >::name = "Int16Array";
 
 typedef Handlers<Array<epicsInt32> > Int32ArrayHandlers;
 template <> struct AsynType<Array<epicsInt32> > {
     static const asynParamType value = asynParamInt32Array;
+    static char const *name;
 };
+char const *AsynType<Array<epicsInt32> >::name = "Int32Array";
 
 typedef Handlers<Array<epicsInt64> > Int64ArrayHandlers;
 template <> struct AsynType<Array<epicsInt64> > {
     static const asynParamType value = asynParamInt64Array;
+    static char const *name;
 };
+char const *AsynType<Array<epicsInt64> >::name = "Int64Array";
 
 typedef Handlers<Array<epicsFloat32> > Float32ArrayHandlers;
 template <> struct AsynType<Array<epicsFloat32> > {
     static const asynParamType value = asynParamFloat32Array;
+    static char const *name;
 };
+char const *AsynType<Array<epicsFloat32> >::name = "Float32Array";
 
 typedef Handlers<Array<epicsFloat64> > Float64ArrayHandlers;
 template <> struct AsynType<Array<epicsFloat64> > {
     static const asynParamType value = asynParamFloat64Array;
+    static char const *name;
 };
+char const *AsynType<Array<epicsFloat64> >::name = "Float64Array";
 
 } // namespace Autoparam
