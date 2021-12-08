@@ -250,7 +250,7 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
     try {
         result = getHandlerMap<Array<T> >()
                      .at(reason->function())
-                     .readHandler(*reason);
+                     .readHandler(*reason, maxSize);
     } catch (std::out_of_range const &) {
         // No handler
     }
@@ -270,18 +270,19 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
         return asynError;
     }
 
-    typename Handlers<Array<T> >::ReadResult result;
+    Array<T> arrayRef(value, size);
+    typename Handlers<Array<T> >::WriteResult result;
     try {
         result = getHandlerMap<Array<T> >()
                      .at(reason->function())
-                     .readHandler(*reason);
+                     .writeHandler(*reason, arrayRef);
     } catch (std::out_of_range const &) {
         // No handler
     }
 
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
-        return doCallbacksArrayDispatch(reason->index(), result.value);
+        return doCallbacksArrayDispatch(reason->index(), arrayRef);
     }
     return result.status;
 }
@@ -303,7 +304,8 @@ asynStatus Driver::setParamDispatch<epicsFloat64>(int index,
 }
 
 template <> asynStatus Driver::setParamDispatch<Octet>(int index, Octet value) {
-    return setStringParam(index, value);
+    // TODO
+    return setStringParam(index, std::string());
 }
 
 template <>

@@ -57,6 +57,16 @@ template <typename T> class Array {
     size_t m_size;
 };
 
+template <typename T> class IsArray {
+  private:
+    template <typename C> static int check(Array<C> *);
+
+    template <typename C> static char check(C *);
+
+  public:
+    static const bool value = (sizeof(check(static_cast<T *>(NULL))) > 1);
+};
+
 struct ResultBase {
     asynStatus status;
     epicsAlarmCondition alarmStatus;
@@ -83,8 +93,9 @@ template <> struct Result<epicsUInt32> : ResultBase {
 };
 
 template <typename T> struct AsynType;
+template <typename T, bool array = IsArray<T>::value> struct Handlers;
 
-template <typename T> struct Handlers {
+template <typename T> struct Handlers<T, false> {
     typedef Result<void> WriteResult;
     typedef Result<T> ReadResult;
     typedef WriteResult (*WriteHandler)(Reason &, T);
@@ -97,7 +108,21 @@ template <typename T> struct Handlers {
     Handlers() : writeHandler(NULL), readHandler(NULL) {}
 };
 
-typedef std::string const &Octet;
+template <typename T> struct Handlers<Array<T>, true> {
+    typedef Result<void> WriteResult;
+    typedef Result<Array<T> > ReadResult;
+    typedef WriteResult (*WriteHandler)(Reason &, Array<T>);
+    typedef ReadResult (*ReadHandler)(Reason &, size_t);
+
+    static const asynParamType type = AsynType<Array<T> >::value;
+    WriteHandler writeHandler;
+    ReadHandler readHandler;
+
+    Handlers() : writeHandler(NULL), readHandler(NULL) {}
+};
+
+// TODO
+struct Octet {};
 
 typedef Handlers<epicsInt32> Int32Handlers;
 template <> struct AsynType<epicsInt32> {
