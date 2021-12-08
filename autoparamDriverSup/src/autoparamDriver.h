@@ -6,20 +6,57 @@
 
 namespace Autoparam {
 
+struct DriverParams {
+    int interfaceMask;
+    int interruptMask;
+    int asynFlags;
+    int autoConnect;
+    int priority;
+    int stackSize;
+
+    DriverParams &setInterfaceMask(int mask) {
+        interfaceMask |= mask;
+        return *this;
+    }
+    DriverParams &setInterruptMask(int mask) {
+        interruptMask |= mask;
+        return *this;
+    }
+    DriverParams &setBlocking() {
+        asynFlags |= ASYN_CANBLOCK;
+        return *this;
+    }
+    DriverParams &setAutoconnect() {
+        autoConnect = 1;
+        return *this;
+    }
+    DriverParams &setPriority(int prio) {
+        priority = prio;
+        return *this;
+    }
+    DriverParams &setStacksize(int size) {
+        stackSize = size;
+        return *this;
+    }
+
+    static const int defaultMask = asynCommonMask | asynDrvUserMask;
+
+    DriverParams()
+        : interfaceMask(defaultMask), interruptMask(0), asynFlags(0),
+          autoConnect(1), priority(0), stackSize(0) {}
+};
+
 class Driver : public asynPortDriver {
+  public:
+    explicit Driver(const char *portName, DriverParams const &params);
+
+    virtual ~Driver();
+
   protected:
     virtual Reason *createReason(Reason const &baseReason) {
         return new Reason(baseReason);
     }
 
-  public:
-    explicit Driver(const char *portName, int interfaceMask, int interruptMask,
-                    int asynFlags, int autoConnect, int priority,
-                    int stackSize);
-
-    virtual ~Driver();
-
-  protected:
     template <typename T>
     void registerHandlers(std::string const &function,
                           typename Handlers<T>::ReadHandler reader,

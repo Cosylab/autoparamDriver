@@ -16,13 +16,16 @@ DBD += autoparamTest.dbd
 autoparamTest_DBD += base.dbd
 
 # Include dbd files from all support applications:
-#autoparamTest_DBD += xxx.dbd
+autoparamTest_DBD += asyn.dbd
 
 # Add all the support libraries needed by this IOC
-#autoparamTest_LIBS += xxx
+autoparamTest_LIBS += autoparamDriver
+autoparamTest_LIBS += asyn
 
 # autoparamTest_registerRecordDeviceDriver.cpp derives from autoparamTest.dbd
 autoparamTest_SRCS += autoparamTest_registerRecordDeviceDriver.cpp
+
+autoparamTest_SRCS += autoparamTest.cpp
 
 # Build the main IOC entry point on workstation OSs.
 autoparamTest_SRCS_DEFAULT += autoparamTestMain.cpp

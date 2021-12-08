@@ -24,10 +24,10 @@ std::string Reason::normalized() const {
     return std::string();
 }
 
-Driver::Driver(const char *portName, int interfaceMask, int interruptMask,
-               int asynFlags, int autoConnect, int priority, int stackSize)
-    : asynPortDriver(portName, 1, interfaceMask, interruptMask, asynFlags,
-                     autoConnect, priority, stackSize) {
+Driver::Driver(const char *portName, const DriverParams &params)
+    : asynPortDriver(portName, 1, params.interfaceMask, params.interruptMask,
+                     params.asynFlags, params.autoConnect, params.priority,
+                     params.stackSize) {
     // TODO
 }
 
@@ -88,6 +88,46 @@ Reason *Driver::reasonFromUser(asynUser *pasynUser) {
         }
         return NULL;
     }
+}
+
+Result<epicsInt32> readInt32(Reason &reason) {
+    Result<epicsInt32> result;
+    result.value = 42;
+    return result;
+}
+
+void testis() {
+    struct Test : public Driver {
+        Test() : Driver("the name", DriverParams().setBlocking()) {
+            registerHandlers<epicsInt32>("integer", readint32, writeint32);
+            registerHandlers<Array<epicsInt32> >("integerArray", readint32Array,
+                                                 writeint32Array);
+            Handlers<epicsInt32>::ReadHandler hnd1 = readint32;
+            Handlers<epicsInt32>::WriteHandler hnd2 = writeint32;
+            Handlers<Array<epicsInt32> >::ReadHandler hnd3 = readint32Array;
+        }
+
+        static Result<epicsInt32> readint32(Reason &reason) {
+            Result<epicsInt32> result;
+            result.value = 42;
+            return result;
+        }
+
+        static Result<> writeint32(Reason &reason, epicsInt32 value) {
+            return Result<>();
+        }
+
+        static Result<Array<epicsInt32> > readint32Array(Reason &reason,
+                                                         size_t maxSize) {
+            Result<Array<epicsInt32> > result;
+            return result;
+        }
+
+        static Result<> writeint32Array(Reason &reason,
+                                        Array<epicsInt32> value) {
+            return Result<>();
+        }
+    };
 }
 
 } // namespace Autoparam
