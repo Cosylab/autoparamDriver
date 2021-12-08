@@ -19,8 +19,6 @@ class Reason {
 
     Reason &operator=(Reason const &other);
 
-    // Najbrž bo derived driver rabil kaj več kot to, kar nudi Reason, tako da
-    // pričakujemo dedovanje
     virtual ~Reason();
 
     std::string const &function() const { return m_function; }

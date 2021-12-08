@@ -20,7 +20,6 @@ class Driver : public asynPortDriver {
     virtual ~Driver();
 
   protected:
-    // reader ali writer je lahko NULL, če ga ni
     template <typename T>
     void registerHandlers(std::string const &function,
                           typename Handlers<T>::ReadHandler reader,
@@ -30,8 +29,6 @@ class Driver : public asynPortDriver {
         m_functionTypes[function] = Handlers<T>::type;
     }
 
-    // Priročni overloadi za uporabo io-interrupt recordov v derived driverju.
-    // Tole je skupno vsem arrayem, zato šablona
     template <typename T>
     asynStatus doCallbacksArray(Reason const &reason, Array<T> &value,
                                 int alarmStatus = epicsAlarmNone,
@@ -41,9 +38,6 @@ class Driver : public asynPortDriver {
         return doCallbacksArrayDispatch(reason.index(), value);
     }
 
-    // Priročna funkcija za uporabo io-interrupt recordov v derived driverju. Ne
-    // kličejo sama callParamCallbacks(), da lahko nastaviš več skalarjev,
-    // preden ga pokličeš.
     template <typename T>
     asynStatus setParam(Reason const &reason, T value,
                         int alarmStatus = epicsAlarmNone,
