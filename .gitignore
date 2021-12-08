@@ -5,3 +5,4 @@ envPaths
 bin/
 dbd/
 lib/
+include/

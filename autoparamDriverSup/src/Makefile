@@ -22,6 +22,10 @@ autoparamDriver_SRCS += autoparamDriver.cpp
 
 autoparamDriver_LIBS += $(EPICS_BASE_IOC_LIBS)
 
+# install these include files
+INC += autoparamDriver.h
+INC += autoparamHandler.h
+
 #===========================
 
 include $(TOP)/configure/RULES
