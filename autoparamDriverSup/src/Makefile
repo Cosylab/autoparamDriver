@@ -5,6 +5,8 @@ include $(TOP)/configure/CONFIG
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
 
+USR_CXXFLAGS += --std=c++03
+
 #==================================================
 # build a support library
 
@@ -16,7 +18,7 @@ LIBRARY_IOC += autoparamDriver
 DBD += autoparamDriver.dbd
 
 # specify all source files to be compiled and added to the library
-#autoparamDriver_SRCS += xxx
+autoparamDriver_SRCS += autoparamDriver.cpp
 
 autoparamDriver_LIBS += $(EPICS_BASE_IOC_LIBS)
 
