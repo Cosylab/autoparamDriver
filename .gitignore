@@ -1,5 +1,6 @@
 O.*/
 .ccls-cache
+compile_commands.json
 envPaths
 bin/
 dbd/
