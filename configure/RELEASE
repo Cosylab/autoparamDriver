@@ -22,14 +22,11 @@
 # the CONFIG_SITE file.
 
 # Variables and paths to dependent modules:
-#MODULES = /path/to/modules
-#MYMODULE = $(MODULES)/my-module
-
-# If using the sequencer, point SNCSEQ at its top directory:
-#SNCSEQ = $(MODULES)/seq-ver
+MODULES = /path/to/modules
+ASYN = $(MODULES)/asyn
 
 # EPICS_BASE should appear last so earlier modules can override stuff:
-EPICS_BASE = /home/exzombie/epics/7/epics-base
+EPICS_BASE = $(MODULES)/../base
 
 # Set RULES here if you want to use build rules from somewhere
 # other than EPICS_BASE:
