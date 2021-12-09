@@ -256,7 +256,7 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
         typename Handlers<T>::ReadHandler handler =
             getHandlerMap<T>().at(reason->function()).readHandler;
         if (handler) {
-            handler(*reason);
+            result = handler(*reason);
         } else {
             throw std::out_of_range("No handler registered");
         }
@@ -289,7 +289,7 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
         typename Handlers<T>::WriteHandler handler =
             getHandlerMap<T>().at(reason->function()).writeHandler;
         if (handler) {
-            handler(*reason, value);
+            result = handler(*reason, value);
         } else {
             throw std::out_of_range("No handler registered");
         }
@@ -324,7 +324,7 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
         typename Handlers<Array<T> >::ReadHandler handler =
             getHandlerMap<Array<T> >().at(reason->function()).readHandler;
         if (handler) {
-            handler(*reason, maxSize);
+            result = handler(*reason, maxSize);
         } else {
             throw std::out_of_range("No handler registered");
         }
@@ -359,7 +359,7 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
         typename Handlers<Array<T> >::WriteHandler handler =
             getHandlerMap<Array<T> >().at(reason->function()).writeHandler;
         if (handler) {
-            handler(*reason, arrayRef);
+            result = handler(*reason, arrayRef);
         } else {
             throw std::out_of_range("No handler registered");
         }
