@@ -1,4 +1,9 @@
 #include <autoparamDriver.h>
+#include <sstream>
+#include <ctime>
+#include <cstdlib>
+#include <iocsh.h>
+#include <epicsExport.h>
 
 class AutoparamTest;
 
@@ -11,6 +16,7 @@ class Reason : public Autoparam::Reason {
 };
 
 class AutoparamTest : public Autoparam::Driver {
+  public:
     AutoparamTest(char const *portName)
         : Autoparam::Driver(
               portName, Autoparam::DriverOpts()
@@ -18,29 +24,90 @@ class AutoparamTest : public Autoparam::Driver {
                                               asynFloat32ArrayMask)
                             .setInterruptMask(asynInt32Mask | asynFloat64Mask |
                                               asynFloat32ArrayMask)
-                            .setAutoconnect()) {
-        registerHandlers<epicsInt32>("LONG", int32ReadHandler,
-                                     int32WriteHandler);
+                            .setAutoconnect()),
+          randomSeed(time(NULL) + clock()), currentSum(0) {
+        registerHandlers<epicsInt32>("RANDOM", randomRead, NULL);
+        registerHandlers<epicsInt32>("SUM", readSum, sumArgs);
+        registerHandlers<epicsFloat64>("ERROR", erroredRead, NULL);
     }
 
+  protected:
     Reason *createReason(Autoparam::Reason const &baseReason) {
         return new Reason(baseReason, this);
     }
 
-    static Int32ReadResult int32ReadHandler(Autoparam::Reason &baseReason) {
+  private:
+    static Int32ReadResult randomRead(Autoparam::Reason &baseReason) {
         Int32ReadResult result;
         Reason &reason = static_cast<Reason &>(baseReason);
         AutoparamTest *self = reason.driver;
-        result.value = 42;
+        result.value = rand_r(&self->randomSeed);
         return result;
     }
 
-    static WriteResult int32WriteHandler(Autoparam::Reason &baseReason,
-                                         epicsInt32 value) {
+    static WriteResult sumArgs(Autoparam::Reason &baseReason,
+                               epicsInt32 value) {
         WriteResult result;
         Reason &reason = static_cast<Reason &>(baseReason);
         AutoparamTest *self = reason.driver;
-        result.status = asynError;
+
+        if (reason.arguments().front() == "set") {
+            self->currentSum = value;
+        } else {
+            typedef Autoparam::Reason::ArgumentList::const_iterator Iter;
+            for (Iter i = reason.arguments().begin(),
+                      end = reason.arguments().end();
+                 i != end; ++i) {
+                std::istringstream istr(*i);
+                int val;
+                istr >> val;
+                self->currentSum += val;
+            }
+        }
+
         return result;
     }
+
+    static Int32ReadResult readSum(Autoparam::Reason &baseReason) {
+        Int32ReadResult result;
+        Reason &reason = static_cast<Reason &>(baseReason);
+        AutoparamTest *self = reason.driver;
+        result.value = self->currentSum;
+        return result;
+    }
+
+    static Float64ReadResult erroredRead(Autoparam::Reason &baseReason) {
+        Float64ReadResult result;
+        Reason &reason = static_cast<Reason &>(baseReason);
+        std::string const &arg = reason.arguments().front();
+        if (arg == "error") {
+            result.status = asynError;
+        } else if (arg == "timeout") {
+            result.status = asynTimeout;
+        } else if (arg == "hwlimit") {
+            result.alarmStatus = epicsAlarmHwLimit;
+            result.alarmSeverity = epicsSevMajor;
+        } else {
+            result.alarmStatus = epicsAlarmSoft;
+            result.alarmSeverity = epicsSevInvalid;
+        }
+        return result;
+    }
+
+    uint randomSeed;
+    epicsInt32 currentSum;
 };
+
+static int const num_args = 1;
+static iocshArg const arg1 = {"port name", iocshArgString};
+static iocshArg const *const args[num_args] = {&arg1};
+static iocshFuncDef command = {"AutoparamTestPort", num_args, args};
+
+static void call(iocshArgBuf const *args) { new AutoparamTest(args[0].sval); }
+
+extern "C" {
+
+static void autoparamTestCommandRegistrar() { iocshRegister(&command, call); }
+
+epicsExportRegistrar(autoparamTestCommandRegistrar);
+}

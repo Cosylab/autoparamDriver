@@ -4,5 +4,6 @@ compile_commands.json
 envPaths
 bin/
 dbd/
+db/
 lib/
 include/

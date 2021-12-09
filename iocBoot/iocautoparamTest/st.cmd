@@ -11,11 +11,10 @@ cd "${TOP}"
 dbLoadDatabase "dbd/autoparamTest.dbd"
 autoparamTest_registerRecordDeviceDriver pdbbase
 
+AutoparamTestPort("TST1")
+
 ## Load record instances
-#dbLoadRecords("db/xxx.db","user=exzombie")
+dbLoadRecords("db/test.db","PREFIX=test,PORT=TST1")
 
 cd "${TOP}/iocBoot/${IOC}"
 iocInit
-
-## Start any sequence programs
-#seq sncxxx,"user=exzombie"

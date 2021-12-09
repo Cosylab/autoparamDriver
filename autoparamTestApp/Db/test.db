@@ -1,0 +1,47 @@
+record(longin, "$(PREFIX):random") {
+    field(DESC, "Read a random integer")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT)) RANDOM")
+}
+
+record(longin, "$(PREFIX):sum_rb") {
+    field(DESC, "Read the summed value")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT)) SUM")
+}
+
+record(longout, "$(PREFIX):sum_set") {
+    field(DESC, "(Re)set the summed value")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT)) SUM set")
+}
+
+record(longout, "$(PREFIX):sum_add") {
+    field(DESC, "Add 11 to the summed value")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT)) SUM 3 4 4")
+}
+
+record(ai, "$(PREFIX):error_read") {
+    field(DESC, "Test read error")
+    field(DTYP, "asynFloat64")
+    field(INP, "@asyn($(PORT)) ERROR read")
+}
+
+record(ai, "$(PREFIX):error_timeout") {
+    field(DESC, "Test timeout error")
+    field(DTYP, "asynFloat64")
+    field(INP, "@asyn($(PORT)) ERROR timeout")
+}
+
+record(ai, "$(PREFIX):error_custom") {
+    field(DESC, "Test custom error")
+    field(DTYP, "asynFloat64")
+    field(INP, "@asyn($(PORT)) ERROR hwlimit")
+}
+
+record(ai, "$(PREFIX):error_soft") {
+    field(DESC, "Test soft error")
+    field(DTYP, "asynFloat64")
+    field(INP, "@asyn($(PORT)) ERROR garbage")
+}

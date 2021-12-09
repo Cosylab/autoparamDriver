@@ -14,6 +14,7 @@ DBD += autoparamTest.dbd
 
 # autoparamTest.dbd will be made up from these files:
 autoparamTest_DBD += base.dbd
+autoparamTest_DBD += autoparamTestCommand.dbd
 
 # Include dbd files from all support applications:
 autoparamTest_DBD += asyn.dbd
