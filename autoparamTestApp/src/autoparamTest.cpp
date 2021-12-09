@@ -27,18 +27,17 @@ class AutoparamTest : public Autoparam::Driver {
         return new Reason(baseReason, this);
     }
 
-    static Autoparam::Result<epicsInt32>
-    int32ReadHandler(Autoparam::Reason &baseReason) {
-        Autoparam::Result<epicsInt32> result;
+    static Int32ReadResult int32ReadHandler(Autoparam::Reason &baseReason) {
+        Int32ReadResult result;
         Reason &reason = static_cast<Reason &>(baseReason);
         AutoparamTest *self = reason.driver;
         result.value = 42;
         return result;
     }
 
-    static Autoparam::Result<> int32WriteHandler(Autoparam::Reason &baseReason,
-                                                 epicsInt32 value) {
-        Autoparam::Result<> result;
+    static WriteResult int32WriteHandler(Autoparam::Reason &baseReason,
+                                         epicsInt32 value) {
+        WriteResult result;
         Reason &reason = static_cast<Reason &>(baseReason);
         AutoparamTest *self = reason.driver;
         result.status = asynError;
