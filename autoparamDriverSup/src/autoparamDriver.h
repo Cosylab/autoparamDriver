@@ -6,7 +6,7 @@
 
 namespace Autoparam {
 
-struct DriverParams {
+struct DriverOpts {
     int interfaceMask;
     int interruptMask;
     int asynFlags;
@@ -14,41 +14,50 @@ struct DriverParams {
     int priority;
     int stackSize;
 
-    DriverParams &setInterfaceMask(int mask) {
+    DriverOpts &setInterfaceMask(int mask) {
         interfaceMask |= mask;
         return *this;
     }
-    DriverParams &setInterruptMask(int mask) {
+
+    DriverOpts &setInterruptMask(int mask) {
         interruptMask |= mask;
         return *this;
     }
-    DriverParams &setBlocking() {
-        asynFlags |= ASYN_CANBLOCK;
+
+    DriverOpts &setBlocking(bool enable = true) {
+        if (enable) {
+            asynFlags |= ASYN_CANBLOCK;
+        } else {
+            asynFlags &= ~ASYN_CANBLOCK;
+        }
         return *this;
     }
-    DriverParams &setAutoconnect() {
-        autoConnect = 1;
+
+    DriverOpts &setAutoconnect(bool enable = true) {
+        autoConnect = enable;
         return *this;
     }
-    DriverParams &setPriority(int prio) {
+
+    DriverOpts &setPriority(int prio) {
         priority = prio;
         return *this;
     }
-    DriverParams &setStacksize(int size) {
+
+    DriverOpts &setStacksize(int size) {
         stackSize = size;
         return *this;
     }
 
     static const int defaultMask = asynCommonMask | asynDrvUserMask;
 
-    DriverParams()
+    DriverOpts()
         : interfaceMask(defaultMask), interruptMask(0), asynFlags(0),
           autoConnect(1), priority(0), stackSize(0) {}
 };
 
 class Driver : public asynPortDriver {
   public:
-    explicit Driver(const char *portName, DriverParams const &params);
+    explicit Driver(const char *portName, DriverOpts const &params);
 
     virtual ~Driver();
 

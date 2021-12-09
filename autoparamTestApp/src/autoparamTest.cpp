@@ -13,7 +13,7 @@ class Reason : public Autoparam::Reason {
 class AutoparamTest : public Autoparam::Driver {
     AutoparamTest(char const *portName)
         : Autoparam::Driver(
-              portName, Autoparam::DriverParams()
+              portName, Autoparam::DriverOpts()
                             .setInterfaceMask(asynInt32Mask | asynFloat64Mask |
                                               asynFloat32ArrayMask)
                             .setInterruptMask(asynInt32Mask | asynFloat64Mask |
