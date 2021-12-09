@@ -1,9 +1,52 @@
 #include "autoparamDriver.h"
 
+#include <errlog.h>
+
 namespace Autoparam {
 
+static char const *skipSpaces(char const *cursor) {
+    while (*cursor != 0 && *cursor == ' ') {
+        ++cursor;
+    }
+    return cursor;
+}
+
+static char const *findSpace(char const *cursor) {
+    while (*cursor != 0 && *cursor != ' ') {
+        ++cursor;
+    }
+    return cursor;
+}
+
 Reason::Reason(char const *asynReason) {
-    // TODO
+    // TODO escaping spaces, quoting. Perhaps this shouldn't be allowed at all,
+    // and we should simply go with JSON if we ever need that.
+
+    // Skip any initial spaces.
+    char const *curr = skipSpaces(asynReason);
+    if (*curr == 0) {
+        return;
+    }
+
+    // Find first space; this determines the function.
+    char const *funcEnd = findSpace(curr);
+    m_function = std::string(curr, funcEnd);
+    curr = skipSpaces(funcEnd);
+
+    // Now let's collect the arguments by jumping over consecutive spaces.
+    while (*curr != 0) {
+        if (*curr == '{' || *curr == '[') {
+            errlogPrintf("Autoparam::Reason: error parsing '%s', arguments may "
+                         "not start with a curly brace or square bracket\n",
+                         asynReason);
+            m_function = std::string();
+            m_arguments = ArgumentList();
+            return;
+        }
+        char const *argEnd = findSpace(curr);
+        m_arguments.push_back(std::string(curr, argEnd));
+        curr = skipSpaces(argEnd);
+    }
 }
 
 Reason::Reason(Reason const &other) { *this = other; }
@@ -20,8 +63,14 @@ Reason::~Reason() {
 }
 
 std::string Reason::normalized() const {
-    // TODO
-    return std::string();
+    std::string norm(function());
+    ArgumentList const &args = arguments();
+    for (ArgumentList::const_iterator i = args.begin(), end = args.end();
+         i != end; ++i) {
+        norm += ' ';
+        norm += *i;
+    }
+    return norm;
 }
 
 Driver::Driver(const char *portName, const DriverOpts &params)
@@ -41,6 +90,13 @@ Driver::~Driver() {
 asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
                                  const char **, size_t *) {
     Reason parsed(reason);
+    if (parsed.function().empty()) {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                  "%s: port=%s empty reason '%s'", driverName, portName,
+                  reason);
+        return asynError;
+    }
+
     std::string normalized = parsed.normalized();
     asynParamType type;
     try {

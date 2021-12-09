@@ -13,6 +13,8 @@ namespace Autoparam {
 
 class Reason {
   public:
+    typedef std::vector<std::string> ArgumentList;
+
     explicit Reason(char const *asynReason);
 
     Reason(Reason const &other);
@@ -23,7 +25,7 @@ class Reason {
 
     std::string const &function() const { return m_function; }
 
-    std::vector<std::string> const &arguments() const { return m_arguments; }
+    ArgumentList const &arguments() const { return m_arguments; }
 
     std::string normalized() const;
 
@@ -36,7 +38,7 @@ class Reason {
 
     int m_asynParamIndex;
     std::string m_function;
-    std::vector<std::string> m_arguments;
+    ArgumentList m_arguments;
 };
 
 template <typename T> class Array {
