@@ -25,7 +25,7 @@ record(longout, "$(PREFIX):sum_add") {
 record(ai, "$(PREFIX):error_read") {
     field(DESC, "Test read error")
     field(DTYP, "asynFloat64")
-    field(INP, "@asyn($(PORT)) ERROR read")
+    field(INP, "@asyn($(PORT)) ERROR error")
 }
 
 record(ai, "$(PREFIX):error_timeout") {
