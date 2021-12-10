@@ -252,12 +252,10 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
     }
 
     typename Handlers<T>::ReadResult result;
+    typename Handlers<T>::ReadHandler handler;
     try {
-        typename Handlers<T>::ReadHandler handler =
-            getHandlerMap<T>().at(pvInfo->function()).readHandler;
-        if (handler) {
-            result = handler(*pvInfo);
-        } else {
+        handler = getHandlerMap<T>().at(pvInfo->function()).readHandler;
+        if (!handler) {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
@@ -270,6 +268,7 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
         result.alarmSeverity = epicsSevInvalid;
     }
 
+    result = handler(*pvInfo);
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         *value = result.value;
@@ -286,12 +285,10 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
     }
 
     typename Handlers<T>::WriteResult result;
+    typename Handlers<T>::WriteHandler handler;
     try {
-        typename Handlers<T>::WriteHandler handler =
-            getHandlerMap<T>().at(pvInfo->function()).writeHandler;
-        if (handler) {
-            result = handler(*pvInfo, value);
-        } else {
+        handler = getHandlerMap<T>().at(pvInfo->function()).writeHandler;
+        if (!handler) {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
@@ -304,6 +301,7 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
         result.alarmSeverity = epicsSevInvalid;
     }
 
+    result = handler(*pvInfo, value);
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         setParamDispatch(pasynUser->reason, value);
@@ -321,12 +319,10 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
     }
 
     typename Handlers<Array<T> >::ReadResult result;
+    typename Handlers<Array<T> >::ReadHandler handler;
     try {
-        typename Handlers<Array<T> >::ReadHandler handler =
-            getHandlerMap<Array<T> >().at(pvInfo->function()).readHandler;
-        if (handler) {
-            result = handler(*pvInfo, maxSize);
-        } else {
+        handler = getHandlerMap<Array<T> >().at(pvInfo->function()).readHandler;
+        if (!handler) {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
@@ -339,6 +335,7 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
         result.alarmSeverity = epicsSevInvalid;
     }
 
+    result = handler(*pvInfo, maxSize);
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         *size = std::min(result.value.size(), maxSize);
@@ -356,12 +353,11 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
 
     Array<T> arrayRef(value, size);
     typename Handlers<Array<T> >::WriteResult result;
+    typename Handlers<Array<T> >::WriteHandler handler;
     try {
-        typename Handlers<Array<T> >::WriteHandler handler =
+        handler =
             getHandlerMap<Array<T> >().at(pvInfo->function()).writeHandler;
-        if (handler) {
-            result = handler(*pvInfo, arrayRef);
-        } else {
+        if (!handler) {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
@@ -374,6 +370,7 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
         result.alarmSeverity = epicsSevInvalid;
     }
 
+    result = handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
