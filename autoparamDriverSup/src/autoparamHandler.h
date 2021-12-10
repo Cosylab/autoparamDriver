@@ -11,17 +11,17 @@
 
 namespace Autoparam {
 
-class Reason {
+class PVInfo {
   public:
     typedef std::vector<std::string> ArgumentList;
 
-    explicit Reason(char const *asynReason);
+    explicit PVInfo(char const *asynReason);
 
-    Reason(Reason const &other);
+    PVInfo(PVInfo const &other);
 
-    Reason &operator=(Reason const &other);
+    PVInfo &operator=(PVInfo const &other);
 
-    virtual ~Reason();
+    virtual ~PVInfo();
 
     std::string const &function() const { return m_function; }
 
@@ -98,8 +98,8 @@ template <typename T, bool array = IsArray<T>::value> struct Handlers;
 template <typename T> struct Handlers<T, false> {
     typedef Result<void> WriteResult;
     typedef Result<T> ReadResult;
-    typedef WriteResult (*WriteHandler)(Reason &, T);
-    typedef ReadResult (*ReadHandler)(Reason &);
+    typedef WriteResult (*WriteHandler)(PVInfo &, T);
+    typedef ReadResult (*ReadHandler)(PVInfo &);
 
     static const asynParamType type = AsynType<T>::value;
     WriteHandler writeHandler;
@@ -111,8 +111,8 @@ template <typename T> struct Handlers<T, false> {
 template <typename T> struct Handlers<Array<T>, true> {
     typedef Result<void> WriteResult;
     typedef Result<Array<T> > ReadResult;
-    typedef WriteResult (*WriteHandler)(Reason &, Array<T>);
-    typedef ReadResult (*ReadHandler)(Reason &, size_t);
+    typedef WriteResult (*WriteHandler)(PVInfo &, Array<T>);
+    typedef ReadResult (*ReadHandler)(PVInfo &, size_t);
 
     static const asynParamType type = AsynType<Array<T> >::value;
 

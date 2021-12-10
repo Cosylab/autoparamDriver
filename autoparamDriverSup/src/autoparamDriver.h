@@ -76,8 +76,8 @@ class Driver : public asynPortDriver {
     virtual ~Driver();
 
   protected:
-    virtual Reason *createReason(Reason const &baseReason) {
-        return new Reason(baseReason);
+    virtual PVInfo *createPVInfo(PVInfo const &baseInfo) {
+        return new PVInfo(baseInfo);
     }
 
     template <typename T>
@@ -90,21 +90,21 @@ class Driver : public asynPortDriver {
     }
 
     template <typename T>
-    asynStatus doCallbacksArray(Reason const &reason, Array<T> &value,
+    asynStatus doCallbacksArray(PVInfo const &pvInfo, Array<T> &value,
                                 int alarmStatus = epicsAlarmNone,
                                 int alarmSeverity = epicsSevNone) {
-        setParamAlarmStatus(reason.index(), alarmStatus);
-        setParamAlarmSeverity(reason.index(), alarmSeverity);
-        return doCallbacksArrayDispatch(reason.index(), value);
+        setParamAlarmStatus(pvInfo.index(), alarmStatus);
+        setParamAlarmSeverity(pvInfo.index(), alarmSeverity);
+        return doCallbacksArrayDispatch(pvInfo.index(), value);
     }
 
     template <typename T>
-    asynStatus setParam(Reason const &reason, T value,
+    asynStatus setParam(PVInfo const &pvInfo, T value,
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone) {
-        setParamAlarmStatus(reason.index(), alarmStatus);
-        setParamAlarmSeverity(reason.index(), alarmSeverity);
-        return setParamDispatch(reason.index(), value);
+        setParamAlarmStatus(pvInfo.index(), alarmStatus);
+        setParamAlarmSeverity(pvInfo.index(), alarmSeverity);
+        return setParamDispatch(pvInfo.index(), value);
     }
 
   public:
@@ -203,7 +203,7 @@ class Driver : public asynPortDriver {
   private:
     void handleResultStatus(asynUser *pasynUser, ResultBase const &result);
 
-    Reason *reasonFromUser(asynUser *pasynUser);
+    PVInfo *pvInfoFromUser(asynUser *pasynUser);
 
     template <typename T>
     asynStatus doCallbacksArrayDispatch(int index, Array<T> &value);
@@ -220,7 +220,7 @@ class Driver : public asynPortDriver {
 
     static char const *driverName;
 
-    typedef std::map<int, Reason *> ParamMap;
+    typedef std::map<int, PVInfo *> ParamMap;
     ParamMap m_params;
     std::map<std::string, asynParamType> m_functionTypes;
 
@@ -246,24 +246,24 @@ char const *Driver::driverName = "Autoparam::Driver";
 
 template <typename T>
 asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
-    Reason *reason = reasonFromUser(pasynUser);
-    if (!reason) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    if (!pvInfo) {
         return asynError;
     }
 
     typename Handlers<T>::ReadResult result;
     try {
         typename Handlers<T>::ReadHandler handler =
-            getHandlerMap<T>().at(reason->function()).readHandler;
+            getHandlerMap<T>().at(pvInfo->function()).readHandler;
         if (handler) {
-            result = handler(*reason);
+            result = handler(*pvInfo);
         } else {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                   "%s: port=%s no read handler registered for '%s' of type %s",
-                  driverName, portName, reason->function().c_str(),
+                  driverName, portName, pvInfo->function().c_str(),
                   AsynType<T>::name);
         result.status = asynError;
         result.alarmStatus = epicsAlarmSoft;
@@ -280,24 +280,24 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
 
 template <typename T>
 asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
-    Reason *reason = reasonFromUser(pasynUser);
-    if (!reason) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    if (!pvInfo) {
         return asynError;
     }
 
     typename Handlers<T>::WriteResult result;
     try {
         typename Handlers<T>::WriteHandler handler =
-            getHandlerMap<T>().at(reason->function()).writeHandler;
+            getHandlerMap<T>().at(pvInfo->function()).writeHandler;
         if (handler) {
-            result = handler(*reason, value);
+            result = handler(*pvInfo, value);
         } else {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                   "%s: port=%s no write handler registered for '%s' of type %s",
-                  driverName, portName, reason->function().c_str(),
+                  driverName, portName, pvInfo->function().c_str(),
                   AsynType<T>::name);
         result.status = asynError;
         result.alarmStatus = epicsAlarmSoft;
@@ -315,24 +315,24 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
 template <typename T>
 asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
                              size_t *size) {
-    Reason *reason = reasonFromUser(pasynUser);
-    if (!reason) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    if (!pvInfo) {
         return asynError;
     }
 
     typename Handlers<Array<T> >::ReadResult result;
     try {
         typename Handlers<Array<T> >::ReadHandler handler =
-            getHandlerMap<Array<T> >().at(reason->function()).readHandler;
+            getHandlerMap<Array<T> >().at(pvInfo->function()).readHandler;
         if (handler) {
-            result = handler(*reason, maxSize);
+            result = handler(*pvInfo, maxSize);
         } else {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                   "%s: port=%s no read handler registered for '%s' of type %s",
-                  driverName, portName, reason->function().c_str(),
+                  driverName, portName, pvInfo->function().c_str(),
                   AsynType<Array<T> >::name);
         result.status = asynError;
         result.alarmStatus = epicsAlarmSoft;
@@ -349,8 +349,8 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
 
 template <typename T>
 asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
-    Reason *reason = reasonFromUser(pasynUser);
-    if (!reason) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    if (!pvInfo) {
         return asynError;
     }
 
@@ -358,16 +358,16 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
     typename Handlers<Array<T> >::WriteResult result;
     try {
         typename Handlers<Array<T> >::WriteHandler handler =
-            getHandlerMap<Array<T> >().at(reason->function()).writeHandler;
+            getHandlerMap<Array<T> >().at(pvInfo->function()).writeHandler;
         if (handler) {
-            result = handler(*reason, arrayRef);
+            result = handler(*pvInfo, arrayRef);
         } else {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                   "%s: port=%s no write handler registered for '%s' of type %s",
-                  driverName, portName, reason->function().c_str(),
+                  driverName, portName, pvInfo->function().c_str(),
                   AsynType<Array<T> >::name);
         result.status = asynError;
         result.alarmStatus = epicsAlarmSoft;
@@ -376,7 +376,7 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
 
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
-        return doCallbacksArrayDispatch(reason->index(), arrayRef);
+        return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
     }
     return result.status;
 }

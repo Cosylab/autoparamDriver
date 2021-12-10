@@ -18,7 +18,7 @@ static char const *findSpace(char const *cursor) {
     return cursor;
 }
 
-Reason::Reason(char const *asynReason) {
+PVInfo::PVInfo(char const *asynReason) {
     // TODO escaping spaces, quoting. Perhaps this shouldn't be allowed at all,
     // and we should simply go with JSON if we ever need that.
 
@@ -36,7 +36,7 @@ Reason::Reason(char const *asynReason) {
     // Now let's collect the arguments by jumping over consecutive spaces.
     while (*curr != 0) {
         if (*curr == '{' || *curr == '[') {
-            errlogPrintf("Autoparam::Reason: error parsing '%s', arguments may "
+            errlogPrintf("Autoparam::PVInfo: error parsing '%s', arguments may "
                          "not start with a curly brace or square bracket\n",
                          asynReason);
             m_function = std::string();
@@ -49,20 +49,20 @@ Reason::Reason(char const *asynReason) {
     }
 }
 
-Reason::Reason(Reason const &other) { *this = other; }
+PVInfo::PVInfo(PVInfo const &other) { *this = other; }
 
-Reason &Reason::operator=(Reason const &other) {
+PVInfo &PVInfo::operator=(PVInfo const &other) {
     m_asynParamIndex = other.m_asynParamIndex;
     m_function = other.m_function;
     m_arguments = other.m_arguments;
     return *this;
 }
 
-Reason::~Reason() {
+PVInfo::~PVInfo() {
     // Nothing to do here.
 }
 
-std::string Reason::normalized() const {
+std::string PVInfo::normalized() const {
     std::string norm(function());
     ArgumentList const &args = arguments();
     for (ArgumentList::const_iterator i = args.begin(), end = args.end();
@@ -89,7 +89,7 @@ Driver::~Driver() {
 
 asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
                                  const char **, size_t *) {
-    Reason parsed(reason);
+    PVInfo parsed(reason);
     if (parsed.function().empty()) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                   "%s: port=%s empty reason '%s'", driverName, portName,
@@ -113,7 +113,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
         pasynUser->reason = index;
     } else {
         createParam(normalized.c_str(), type, &index);
-        m_params[index] = createReason(parsed);
+        m_params[index] = createPVInfo(parsed);
         pasynUser->reason = index;
     }
 
@@ -127,7 +127,7 @@ void Driver::handleResultStatus(asynUser *pasynUser, ResultBase const &result) {
     setParamAlarmSeverity(pasynUser->reason, result.alarmSeverity);
 }
 
-Reason *Driver::reasonFromUser(asynUser *pasynUser) {
+PVInfo *Driver::pvInfoFromUser(asynUser *pasynUser) {
     try {
         return m_params.at(pasynUser->reason);
     } catch (std::out_of_range const &) {

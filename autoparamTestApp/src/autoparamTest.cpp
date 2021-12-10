@@ -7,10 +7,10 @@
 
 class AutoparamTest;
 
-class Reason : public Autoparam::Reason {
+class PVInfo : public Autoparam::PVInfo {
   public:
-    Reason(Autoparam::Reason const &parsed, AutoparamTest *driver)
-        : Autoparam::Reason(parsed), driver(driver) {}
+    PVInfo(Autoparam::PVInfo const &parsed, AutoparamTest *driver)
+        : Autoparam::PVInfo(parsed), driver(driver) {}
 
     AutoparamTest *driver;
 };
@@ -32,31 +32,30 @@ class AutoparamTest : public Autoparam::Driver {
     }
 
   protected:
-    Reason *createReason(Autoparam::Reason const &baseReason) {
-        return new Reason(baseReason, this);
+    PVInfo *createPVInfo(Autoparam::PVInfo const &baseInfo) {
+        return new PVInfo(baseInfo, this);
     }
 
   private:
-    static Int32ReadResult randomRead(Autoparam::Reason &baseReason) {
+    static Int32ReadResult randomRead(Autoparam::PVInfo &baseInfo) {
         Int32ReadResult result;
-        Reason &reason = static_cast<Reason &>(baseReason);
-        AutoparamTest *self = reason.driver;
+        PVInfo &pvInfo = static_cast<PVInfo &>(baseInfo);
+        AutoparamTest *self = pvInfo.driver;
         result.value = rand_r(&self->randomSeed);
         return result;
     }
 
-    static WriteResult sumArgs(Autoparam::Reason &baseReason,
-                               epicsInt32 value) {
+    static WriteResult sumArgs(Autoparam::PVInfo &baseInfo, epicsInt32 value) {
         WriteResult result;
-        Reason &reason = static_cast<Reason &>(baseReason);
-        AutoparamTest *self = reason.driver;
+        PVInfo &pvInfo = static_cast<PVInfo &>(baseInfo);
+        AutoparamTest *self = pvInfo.driver;
 
-        if (reason.arguments().front() == "set") {
+        if (pvInfo.arguments().front() == "set") {
             self->currentSum = value;
         } else {
-            typedef Autoparam::Reason::ArgumentList::const_iterator Iter;
-            for (Iter i = reason.arguments().begin(),
-                      end = reason.arguments().end();
+            typedef Autoparam::PVInfo::ArgumentList::const_iterator Iter;
+            for (Iter i = pvInfo.arguments().begin(),
+                      end = pvInfo.arguments().end();
                  i != end; ++i) {
                 std::istringstream istr(*i);
                 int val;
@@ -68,18 +67,18 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
-    static Int32ReadResult readSum(Autoparam::Reason &baseReason) {
+    static Int32ReadResult readSum(Autoparam::PVInfo &baseInfo) {
         Int32ReadResult result;
-        Reason &reason = static_cast<Reason &>(baseReason);
-        AutoparamTest *self = reason.driver;
+        PVInfo &pvInfo = static_cast<PVInfo &>(baseInfo);
+        AutoparamTest *self = pvInfo.driver;
         result.value = self->currentSum;
         return result;
     }
 
-    static Float64ReadResult erroredRead(Autoparam::Reason &baseReason) {
+    static Float64ReadResult erroredRead(Autoparam::PVInfo &baseInfo) {
         Float64ReadResult result;
-        Reason &reason = static_cast<Reason &>(baseReason);
-        std::string const &arg = reason.arguments().front();
+        PVInfo &pvInfo = static_cast<PVInfo &>(baseInfo);
+        std::string const &arg = pvInfo.arguments().front();
         if (arg == "error") {
             result.status = asynError;
         } else if (arg == "timeout") {
