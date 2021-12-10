@@ -1,6 +1,7 @@
 #include "autoparamDriver.h"
 
 #include <errlog.h>
+#include <epicsExit.h>
 
 namespace Autoparam {
 
@@ -73,11 +74,18 @@ std::string PVInfo::normalized() const {
     return norm;
 }
 
+static void destroyDriver(void *driver) {
+    Driver *drv = static_cast<Driver *>(driver);
+    delete drv;
+}
+
 Driver::Driver(const char *portName, const DriverOpts &params)
     : asynPortDriver(portName, 1, params.interfaceMask, params.interruptMask,
                      params.asynFlags, params.autoConnect, params.priority,
                      params.stackSize) {
-    // TODO
+    if (params.autodestruct) {
+        epicsAtExit(destroyDriver, this);
+    }
 }
 
 Driver::~Driver() {

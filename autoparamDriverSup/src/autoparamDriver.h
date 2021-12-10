@@ -13,6 +13,7 @@ struct DriverOpts {
     int autoConnect;
     int priority;
     int stackSize;
+    bool autodestruct;
 
     DriverOpts &setInterfaceMask(int mask) {
         interfaceMask |= mask;
@@ -48,11 +49,16 @@ struct DriverOpts {
         return *this;
     }
 
+    DriverOpts &setAutodestruct(bool enable = true) {
+        autodestruct = enable;
+        return *this;
+    }
+
     static const int defaultMask = asynCommonMask | asynDrvUserMask;
 
     DriverOpts()
         : interfaceMask(defaultMask), interruptMask(0), asynFlags(0),
-          autoConnect(1), priority(0), stackSize(0) {}
+          autoConnect(1), priority(0), stackSize(0), autodestruct(false) {}
 };
 
 class Driver : public asynPortDriver {

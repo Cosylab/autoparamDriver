@@ -20,6 +20,7 @@ class AutoparamTest : public Autoparam::Driver {
     AutoparamTest(char const *portName)
         : Autoparam::Driver(
               portName, Autoparam::DriverOpts()
+                            .setAutodestruct()
                             .setInterfaceMask(asynInt32Mask | asynFloat64Mask |
                                               asynFloat32ArrayMask)
                             .setInterruptMask(asynInt32Mask | asynFloat64Mask |
