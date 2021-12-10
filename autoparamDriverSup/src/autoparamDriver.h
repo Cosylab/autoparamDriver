@@ -273,6 +273,7 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         *value = result.value;
+        setParamDispatch(pasynUser->reason, result.value);
     }
     return result.status;
 }
