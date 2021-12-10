@@ -259,10 +259,11 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s: port=%s no read handler registered for '%s' of type %s",
-                  driverName, portName, pvInfo->function().c_str(),
-                  AsynType<T>::name);
+        asynPrint(
+            this->pasynUserSelf, ASYN_TRACE_ERROR,
+            "%s: port=%s no read handler registered for '%s' of type %s\n",
+            driverName, portName, pvInfo->function().c_str(),
+            AsynType<T>::name);
         result.status = asynError;
         result.alarmStatus = epicsAlarmSoft;
         result.alarmSeverity = epicsSevInvalid;
@@ -292,10 +293,11 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s: port=%s no write handler registered for '%s' of type %s",
-                  driverName, portName, pvInfo->function().c_str(),
-                  AsynType<T>::name);
+        asynPrint(
+            this->pasynUserSelf, ASYN_TRACE_ERROR,
+            "%s: port=%s no write handler registered for '%s' of type %s\n",
+            driverName, portName, pvInfo->function().c_str(),
+            AsynType<T>::name);
         result.status = asynError;
         result.alarmStatus = epicsAlarmSoft;
         result.alarmSeverity = epicsSevInvalid;
@@ -326,10 +328,11 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s: port=%s no read handler registered for '%s' of type %s",
-                  driverName, portName, pvInfo->function().c_str(),
-                  AsynType<Array<T> >::name);
+        asynPrint(
+            this->pasynUserSelf, ASYN_TRACE_ERROR,
+            "%s: port=%s no read handler registered for '%s' of type %s\n",
+            driverName, portName, pvInfo->function().c_str(),
+            AsynType<Array<T> >::name);
         result.status = asynError;
         result.alarmStatus = epicsAlarmSoft;
         result.alarmSeverity = epicsSevInvalid;
@@ -361,10 +364,11 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s: port=%s no write handler registered for '%s' of type %s",
-                  driverName, portName, pvInfo->function().c_str(),
-                  AsynType<Array<T> >::name);
+        asynPrint(
+            this->pasynUserSelf, ASYN_TRACE_ERROR,
+            "%s: port=%s no write handler registered for '%s' of type %s\n",
+            driverName, portName, pvInfo->function().c_str(),
+            AsynType<Array<T> >::name);
         result.status = asynError;
         result.alarmStatus = epicsAlarmSoft;
         result.alarmSeverity = epicsSevInvalid;

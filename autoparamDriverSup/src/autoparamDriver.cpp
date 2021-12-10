@@ -92,7 +92,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
     PVInfo parsed(reason);
     if (parsed.function().empty()) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s: port=%s empty reason '%s'", driverName, portName,
+                  "%s: port=%s empty reason '%s'\n", driverName, portName,
                   reason);
         return asynError;
     }
@@ -103,7 +103,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
         type = m_functionTypes.at(parsed.function());
     } catch (std::out_of_range const &) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s: port=%s no handler registered for '%s'", driverName,
+                  "%s: port=%s no handler registered for '%s'\n", driverName,
                   portName, parsed.function().c_str());
         return asynError;
     }
@@ -135,12 +135,12 @@ PVInfo *Driver::pvInfoFromUser(asynUser *pasynUser) {
         asynStatus status = getParamName(pasynUser->reason, &paramName);
         if (status == asynSuccess) {
             asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                      "%s: port=%s no handler registered for '%s'", driverName,
-                      portName, paramName);
+                      "%s: port=%s no handler registered for '%s'\n",
+                      driverName, portName, paramName);
         } else {
             asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                      "%s: port=%s no parameter exists at index %d", driverName,
-                      portName, pasynUser->reason);
+                      "%s: port=%s no parameter exists at index %d\n",
+                      driverName, portName, pasynUser->reason);
         }
         return NULL;
     }
