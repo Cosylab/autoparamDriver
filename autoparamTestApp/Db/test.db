@@ -45,3 +45,28 @@ record(ai, "$(PREFIX):error_soft") {
     field(DTYP, "asynFloat64")
     field(INP, "@asyn($(PORT)) ERROR garbage")
 }
+
+record(waveform, "$(PREFIX):waveform_sp") {
+    field(DESC, "Set the value of a waveform")
+    field(FTVL, "CHAR")
+    field(NELM, 10)  # The driver enforces 8
+    field(DTYP, "asynInt8ArrayOut")
+    field(INP, "@asyn($(PORT)) WFM8")
+}
+
+record(waveform, "$(PREFIX):waveform_rb") {
+    field(DESC, "Read the value of a waveform")
+    field(FTVL, "CHAR")
+    field(NELM, 10)  # The driver enforces 8
+    field(DTYP, "asynInt8ArrayIn")
+    field(INP, "@asyn($(PORT)) WFM8")
+}
+
+record(waveform, "$(PREFIX):waveform_rb2") {
+    field(DESC, "Get notified of the value of a waveform")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "CHAR")
+    field(NELM, 10)  # The driver enforces 8
+    field(DTYP, "asynInt8ArrayIn")
+    field(INP, "@asyn($(PORT)) WFM8")
+}

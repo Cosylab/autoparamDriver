@@ -24,14 +24,15 @@ class AutoparamTest : public Autoparam::Driver {
               portName, Autoparam::DriverOpts()
                             .setAutodestruct()
                             .setInterfaceMask(asynInt32Mask | asynFloat64Mask |
-                                              asynFloat32ArrayMask)
+                                              asynInt8ArrayMask)
                             .setInterruptMask(asynInt32Mask | asynFloat64Mask |
-                                              asynFloat32ArrayMask)
+                                              asynInt8ArrayMask)
                             .setAutoconnect()),
           randomSeed(time(NULL) + clock()), currentSum(0) {
         registerHandlers<epicsInt32>("RANDOM", randomRead, NULL);
         registerHandlers<epicsInt32>("SUM", readSum, sumArgs);
         registerHandlers<epicsFloat64>("ERROR", erroredRead, NULL);
+        registerHandlers<Array<epicsInt8> >("WFM8", wfm8Read, wfm8Write);
     }
 
   protected:
@@ -96,8 +97,32 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
+    static Int8ArrayReadResult wfm8Read(PVInfo &baseInfo, size_t maxSize) {
+        Int8ArrayReadResult result;
+        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
+        AutoparamTest *self = pvInfo.driver;
+        result.value = Array<epicsInt8>(self->wfm8Data, maxSize);
+        return result;
+    }
+
+    static WriteResult wfm8Write(PVInfo &baseInfo, Array<epicsInt8> value) {
+        WriteResult result;
+        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
+        AutoparamTest *self = pvInfo.driver;
+
+        // Enforce an arbitrary limit
+        if (value.size() < 8) {
+            self->wfm8Data.assign(value.data(), value.data() + value.size());
+        } else {
+            result.status = asynOverflow;
+        }
+
+        return result;
+    }
+
     uint randomSeed;
     epicsInt32 currentSum;
+    std::vector<epicsInt8> wfm8Data;
 };
 
 static int const num_args = 1;
