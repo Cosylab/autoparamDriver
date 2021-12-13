@@ -122,6 +122,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
     } else {
         createParam(normalized.c_str(), type, &index);
         m_params[index] = createPVInfo(parsed);
+        m_params[index]->setIndex(index);
         pasynUser->reason = index;
     }
 
