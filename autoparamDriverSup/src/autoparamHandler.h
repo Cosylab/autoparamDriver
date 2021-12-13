@@ -45,8 +45,9 @@ template <typename T> class Array {
   public:
     Array() : m_data(NULL), m_size(0) {}
     Array(T *value, size_t size) : m_data(value), m_size(size) {}
-    Array(std::vector<T> &vector)
-        : m_data(vector.data()), m_size(vector.size) {}
+    Array(std::vector<T> &vector, size_t maxSize)
+        : m_data(vector.data()),
+          m_size(vector.size() < maxSize ? vector.size() : maxSize) {}
 
     T *data() const { return m_data; }
 
