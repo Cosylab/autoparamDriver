@@ -82,9 +82,7 @@ class Driver : public asynPortDriver {
     virtual ~Driver();
 
   protected:
-    virtual PVInfo *createPVInfo(PVInfo const &baseInfo) {
-        return new PVInfo(baseInfo);
-    }
+    virtual PVInfo *createPVInfo(PVInfo const &baseInfo) = 0;
 
     template <typename T>
     void registerHandlers(std::string const &function,
