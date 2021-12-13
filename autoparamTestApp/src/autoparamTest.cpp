@@ -9,10 +9,10 @@ using namespace Autoparam::Convenience;
 
 class AutoparamTest;
 
-class PVInfo : public Autoparam::PVInfo {
+class MyInfo : public PVInfo {
   public:
-    PVInfo(Autoparam::PVInfo const &parsed, AutoparamTest *driver)
-        : Autoparam::PVInfo(parsed), driver(driver) {}
+    MyInfo(PVInfo const &parsed, AutoparamTest *driver)
+        : PVInfo(parsed), driver(driver) {}
 
     AutoparamTest *driver;
 };
@@ -35,28 +35,28 @@ class AutoparamTest : public Autoparam::Driver {
     }
 
   protected:
-    PVInfo *createPVInfo(Autoparam::PVInfo const &baseInfo) {
-        return new PVInfo(baseInfo, this);
+    MyInfo *createPVInfo(PVInfo const &baseInfo) {
+        return new MyInfo(baseInfo, this);
     }
 
   private:
-    static Int32ReadResult randomRead(Autoparam::PVInfo &baseInfo) {
+    static Int32ReadResult randomRead(PVInfo &baseInfo) {
         Int32ReadResult result;
-        PVInfo &pvInfo = static_cast<PVInfo &>(baseInfo);
+        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
         AutoparamTest *self = pvInfo.driver;
         result.value = rand_r(&self->randomSeed);
         return result;
     }
 
-    static WriteResult sumArgs(Autoparam::PVInfo &baseInfo, epicsInt32 value) {
+    static WriteResult sumArgs(PVInfo &baseInfo, epicsInt32 value) {
         WriteResult result;
-        PVInfo &pvInfo = static_cast<PVInfo &>(baseInfo);
+        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
         AutoparamTest *self = pvInfo.driver;
 
         if (pvInfo.arguments().front() == "set") {
             self->currentSum = value;
         } else {
-            typedef Autoparam::PVInfo::ArgumentList::const_iterator Iter;
+            typedef PVInfo::ArgumentList::const_iterator Iter;
             for (Iter i = pvInfo.arguments().begin(),
                       end = pvInfo.arguments().end();
                  i != end; ++i) {
@@ -70,17 +70,17 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
-    static Int32ReadResult readSum(Autoparam::PVInfo &baseInfo) {
+    static Int32ReadResult readSum(PVInfo &baseInfo) {
         Int32ReadResult result;
-        PVInfo &pvInfo = static_cast<PVInfo &>(baseInfo);
+        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
         AutoparamTest *self = pvInfo.driver;
         result.value = self->currentSum;
         return result;
     }
 
-    static Float64ReadResult erroredRead(Autoparam::PVInfo &baseInfo) {
+    static Float64ReadResult erroredRead(PVInfo &baseInfo) {
         Float64ReadResult result;
-        PVInfo &pvInfo = static_cast<PVInfo &>(baseInfo);
+        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
         std::string const &arg = pvInfo.arguments().front();
         if (arg == "error") {
             result.status = asynError;

@@ -204,6 +204,7 @@ char const *AsynType<Array<epicsFloat64> >::name = "Float64Array";
 
 namespace Convenience {
 using Autoparam::Array;
+using Autoparam::PVInfo;
 typedef Result<void> WriteResult;
 typedef Result<epicsInt32> Int32ReadResult;
 typedef Result<epicsInt64> Int64ReadResult;
