@@ -83,7 +83,7 @@ Driver::Driver(const char *portName, const DriverOpts &params)
     : asynPortDriver(portName, 1, params.interfaceMask, params.interruptMask,
                      params.asynFlags, params.autoConnect, params.priority,
                      params.stackSize) {
-    if (params.autodestruct) {
+    if (params.autoDestruct) {
         epicsAtExit(destroyDriver, this);
     }
 }

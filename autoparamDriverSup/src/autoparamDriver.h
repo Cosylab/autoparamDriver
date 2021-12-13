@@ -13,7 +13,7 @@ struct DriverOpts {
     int autoConnect;
     int priority;
     int stackSize;
-    bool autodestruct;
+    bool autoDestruct;
 
     DriverOpts &setInterfaceMask(int mask) {
         interfaceMask |= mask;
@@ -34,7 +34,7 @@ struct DriverOpts {
         return *this;
     }
 
-    DriverOpts &setAutoconnect(bool enable = true) {
+    DriverOpts &setAutoConnect(bool enable = true) {
         autoConnect = enable;
         return *this;
     }
@@ -49,8 +49,8 @@ struct DriverOpts {
         return *this;
     }
 
-    DriverOpts &setAutodestruct(bool enable = true) {
-        autodestruct = enable;
+    DriverOpts &setAutoDestruct(bool enable = true) {
+        autoDestruct = enable;
         return *this;
     }
 
@@ -58,7 +58,7 @@ struct DriverOpts {
 
     DriverOpts()
         : interfaceMask(defaultMask), interruptMask(0), asynFlags(0),
-          autoConnect(1), priority(0), stackSize(0), autodestruct(false) {}
+          autoConnect(1), priority(0), stackSize(0), autoDestruct(false) {}
 };
 
 class Driver : public asynPortDriver {
