@@ -5,6 +5,8 @@
 #include <iocsh.h>
 #include <epicsExport.h>
 
+using namespace Autoparam::Convenience;
+
 class AutoparamTest;
 
 class PVInfo : public Autoparam::PVInfo {

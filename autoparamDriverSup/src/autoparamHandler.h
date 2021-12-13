@@ -202,4 +202,20 @@ template <> struct AsynType<Array<epicsFloat64> > {
 };
 char const *AsynType<Array<epicsFloat64> >::name = "Float64Array";
 
+namespace Convenience {
+using Autoparam::Array;
+typedef Result<void> WriteResult;
+typedef Result<epicsInt32> Int32ReadResult;
+typedef Result<epicsInt64> Int64ReadResult;
+typedef Result<epicsUInt32> UInt32ReadResult;
+typedef Result<epicsFloat64> Float64ReadResult;
+typedef Result<Octet> OctetReadResult;
+typedef Result<Array<epicsInt8> > Int8ArrayReadResult;
+typedef Result<Array<epicsInt16> > Int16ArrayReadResult;
+typedef Result<Array<epicsInt32> > Int32ArrayReadResult;
+typedef Result<Array<epicsInt64> > Int64ArrayReadResult;
+typedef Result<Array<epicsFloat32> > Float32ArrayReadResult;
+typedef Result<Array<epicsFloat64> > Float64ArrayReadResult;
+} // namespace Convenience
+
 } // namespace Autoparam
