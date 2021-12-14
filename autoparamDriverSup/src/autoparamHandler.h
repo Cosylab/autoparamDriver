@@ -86,14 +86,8 @@ template <typename T = void> struct Result : ResultBase {
 
 template <> struct Result<void> : ResultBase {};
 
-template <> struct Result<epicsUInt32> : ResultBase {
-    epicsUInt32 value;
-    epicsUInt32 mask;
-
-    Result() : value(), mask() {}
-};
-
 template <typename T> struct AsynType;
+
 template <typename T, bool array = IsArray<T>::value> struct Handlers;
 
 template <typename T> struct Handlers<T, false> {
@@ -202,6 +196,19 @@ template <> struct AsynType<Array<epicsFloat64> > {
     static char const *name;
 };
 char const *AsynType<Array<epicsFloat64> >::name = "Float64Array";
+
+template <> struct Handlers<epicsUInt32, false> {
+    typedef Result<void> WriteResult;
+    typedef Result<epicsUInt32> ReadResult;
+    typedef WriteResult (*WriteHandler)(PVInfo &, epicsUInt32, epicsUInt32);
+    typedef ReadResult (*ReadHandler)(PVInfo &, epicsUInt32);
+
+    static const asynParamType type = AsynType<epicsUInt32>::value;
+    WriteHandler writeHandler;
+    ReadHandler readHandler;
+
+    Handlers() : writeHandler(NULL), readHandler(NULL) {}
+};
 
 namespace Convenience {
 using Autoparam::Array;

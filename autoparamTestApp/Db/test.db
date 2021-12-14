@@ -82,3 +82,31 @@ record(longin, "$(PREFIX):default_handler_rb") {
     field(DTYP, "asynInt32")
     field(INP, "@asyn($(PORT)) DEFHANDLER")
 }
+
+record(longout, "$(PREFIX):bits_sp") {
+    field(DESC, "Setting of shifted register")
+    field(DTYP, "asynUInt32Digital")
+    field(OUT, "@asynMask($(PORT), 0, 0xFFFFFFFF) DIGIO")
+}
+
+record(longin, "$(PREFIX):bits_rb") {
+    field(DESC, "Numeric representation of shifted register")
+    field(DTYP, "asynUInt32Digital")
+    field(INP, "@asynMask($(PORT), 0, 0xFFFFFFFF) DIGIO")
+}
+
+record(bi, "$(PREFIX):bits_b3") {
+    field(DESC, "A single bit")
+    field(DTYP, "asynUInt32Digital")
+    field(INP, "@asynMask($(PORT), 0, 0x8) DIGIO")
+    field(ZNAM, "Down")
+    field(ONAM, "Up")
+}
+
+record(bi, "$(PREFIX):bits_b4") {
+    field(DESC, "A single bit")
+    field(DTYP, "asynUInt32Digital")
+    field(INP, "@asynMask($(PORT), 0, 0x16) DIGIO")
+    field(ZNAM, "Down")
+    field(ONAM, "Up")
+}

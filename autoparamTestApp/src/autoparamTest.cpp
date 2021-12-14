@@ -23,12 +23,13 @@ class AutoparamTest : public Autoparam::Driver {
         : Autoparam::Driver(
               portName,
               Autoparam::DriverOpts().setAutoDestruct().setAutoConnect()),
-          randomSeed(time(NULL) + clock()), currentSum(0) {
+          randomSeed(time(NULL) + clock()), currentSum(0), shiftedRegister(0) {
         registerHandlers<epicsInt32>("RANDOM", randomRead, NULL);
         registerHandlers<epicsInt32>("SUM", readSum, sumArgs);
         registerHandlers<epicsFloat64>("ERROR", erroredRead, NULL);
         registerHandlers<Array<epicsInt8> >("WFM8", wfm8Read, wfm8Write);
         registerHandlers<epicsInt32>("DEFHANDLER", NULL, NULL);
+        registerHandlers<epicsUInt32>("DIGIO", bitsGet, bitsSet);
     }
 
   protected:
@@ -116,9 +117,24 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
+    static WriteResult bitsSet(PVInfo &baseInfo, epicsUInt32 value, epicsUInt32 mask) {
+        WriteResult result;
+        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
+        pvInfo.driver->shiftedRegister = (value & mask) << 3;
+        return result;
+    }
+
+    static UInt32ReadResult bitsGet(PVInfo &baseInfo, epicsUInt32 mask) {
+        UInt32ReadResult result;
+        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
+        result.value = pvInfo.driver->shiftedRegister & mask;
+        return result;
+    }
+
     uint randomSeed;
     epicsInt32 currentSum;
     std::vector<epicsInt8> wfm8Data;
+    epicsUInt32 shiftedRegister;
 };
 
 static int const num_args = 1;

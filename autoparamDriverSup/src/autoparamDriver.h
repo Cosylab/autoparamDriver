@@ -97,7 +97,7 @@ class Driver : public asynPortDriver {
     // Beyond this point, the methods are public because they are part of the
     // asyn interface, but derived classes shouldn't need to override them.
 
-    // TODO UInt32Digital, Octet
+    // TODO Octet
 
     asynStatus drvUserCreate(asynUser *pasynUser, const char *reason,
                              const char **, size_t *);
@@ -264,6 +264,24 @@ class Driver : public asynPortDriver {
         return writeArray(pasynUser, value, size);
     }
 
+    asynStatus readUInt32Digital(asynUser *pasynUser, epicsUInt32 *value,
+                                 epicsUInt32 mask) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasReadHandler<epicsUInt32>(pasynUser->reason)) {
+            return asynPortDriver::readUInt32Digital(pasynUser, value, mask);
+        }
+        return readScalar(pasynUser, value, mask);
+    }
+
+    asynStatus writeUInt32Digital(asynUser *pasynUser, epicsUInt32 value,
+                                  epicsUInt32 mask) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasWriteHandler<epicsUInt32>(pasynUser->reason)) {
+            return asynPortDriver::writeUInt32Digital(pasynUser, value, mask);
+        }
+        return writeScalar(pasynUser, value, mask);
+    }
+
   private:
     void handleResultStatus(asynUser *pasynUser, ResultBase const &result);
 
@@ -282,7 +300,11 @@ class Driver : public asynPortDriver {
     typename Handlers<T>::WriteHandler
     getWriteHandler(std::string const &function);
     template <typename T> asynStatus readScalar(asynUser *pasynUser, T *value);
+    asynStatus readScalar(asynUser *pasynUser, epicsUInt32 *value,
+                          epicsUInt32 mask);
     template <typename T> asynStatus writeScalar(asynUser *pasynUser, T value);
+    asynStatus writeScalar(asynUser *pasynUser, epicsUInt32 value,
+                           epicsUInt32 mask);
     template <typename T>
     asynStatus readArray(asynUser *pasynUser, T *value, size_t maxSize,
                          size_t *size);
@@ -373,6 +395,20 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
     return result.status;
 }
 
+asynStatus Driver::readScalar(asynUser *pasynUser, epicsUInt32 *value,
+                              epicsUInt32 mask) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    Handlers<epicsUInt32>::ReadHandler handler =
+        getReadHandler<epicsUInt32>(pvInfo->function());
+    Handlers<epicsUInt32>::ReadResult result = handler(*pvInfo, mask);
+    handleResultStatus(pasynUser, result);
+    if (result.status == asynSuccess) {
+        *value = result.value;
+        setUIntDigitalParam(pasynUser->reason, result.value, mask);
+    }
+    return result.status;
+}
+
 template <typename T>
 asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
     PVInfo *pvInfo = pvInfoFromUser(pasynUser);
@@ -382,6 +418,20 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         setParamDispatch(pasynUser->reason, value);
+        callParamCallbacks();
+    }
+    return result.status;
+}
+
+asynStatus Driver::writeScalar(asynUser *pasynUser, epicsUInt32 value,
+                               epicsUInt32 mask) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    Handlers<epicsUInt32>::WriteHandler handler =
+        getWriteHandler<epicsUInt32>(pvInfo->function());
+    Handlers<epicsUInt32>::WriteResult result = handler(*pvInfo, value, mask);
+    handleResultStatus(pasynUser, result);
+    if (result.status == asynSuccess) {
+        setUIntDigitalParam(pasynUser->reason, value, mask);
         callParamCallbacks();
     }
     return result.status;
