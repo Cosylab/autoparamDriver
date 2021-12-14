@@ -70,3 +70,15 @@ record(waveform, "$(PREFIX):waveform_rb2") {
     field(DTYP, "asynInt8ArrayIn")
     field(INP, "@asyn($(PORT)) WFM8")
 }
+
+record(longout, "$(PREFIX):default_handler_sp") {
+    field(DESC, "Test default write handler")
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT)) DEFHANDLER")
+}
+
+record(longin, "$(PREFIX):default_handler_rb") {
+    field(DESC, "Test default read handler")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT)) DEFHANDLER")
+}

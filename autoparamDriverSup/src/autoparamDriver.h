@@ -107,86 +107,164 @@ class Driver : public asynPortDriver {
                              const char **, size_t *);
 
     asynStatus readInt32(asynUser *pasynUser, epicsInt32 *value) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasReadHandler<epicsInt32>(pasynUser->reason)) {
+            return asynPortDriver::readInt32(pasynUser, value);
+        }
         return readScalar(pasynUser, value);
     }
 
     asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasWriteHandler<epicsInt32>(pasynUser->reason)) {
+            return asynPortDriver::writeInt32(pasynUser, value);
+        }
         return writeScalar(pasynUser, value);
     }
 
     asynStatus readInt64(asynUser *pasynUser, epicsInt64 *value) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasReadHandler<epicsInt64>(pasynUser->reason)) {
+            return asynPortDriver::readInt64(pasynUser, value);
+        }
         return readScalar(pasynUser, value);
     }
 
     asynStatus writeInt64(asynUser *pasynUser, epicsInt64 value) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasWriteHandler<epicsInt64>(pasynUser->reason)) {
+            return asynPortDriver::writeInt64(pasynUser, value);
+        }
         return writeScalar(pasynUser, value);
     }
 
     asynStatus readFloat64(asynUser *pasynUser, epicsFloat64 *value) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasReadHandler<epicsFloat64>(pasynUser->reason)) {
+            return asynPortDriver::readFloat64(pasynUser, value);
+        }
         return readScalar(pasynUser, value);
     }
 
     asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasWriteHandler<epicsFloat64>(pasynUser->reason)) {
+            return asynPortDriver::writeFloat64(pasynUser, value);
+        }
         return writeScalar(pasynUser, value);
     }
 
     asynStatus readInt8Array(asynUser *pasynUser, epicsInt8 *value,
                              size_t maxSize, size_t *size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasReadHandler<Array<epicsInt8> >(pasynUser->reason)) {
+            return asynPortDriver::readInt8Array(pasynUser, value, maxSize,
+                                                 size);
+        }
         return readArray(pasynUser, value, maxSize, size);
     }
 
     asynStatus writeInt8Array(asynUser *pasynUser, epicsInt8 *value,
                               size_t size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasWriteHandler<Array<epicsInt8> >(pasynUser->reason)) {
+            return asynPortDriver::writeInt8Array(pasynUser, value, size);
+        }
         return writeArray(pasynUser, value, size);
     }
 
     asynStatus readInt16Array(asynUser *pasynUser, epicsInt16 *value,
                               size_t maxSize, size_t *size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasReadHandler<Array<epicsInt16> >(pasynUser->reason)) {
+            return asynPortDriver::readInt16Array(pasynUser, value, maxSize,
+                                                  size);
+        }
         return readArray(pasynUser, value, maxSize, size);
     }
 
     asynStatus writeInt16Array(asynUser *pasynUser, epicsInt16 *value,
                                size_t size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasWriteHandler<Array<epicsInt16> >(pasynUser->reason)) {
+            return asynPortDriver::writeInt16Array(pasynUser, value, size);
+        }
         return writeArray(pasynUser, value, size);
     }
 
     asynStatus readInt32Array(asynUser *pasynUser, epicsInt32 *value,
                               size_t maxSize, size_t *size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasReadHandler<Array<epicsInt32> >(pasynUser->reason)) {
+            return asynPortDriver::readInt32Array(pasynUser, value, maxSize,
+                                                  size);
+        }
         return readArray(pasynUser, value, maxSize, size);
     }
 
     asynStatus writeInt32Array(asynUser *pasynUser, epicsInt32 *value,
                                size_t size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasWriteHandler<Array<epicsInt32> >(pasynUser->reason)) {
+            return asynPortDriver::writeInt32Array(pasynUser, value, size);
+        }
         return writeArray(pasynUser, value, size);
     }
 
     asynStatus readInt64Array(asynUser *pasynUser, epicsInt64 *value,
                               size_t maxSize, size_t *size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasReadHandler<Array<epicsInt64> >(pasynUser->reason)) {
+            return asynPortDriver::readInt64Array(pasynUser, value, maxSize,
+                                                  size);
+        }
         return readArray(pasynUser, value, maxSize, size);
     }
 
     asynStatus writeInt64Array(asynUser *pasynUser, epicsInt64 *value,
                                size_t size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasWriteHandler<Array<epicsInt64> >(pasynUser->reason)) {
+            return asynPortDriver::writeInt64Array(pasynUser, value, size);
+        }
         return writeArray(pasynUser, value, size);
     }
 
     asynStatus readFloat32Array(asynUser *pasynUser, epicsFloat32 *value,
                                 size_t maxSize, size_t *size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasReadHandler<Array<epicsFloat32> >(pasynUser->reason)) {
+            return asynPortDriver::readFloat32Array(pasynUser, value, maxSize,
+                                                    size);
+        }
         return readArray(pasynUser, value, maxSize, size);
     }
 
     asynStatus writeFloat32Array(asynUser *pasynUser, epicsFloat32 *value,
                                  size_t size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasWriteHandler<Array<epicsFloat32> >(pasynUser->reason)) {
+            return asynPortDriver::writeFloat32Array(pasynUser, value, size);
+        }
         return writeArray(pasynUser, value, size);
     }
 
     asynStatus readFloat64Array(asynUser *pasynUser, epicsFloat64 *value,
                                 size_t maxSize, size_t *size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasReadHandler<Array<epicsFloat64> >(pasynUser->reason)) {
+            return asynPortDriver::readFloat64Array(pasynUser, value, maxSize,
+                                                    size);
+        }
         return readArray(pasynUser, value, maxSize, size);
     }
 
     asynStatus writeFloat64Array(asynUser *pasynUser, epicsFloat64 *value,
                                  size_t size) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasWriteHandler<Array<epicsFloat64> >(pasynUser->reason)) {
+            return asynPortDriver::writeFloat64Array(pasynUser, value, size);
+        }
         return writeArray(pasynUser, value, size);
     }
 
@@ -195,9 +273,18 @@ class Driver : public asynPortDriver {
 
     PVInfo *pvInfoFromUser(asynUser *pasynUser);
 
+    bool hasParam(int index);
+    template <typename T> bool hasReadHandler(int index);
+    template <typename T> bool hasWriteHandler(int index);
     template <typename T>
     asynStatus doCallbacksArrayDispatch(int index, Array<T> &value);
     template <typename T> asynStatus setParamDispatch(int index, T value);
+    template <typename T>
+    typename Handlers<T>::ReadHandler
+    getReadHandler(std::string const &function);
+    template <typename T>
+    typename Handlers<T>::WriteHandler
+    getWriteHandler(std::string const &function);
     template <typename T> asynStatus readScalar(asynUser *pasynUser, T *value);
     template <typename T> asynStatus writeScalar(asynUser *pasynUser, T value);
     template <typename T>
@@ -235,31 +322,53 @@ class Driver : public asynPortDriver {
 char const *Driver::driverName = "Autoparam::Driver";
 
 template <typename T>
-asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
-    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
-    if (!pvInfo) {
-        return asynError;
-    }
-
-    typename Handlers<T>::ReadResult result;
+typename Handlers<T>::ReadHandler
+Driver::getReadHandler(std::string const &function) {
     typename Handlers<T>::ReadHandler handler;
     try {
-        handler = getHandlerMap<T>().at(pvInfo->function()).readHandler;
+        handler = getHandlerMap<T>().at(function).readHandler;
         if (!handler) {
             throw std::out_of_range("No handler registered");
         }
     } catch (std::out_of_range const &) {
-        asynPrint(
-            this->pasynUserSelf, ASYN_TRACE_ERROR,
-            "%s: port=%s no read handler registered for '%s' of type %s\n",
-            driverName, portName, pvInfo->function().c_str(),
-            AsynType<T>::name);
-        result.status = asynError;
-        result.alarmStatus = epicsAlarmSoft;
-        result.alarmSeverity = epicsSevInvalid;
+        handler = NULL;
     }
+    return handler;
+}
 
-    result = handler(*pvInfo);
+template <typename T>
+typename Handlers<T>::WriteHandler
+Driver::getWriteHandler(std::string const &function) {
+    typename Handlers<T>::WriteHandler handler;
+    try {
+        handler = getHandlerMap<T>().at(function).writeHandler;
+        if (!handler) {
+            throw std::out_of_range("No handler registered");
+        }
+    } catch (std::out_of_range const &) {
+        handler = NULL;
+    }
+    return handler;
+}
+
+bool Driver::hasParam(int index) {
+    return m_params.find(index) != m_params.end();
+}
+
+template <typename T> bool Driver::hasReadHandler(int index) {
+    return getReadHandler<T>(m_params.at(index)->function()) != NULL;
+}
+
+template <typename T> bool Driver::hasWriteHandler(int index) {
+    return getWriteHandler<T>(m_params.at(index)->function()) != NULL;
+}
+
+template <typename T>
+asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    typename Handlers<T>::ReadHandler handler =
+        getReadHandler<T>(pvInfo->function());
+    typename Handlers<T>::ReadResult result = handler(*pvInfo);
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         *value = result.value;
@@ -271,29 +380,9 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
 template <typename T>
 asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
     PVInfo *pvInfo = pvInfoFromUser(pasynUser);
-    if (!pvInfo) {
-        return asynError;
-    }
-
-    typename Handlers<T>::WriteResult result;
-    typename Handlers<T>::WriteHandler handler;
-    try {
-        handler = getHandlerMap<T>().at(pvInfo->function()).writeHandler;
-        if (!handler) {
-            throw std::out_of_range("No handler registered");
-        }
-    } catch (std::out_of_range const &) {
-        asynPrint(
-            this->pasynUserSelf, ASYN_TRACE_ERROR,
-            "%s: port=%s no write handler registered for '%s' of type %s\n",
-            driverName, portName, pvInfo->function().c_str(),
-            AsynType<T>::name);
-        result.status = asynError;
-        result.alarmStatus = epicsAlarmSoft;
-        result.alarmSeverity = epicsSevInvalid;
-    }
-
-    result = handler(*pvInfo, value);
+    typename Handlers<T>::WriteHandler handler =
+        getWriteHandler<T>(pvInfo->function());
+    typename Handlers<T>::WriteResult result = handler(*pvInfo, value);
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         setParamDispatch(pasynUser->reason, value);
@@ -306,29 +395,9 @@ template <typename T>
 asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
                              size_t *size) {
     PVInfo *pvInfo = pvInfoFromUser(pasynUser);
-    if (!pvInfo) {
-        return asynError;
-    }
-
-    typename Handlers<Array<T> >::ReadResult result;
-    typename Handlers<Array<T> >::ReadHandler handler;
-    try {
-        handler = getHandlerMap<Array<T> >().at(pvInfo->function()).readHandler;
-        if (!handler) {
-            throw std::out_of_range("No handler registered");
-        }
-    } catch (std::out_of_range const &) {
-        asynPrint(
-            this->pasynUserSelf, ASYN_TRACE_ERROR,
-            "%s: port=%s no read handler registered for '%s' of type %s\n",
-            driverName, portName, pvInfo->function().c_str(),
-            AsynType<Array<T> >::name);
-        result.status = asynError;
-        result.alarmStatus = epicsAlarmSoft;
-        result.alarmSeverity = epicsSevInvalid;
-    }
-
-    result = handler(*pvInfo, maxSize);
+    typename Handlers<Array<T> >::ReadHandler handler =
+        getHandlerMap<Array<T> >().at(pvInfo->function()).readHandler;
+    typename Handlers<Array<T> >::ReadResult result = handler(*pvInfo, maxSize);
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         *size = std::min(result.value.size(), maxSize);
@@ -340,31 +409,11 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
 template <typename T>
 asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
     PVInfo *pvInfo = pvInfoFromUser(pasynUser);
-    if (!pvInfo) {
-        return asynError;
-    }
-
     Array<T> arrayRef(value, size);
-    typename Handlers<Array<T> >::WriteResult result;
-    typename Handlers<Array<T> >::WriteHandler handler;
-    try {
-        handler =
-            getHandlerMap<Array<T> >().at(pvInfo->function()).writeHandler;
-        if (!handler) {
-            throw std::out_of_range("No handler registered");
-        }
-    } catch (std::out_of_range const &) {
-        asynPrint(
-            this->pasynUserSelf, ASYN_TRACE_ERROR,
-            "%s: port=%s no write handler registered for '%s' of type %s\n",
-            driverName, portName, pvInfo->function().c_str(),
-            AsynType<Array<T> >::name);
-        result.status = asynError;
-        result.alarmStatus = epicsAlarmSoft;
-        result.alarmSeverity = epicsSevInvalid;
-    }
-
-    result = handler(*pvInfo, arrayRef);
+    typename Handlers<Array<T> >::WriteHandler handler =
+        getHandlerMap<Array<T> >().at(pvInfo->function()).writeHandler;
+    typename Handlers<Array<T> >::WriteResult result =
+        handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);

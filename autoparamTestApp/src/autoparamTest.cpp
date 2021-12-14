@@ -33,6 +33,7 @@ class AutoparamTest : public Autoparam::Driver {
         registerHandlers<epicsInt32>("SUM", readSum, sumArgs);
         registerHandlers<epicsFloat64>("ERROR", erroredRead, NULL);
         registerHandlers<Array<epicsInt8> >("WFM8", wfm8Read, wfm8Write);
+        registerHandlers<epicsInt32>("DEFHANDLER", NULL, NULL);
     }
 
   protected:
