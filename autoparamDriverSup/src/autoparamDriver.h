@@ -15,16 +15,6 @@ struct DriverOpts {
     int stackSize;
     bool autoDestruct;
 
-    DriverOpts &setInterfaceMask(int mask) {
-        interfaceMask |= mask;
-        return *this;
-    }
-
-    DriverOpts &setInterruptMask(int mask) {
-        interruptMask |= mask;
-        return *this;
-    }
-
     DriverOpts &setBlocking(bool enable = true) {
         if (enable) {
             asynFlags |= ASYN_CANBLOCK;
@@ -54,11 +44,17 @@ struct DriverOpts {
         return *this;
     }
 
-    static const int defaultMask = asynCommonMask | asynDrvUserMask;
+    static const int minimalInterfaceMask = asynCommonMask | asynDrvUserMask;
+    static const int defaultMask =
+        asynInt32Mask | asynInt64Mask | asynUInt32DigitalMask |
+        asynFloat64Mask | asynOctetMask | asynInt8ArrayMask |
+        asynInt16ArrayMask | asynInt32ArrayMask | asynInt64ArrayMask |
+        asynFloat32ArrayMask | asynFloat64ArrayMask;
 
     DriverOpts()
-        : interfaceMask(defaultMask), interruptMask(0), asynFlags(0),
-          autoConnect(1), priority(0), stackSize(0), autoDestruct(false) {}
+        : interfaceMask(minimalInterfaceMask | defaultMask),
+          interruptMask(defaultMask), asynFlags(0), autoConnect(1), priority(0),
+          stackSize(0), autoDestruct(false) {}
 };
 
 class Driver : public asynPortDriver {

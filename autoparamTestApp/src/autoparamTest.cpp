@@ -21,13 +21,8 @@ class AutoparamTest : public Autoparam::Driver {
   public:
     AutoparamTest(char const *portName)
         : Autoparam::Driver(
-              portName, Autoparam::DriverOpts()
-                            .setAutoDestruct()
-                            .setInterfaceMask(asynInt32Mask | asynFloat64Mask |
-                                              asynInt8ArrayMask)
-                            .setInterruptMask(asynInt32Mask | asynFloat64Mask |
-                                              asynInt8ArrayMask)
-                            .setAutoConnect()),
+              portName,
+              Autoparam::DriverOpts().setAutoDestruct().setAutoConnect()),
           randomSeed(time(NULL) + clock()), currentSum(0) {
         registerHandlers<epicsInt32>("RANDOM", randomRead, NULL);
         registerHandlers<epicsInt32>("SUM", readSum, sumArgs);
