@@ -166,7 +166,7 @@ class AutoparamTest : public Autoparam::Driver {
 static int const num_args = 1;
 static iocshArg const arg1 = {"port name", iocshArgString};
 static iocshArg const *const args[num_args] = {&arg1};
-static iocshFuncDef command = {"AutoparamTestPort", num_args, args};
+static iocshFuncDef command = {"drvAutoparamTestConfigure", num_args, args};
 
 static void call(iocshArgBuf const *args) { new AutoparamTest(args[0].sval); }
 

@@ -11,7 +11,7 @@ cd "${TOP}"
 dbLoadDatabase "dbd/autoparamTest.dbd"
 autoparamTest_registerRecordDeviceDriver pdbbase
 
-AutoparamTestPort("TST1")
+drvAutoparamTestConfigure("TST1")
 
 ## Load record instances
 dbLoadRecords("db/test.db","PREFIX=test,PORT=TST1")
