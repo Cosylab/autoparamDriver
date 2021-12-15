@@ -93,6 +93,14 @@ class Driver : public asynPortDriver {
         return setParamDispatch(pvInfo.index(), value);
     }
 
+    asynStatus setParam(PVInfo const &pvInfo, epicsUInt32 value,
+                        epicsUInt32 mask, int alarmStatus = epicsAlarmNone,
+                        int alarmSeverity = epicsSevNone) {
+        setParamAlarmStatus(pvInfo.index(), alarmStatus);
+        setParamAlarmSeverity(pvInfo.index(), alarmSeverity);
+        return setUIntDigitalParam(pvInfo.index(), value, mask);
+    }
+
     bool hasParam(int index);
 
     PVInfo *pvInfoFromUser(asynUser *pasynUser);
