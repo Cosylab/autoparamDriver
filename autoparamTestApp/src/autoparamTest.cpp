@@ -94,15 +94,16 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
-    static Int8ArrayReadResult wfm8Read(PVInfo &baseInfo, size_t maxSize) {
-        Int8ArrayReadResult result;
+    static ArrayReadResult wfm8Read(PVInfo &baseInfo, Array<epicsInt8> &value) {
+        ArrayReadResult result;
         MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
         AutoparamTest *self = pvInfo.driver;
-        result.value = Array<epicsInt8>(self->wfm8Data, maxSize);
+        value.fillFrom(self->wfm8Data);
         return result;
     }
 
-    static WriteResult wfm8Write(PVInfo &baseInfo, Array<epicsInt8> value) {
+    static WriteResult wfm8Write(PVInfo &baseInfo,
+                                 Array<epicsInt8> const &value) {
         WriteResult result;
         MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
         AutoparamTest *self = pvInfo.driver;

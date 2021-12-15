@@ -3,6 +3,7 @@
 // Standard includes
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 // EPICS includes
 #include <asynPortDriver.h>
@@ -43,19 +44,42 @@ class PVInfo {
 
 template <typename T> class Array {
   public:
-    Array() : m_data(NULL), m_size(0) {}
-    Array(T *value, size_t size) : m_data(value), m_size(size) {}
-    Array(std::vector<T> &vector, size_t maxSize)
-        : m_data(vector.data()),
-          m_size(vector.size() < maxSize ? vector.size() : maxSize) {}
+    Array(T *value, size_t size)
+        : m_data(value), m_size(size), m_maxSize(size) {
+        if (value == NULL && size != 0) {
+            throw std::logic_error("Cannot create Autoparam::Array from NULL");
+        }
+    }
 
     T *data() const { return m_data; }
 
     size_t size() const { return m_size; }
 
-  private:
+    size_t maxSize() const { return m_maxSize; }
+
+    void setSize(size_t size) {
+        m_size = std::min(m_maxSize, size);
+    }
+
+    void fillFrom(T const *data, size_t size) {
+        m_size = std::min(m_maxSize, size);
+        std::copy(data, data + m_size, m_data);
+    }
+
+    void fillFrom(std::vector<T> const &vector) {
+        return fillFrom(vector.data(), vector.size());
+    }
+
+    size_t writeTo(T *data, size_t maxSize) const {
+        size_t size = std::min(maxSize, m_size);
+        std::copy(m_data, m_data + size, data);
+        return size;
+    }
+
+  protected:
     T *m_data;
     size_t m_size;
+    size_t m_maxSize;
 };
 
 template <typename T> class IsArray {
@@ -83,6 +107,8 @@ struct WriteResult : ResultBase {
     WriteResult() : ResultBase() { processInterrupts = true; }
 };
 
+struct ArrayResult : ResultBase {};
+
 template <typename T> struct Result : ResultBase {
     T value;
 
@@ -108,9 +134,9 @@ template <typename T> struct Handlers<T, false> {
 
 template <typename T> struct Handlers<Array<T>, true> {
     typedef Autoparam::WriteResult WriteResult;
-    typedef Result<Array<T> > ReadResult;
-    typedef WriteResult (*WriteHandler)(PVInfo &, Array<T>);
-    typedef ReadResult (*ReadHandler)(PVInfo &, size_t);
+    typedef ArrayResult ReadResult;
+    typedef WriteResult (*WriteHandler)(PVInfo &, Array<T> const &);
+    typedef ReadResult (*ReadHandler)(PVInfo &, Array<T> &);
 
     static const asynParamType type = AsynType<Array<T> >::value;
 
@@ -217,17 +243,12 @@ namespace Convenience {
 using Autoparam::Array;
 using Autoparam::PVInfo;
 typedef Autoparam::WriteResult WriteResult;
+typedef Autoparam::ArrayResult ArrayReadResult;
 typedef Result<epicsInt32> Int32ReadResult;
 typedef Result<epicsInt64> Int64ReadResult;
 typedef Result<epicsUInt32> UInt32ReadResult;
 typedef Result<epicsFloat64> Float64ReadResult;
 typedef Result<Octet> OctetReadResult;
-typedef Result<Array<epicsInt8> > Int8ArrayReadResult;
-typedef Result<Array<epicsInt16> > Int16ArrayReadResult;
-typedef Result<Array<epicsInt32> > Int32ArrayReadResult;
-typedef Result<Array<epicsInt64> > Int64ArrayReadResult;
-typedef Result<Array<epicsFloat32> > Float32ArrayReadResult;
-typedef Result<Array<epicsFloat64> > Float64ArrayReadResult;
 } // namespace Convenience
 
 } // namespace Autoparam

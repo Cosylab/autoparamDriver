@@ -451,15 +451,16 @@ template <typename T>
 asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
                              size_t *size) {
     PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    Array<T> arrayRef(value, maxSize);
     typename Handlers<Array<T> >::ReadHandler handler =
         getHandlerMap<Array<T> >().at(pvInfo->function()).readHandler;
-    typename Handlers<Array<T> >::ReadResult result = handler(*pvInfo, maxSize);
+    typename Handlers<Array<T> >::ReadResult result =
+        handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
-        *size = std::min(result.value.size(), maxSize);
-        std::copy(result.value.data(), result.value.data() + *size, value);
-        if (result.status == asynSuccess && result.processInterrupts) {
-            return doCallbacksArrayDispatch(pvInfo->index(), result.value);
+        *size = arrayRef.size();
+        if (result.processInterrupts) {
+            return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
         }
     }
     return result.status;
