@@ -417,106 +417,6 @@ template <typename T> bool Driver::hasWriteHandler(int index) {
     return getWriteHandler<T>(m_params.at(index)->function()) != NULL;
 }
 
-template <typename T>
-asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
-    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
-    typename Handlers<T>::ReadHandler handler =
-        getReadHandler<T>(pvInfo->function());
-    typename Handlers<T>::ReadResult result = handler(*pvInfo);
-    handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
-        *value = result.value;
-        setParamDispatch(pasynUser->reason, result.value);
-        if (result.processInterrupts) {
-            callParamCallbacks();
-        }
-    }
-    return result.status;
-}
-
-asynStatus Driver::readScalar(asynUser *pasynUser, epicsUInt32 *value,
-                              epicsUInt32 mask) {
-    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
-    Handlers<epicsUInt32>::ReadHandler handler =
-        getReadHandler<epicsUInt32>(pvInfo->function());
-    Handlers<epicsUInt32>::ReadResult result = handler(*pvInfo, mask);
-    handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
-        *value = result.value;
-        setUIntDigitalParam(pasynUser->reason, result.value, mask);
-        if (result.processInterrupts) {
-            callParamCallbacks();
-        }
-    }
-    return result.status;
-}
-
-template <typename T>
-asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
-    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
-    typename Handlers<T>::WriteHandler handler =
-        getWriteHandler<T>(pvInfo->function());
-    typename Handlers<T>::WriteResult result = handler(*pvInfo, value);
-    handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
-        setParamDispatch(pasynUser->reason, value);
-        if (result.processInterrupts) {
-            callParamCallbacks();
-        }
-    }
-    return result.status;
-}
-
-asynStatus Driver::writeScalar(asynUser *pasynUser, epicsUInt32 value,
-                               epicsUInt32 mask) {
-    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
-    Handlers<epicsUInt32>::WriteHandler handler =
-        getWriteHandler<epicsUInt32>(pvInfo->function());
-    Handlers<epicsUInt32>::WriteResult result = handler(*pvInfo, value, mask);
-    handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
-        setUIntDigitalParam(pasynUser->reason, value, mask);
-        if (result.processInterrupts) {
-            callParamCallbacks();
-        }
-    }
-    return result.status;
-}
-
-template <typename T>
-asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
-                             size_t *size) {
-    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
-    Array<T> arrayRef(value, maxSize);
-    typename Handlers<Array<T> >::ReadHandler handler =
-        getHandlerMap<Array<T> >().at(pvInfo->function()).readHandler;
-    typename Handlers<Array<T> >::ReadResult result =
-        handler(*pvInfo, arrayRef);
-    handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
-        *size = arrayRef.size();
-        if (result.processInterrupts) {
-            return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
-        }
-    }
-    return result.status;
-}
-
-template <typename T>
-asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
-    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
-    Array<T> arrayRef(value, size);
-    typename Handlers<Array<T> >::WriteHandler handler =
-        getHandlerMap<Array<T> >().at(pvInfo->function()).writeHandler;
-    typename Handlers<Array<T> >::WriteResult result =
-        handler(*pvInfo, arrayRef);
-    handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess && result.processInterrupts) {
-        return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
-    }
-    return result.status;
-}
-
 template <>
 asynStatus Driver::setParamDispatch<epicsInt32>(int index, epicsInt32 value) {
     return setIntegerParam(index, value);
@@ -648,6 +548,106 @@ template <>
 std::map<std::string, Handlers<Array<epicsFloat64> > > &
 Driver::getHandlerMap<Array<epicsFloat64> >() {
     return m_Float64ArrayHandlerMap;
+}
+
+template <typename T>
+asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    typename Handlers<T>::ReadHandler handler =
+        getReadHandler<T>(pvInfo->function());
+    typename Handlers<T>::ReadResult result = handler(*pvInfo);
+    handleResultStatus(pasynUser, result);
+    if (result.status == asynSuccess) {
+        *value = result.value;
+        setParamDispatch(pasynUser->reason, result.value);
+        if (result.processInterrupts) {
+            callParamCallbacks();
+        }
+    }
+    return result.status;
+}
+
+asynStatus Driver::readScalar(asynUser *pasynUser, epicsUInt32 *value,
+                              epicsUInt32 mask) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    Handlers<epicsUInt32>::ReadHandler handler =
+        getReadHandler<epicsUInt32>(pvInfo->function());
+    Handlers<epicsUInt32>::ReadResult result = handler(*pvInfo, mask);
+    handleResultStatus(pasynUser, result);
+    if (result.status == asynSuccess) {
+        *value = result.value;
+        setUIntDigitalParam(pasynUser->reason, result.value, mask);
+        if (result.processInterrupts) {
+            callParamCallbacks();
+        }
+    }
+    return result.status;
+}
+
+template <typename T>
+asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    typename Handlers<T>::WriteHandler handler =
+        getWriteHandler<T>(pvInfo->function());
+    typename Handlers<T>::WriteResult result = handler(*pvInfo, value);
+    handleResultStatus(pasynUser, result);
+    if (result.status == asynSuccess) {
+        setParamDispatch(pasynUser->reason, value);
+        if (result.processInterrupts) {
+            callParamCallbacks();
+        }
+    }
+    return result.status;
+}
+
+asynStatus Driver::writeScalar(asynUser *pasynUser, epicsUInt32 value,
+                               epicsUInt32 mask) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    Handlers<epicsUInt32>::WriteHandler handler =
+        getWriteHandler<epicsUInt32>(pvInfo->function());
+    Handlers<epicsUInt32>::WriteResult result = handler(*pvInfo, value, mask);
+    handleResultStatus(pasynUser, result);
+    if (result.status == asynSuccess) {
+        setUIntDigitalParam(pasynUser->reason, value, mask);
+        if (result.processInterrupts) {
+            callParamCallbacks();
+        }
+    }
+    return result.status;
+}
+
+template <typename T>
+asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
+                             size_t *size) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    Array<T> arrayRef(value, maxSize);
+    typename Handlers<Array<T> >::ReadHandler handler =
+        getHandlerMap<Array<T> >().at(pvInfo->function()).readHandler;
+    typename Handlers<Array<T> >::ReadResult result =
+        handler(*pvInfo, arrayRef);
+    handleResultStatus(pasynUser, result);
+    if (result.status == asynSuccess) {
+        *size = arrayRef.size();
+        if (result.processInterrupts) {
+            return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
+        }
+    }
+    return result.status;
+}
+
+template <typename T>
+asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    Array<T> arrayRef(value, size);
+    typename Handlers<Array<T> >::WriteHandler handler =
+        getHandlerMap<Array<T> >().at(pvInfo->function()).writeHandler;
+    typename Handlers<Array<T> >::WriteResult result =
+        handler(*pvInfo, arrayRef);
+    handleResultStatus(pasynUser, result);
+    if (result.status == asynSuccess && result.processInterrupts) {
+        return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
+    }
+    return result.status;
 }
 
 asynStatus Driver::readOctetData(asynUser *pasynUser, char *value,
