@@ -93,6 +93,10 @@ class Driver : public asynPortDriver {
         return setParamDispatch(pvInfo.index(), value);
     }
 
+    bool hasParam(int index);
+
+    PVInfo *pvInfoFromUser(asynUser *pasynUser);
+
   public:
     // Beyond this point, the methods are public because they are part of the
     // asyn interface, but derived classes shouldn't need to override them.
@@ -307,9 +311,6 @@ class Driver : public asynPortDriver {
   private:
     void handleResultStatus(asynUser *pasynUser, ResultBase const &result);
 
-    PVInfo *pvInfoFromUser(asynUser *pasynUser);
-
-    bool hasParam(int index);
     template <typename T> bool hasReadHandler(int index);
     template <typename T> bool hasWriteHandler(int index);
     asynStatus doCallbacksArrayDispatch(int index, Octet const &value);
