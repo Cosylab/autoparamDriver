@@ -70,6 +70,17 @@ class Driver : public asynPortDriver {
     void registerHandlers(std::string const &function,
                           typename Handlers<T>::ReadHandler reader,
                           typename Handlers<T>::WriteHandler writer) {
+        if (m_functionTypes.find(function) != m_functionTypes.end() &&
+            m_functionTypes[function] != Handlers<T>::type) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                      "%s: port=%s function %s already has handlers for type "
+                      "%s, can't register another for type %s\n",
+                      driverName, portName, function.c_str(),
+                      getAsynTypeName(m_functionTypes[function]),
+                      getAsynTypeName(AsynType<T>::value));
+            return;
+        }
+
         getHandlerMap<T>()[function].readHandler = reader;
         getHandlerMap<T>()[function].writeHandler = writer;
         m_functionTypes[function] = Handlers<T>::type;

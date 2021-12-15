@@ -74,6 +74,19 @@ std::string PVInfo::normalized() const {
     return norm;
 }
 
+// Copied from asyn. I wish they made this public.
+char const *getAsynTypeName(asynParamType type) {
+    static const char *typeNames[] = {
+        "asynParamTypeUndefined", "asynParamInt32",
+        "asynParamInt64",         "asynParamUInt32Digital",
+        "asynParamFloat64",       "asynParamOctet",
+        "asynParamInt8Array",     "asynParamInt16Array",
+        "asynParamInt32Array",    "asynParamInt64Array",
+        "asynParamFloat32Array",  "asynParamFloat64Array",
+        "asynParamGenericPointer"};
+    return typeNames[type];
+}
+
 static void destroyDriver(void *driver) {
     Driver *drv = static_cast<Driver *>(driver);
     delete drv;
