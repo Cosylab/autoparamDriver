@@ -57,9 +57,7 @@ template <typename T> class Array {
 
     size_t maxSize() const { return m_maxSize; }
 
-    void setSize(size_t size) {
-        m_size = std::min(m_maxSize, size);
-    }
+    void setSize(size_t size) { m_size = std::min(m_maxSize, size); }
 
     void fillFrom(T const *data, size_t size) {
         m_size = std::min(m_maxSize, size);
@@ -92,6 +90,29 @@ template <typename T> class IsArray {
     static const bool value = (sizeof(check(static_cast<T *>(NULL))) > 1);
 };
 
+// Same as array of char, but ends with a null terminator.
+class Octet : public Array<char> {
+  public:
+    Octet(char *value, size_t size) : Array<char>(value, size) {}
+
+    void terminate() { m_data[m_size] = 0; }
+
+    void fillFrom(char const *data, size_t size) {
+        Array<char>::fillFrom(data, size);
+        terminate();
+    }
+
+    void fillFrom(std::string const &string) {
+        fillFrom(string.data(), string.size());
+    }
+
+    size_t writeTo(char *data, size_t maxSize) const {
+        size_t size = Array<char>::writeTo(data, maxSize);
+        data[size] = 0;
+        return size;
+    }
+};
+
 struct ResultBase {
     asynStatus status;
     epicsAlarmCondition alarmStatus;
@@ -115,8 +136,11 @@ template <typename T> struct Result : ResultBase {
     Result() : ResultBase(), value() {}
 };
 
+template <> struct Result<Octet> : ResultBase {};
+
 template <typename T> struct AsynType;
 
+// The value member is only true when T = Array. This does not include Octet.
 template <typename T, bool array = IsArray<T>::value> struct Handlers;
 
 template <typename T> struct Handlers<T, false> {
@@ -145,9 +169,6 @@ template <typename T> struct Handlers<Array<T>, true> {
 
     Handlers() : writeHandler(NULL), readHandler(NULL) {}
 };
-
-// TODO
-struct Octet {};
 
 typedef Handlers<epicsInt32> Int32Handlers;
 template <> struct AsynType<epicsInt32> {
@@ -239,8 +260,23 @@ template <> struct Handlers<epicsUInt32, false> {
     Handlers() : writeHandler(NULL), readHandler(NULL) {}
 };
 
+template <> struct Handlers<Octet, false> {
+    typedef Autoparam::WriteResult WriteResult;
+    typedef Result<Octet> ReadResult;
+    typedef WriteResult (*WriteHandler)(PVInfo &, Octet const &);
+    typedef ReadResult (*ReadHandler)(PVInfo &, Octet &);
+
+    static const asynParamType type = AsynType<Octet>::value;
+
+    WriteHandler writeHandler;
+    ReadHandler readHandler;
+
+    Handlers() : writeHandler(NULL), readHandler(NULL) {}
+};
+
 namespace Convenience {
 using Autoparam::Array;
+using Autoparam::Octet;
 using Autoparam::PVInfo;
 typedef Autoparam::WriteResult WriteResult;
 typedef Autoparam::ArrayResult ArrayReadResult;

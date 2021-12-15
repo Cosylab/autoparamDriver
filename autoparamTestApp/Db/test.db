@@ -110,3 +110,15 @@ record(bi, "$(PREFIX):bits_b4") {
     field(ZNAM, "Down")
     field(ONAM, "Up")
 }
+
+record(stringin, "$(PREFIX):arg_echo") {
+    field(DESC, "Show the argument string")
+    field(DTYP, "asynOctetRead")
+    field(INP, "@asyn($(PORT)) ARGECHO ena dva tri")
+}
+
+record(stringout, "$(PREFIX):print") {
+    field(DESC, "Print a string to ioc stdout")
+    field(DTYP, "asynOctetWrite")
+    field(OUT, "@asyn($(PORT)) PRINT")
+}

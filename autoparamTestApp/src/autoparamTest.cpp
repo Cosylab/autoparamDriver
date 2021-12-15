@@ -30,6 +30,8 @@ class AutoparamTest : public Autoparam::Driver {
         registerHandlers<Array<epicsInt8> >("WFM8", wfm8Read, wfm8Write);
         registerHandlers<epicsInt32>("DEFHANDLER", NULL, NULL);
         registerHandlers<epicsUInt32>("DIGIO", bitsGet, bitsSet);
+        registerHandlers<Octet>("ARGECHO", argEcho, NULL);
+        registerHandlers<Octet>("PRINT", NULL, stringPrint);
     }
 
   protected:
@@ -131,6 +133,28 @@ class AutoparamTest : public Autoparam::Driver {
         MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
         result.value = pvInfo.driver->shiftedRegister & mask;
         return result;
+    }
+
+    static OctetReadResult argEcho(PVInfo &info, Octet &value) {
+        OctetReadResult result;
+        std::string argcat;
+        for (PVInfo::ArgumentList::const_iterator i = info.arguments().begin(),
+                                                  end = info.arguments().end();
+             i != end; ++i) {
+            argcat += *i;
+        }
+        value.fillFrom(argcat);
+        return result;
+    }
+
+    static WriteResult stringPrint(PVInfo &baseInfo, Octet const &value) {
+        printf("Got string: '");
+        for (size_t i = 0; i < value.size(); ++i) {
+            putchar(value.data()[i]);
+        }
+        putchar('\'');
+        putchar('\n');
+        return WriteResult();
     }
 
     uint randomSeed;

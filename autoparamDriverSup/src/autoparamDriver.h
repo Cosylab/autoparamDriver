@@ -97,8 +97,6 @@ class Driver : public asynPortDriver {
     // Beyond this point, the methods are public because they are part of the
     // asyn interface, but derived classes shouldn't need to override them.
 
-    // TODO Octet
-
     asynStatus drvUserCreate(asynUser *pasynUser, const char *reason,
                              const char **, size_t *);
 
@@ -282,6 +280,30 @@ class Driver : public asynPortDriver {
         return writeScalar(pasynUser, value, mask);
     }
 
+    asynStatus readOctet(asynUser *pasynUser, char *value, size_t nChars,
+                         size_t *nActual, int *eomReason) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasReadHandler<Octet>(pasynUser->reason)) {
+            return asynPortDriver::readOctet(pasynUser, value, nChars, nActual,
+                                             eomReason);
+        }
+        // Only complete reads are supported.
+        *eomReason = ASYN_EOM_END;
+        return readOctetData(pasynUser, value, nChars, nActual);
+    }
+
+    asynStatus writeOctet(asynUser *pasynUser, const char *value, size_t nChars,
+                          size_t *nActual) {
+        if (!hasParam(pasynUser->reason) ||
+            !hasWriteHandler<Octet>(pasynUser->reason)) {
+            return asynPortDriver::writeOctet(pasynUser, value, nChars,
+                                              nActual);
+        }
+        // Only complete writes are supported.
+        *nActual = nChars;
+        return writeOctetData(pasynUser, value, nChars);
+    }
+
   private:
     void handleResultStatus(asynUser *pasynUser, ResultBase const &result);
 
@@ -290,6 +312,7 @@ class Driver : public asynPortDriver {
     bool hasParam(int index);
     template <typename T> bool hasReadHandler(int index);
     template <typename T> bool hasWriteHandler(int index);
+    asynStatus doCallbacksArrayDispatch(int index, Octet const &value);
     template <typename T>
     asynStatus doCallbacksArrayDispatch(int index, Array<T> &value);
     template <typename T> asynStatus setParamDispatch(int index, T value);
@@ -310,6 +333,10 @@ class Driver : public asynPortDriver {
                          size_t *size);
     template <typename T>
     asynStatus writeArray(asynUser *pasynUser, T *value, size_t size);
+    asynStatus readOctetData(asynUser *pasynUser, char *value, size_t maxSize,
+                             size_t *nRead);
+    asynStatus writeOctetData(asynUser *pasynUser, char const *value,
+                              size_t size);
 
     template <typename T> std::map<std::string, Handlers<T> > &getHandlerMap();
 
@@ -498,8 +525,7 @@ asynStatus Driver::setParamDispatch<epicsFloat64>(int index,
 }
 
 template <> asynStatus Driver::setParamDispatch<Octet>(int index, Octet value) {
-    // TODO
-    return setStringParam(index, std::string());
+    return setStringParam(index, value.data());
 }
 
 template <>
@@ -613,6 +639,46 @@ template <>
 std::map<std::string, Handlers<Array<epicsFloat64> > > &
 Driver::getHandlerMap<Array<epicsFloat64> >() {
     return m_Float64ArrayHandlerMap;
+}
+
+asynStatus Driver::readOctetData(asynUser *pasynUser, char *value,
+                                 size_t maxSize, size_t *nRead) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    Octet arrayRef(value, maxSize);
+    Handlers<Octet>::ReadHandler handler =
+        getHandlerMap<Octet>().at(pvInfo->function()).readHandler;
+    Handlers<Octet>::ReadResult result = handler(*pvInfo, arrayRef);
+    handleResultStatus(pasynUser, result);
+    if (result.status == asynSuccess) {
+        *nRead = arrayRef.size();
+        if (result.processInterrupts) {
+            // The handler should have ensured termination, but we can't be
+            // sure.
+            arrayRef.terminate();
+            setParamDispatch(pvInfo->index(), arrayRef);
+            if (result.processInterrupts) {
+                callParamCallbacks();
+            }
+        }
+    }
+    return result.status;
+}
+
+asynStatus Driver::writeOctetData(asynUser *pasynUser, char const *value,
+                                  size_t size) {
+    PVInfo *pvInfo = pvInfoFromUser(pasynUser);
+    Octet const arrayRef(const_cast<char *>(value), size);
+    Handlers<Octet>::WriteHandler handler =
+        getHandlerMap<Octet>().at(pvInfo->function()).writeHandler;
+    Handlers<Octet>::WriteResult result = handler(*pvInfo, arrayRef);
+    handleResultStatus(pasynUser, result);
+    if (result.status == asynSuccess && result.processInterrupts) {
+        setParamDispatch(pvInfo->index(), arrayRef);
+        if (result.processInterrupts) {
+            callParamCallbacks();
+        }
+    }
+    return result.status;
 }
 
 } // namespace Autoparam
