@@ -117,7 +117,8 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
-    static WriteResult bitsSet(PVInfo &baseInfo, epicsUInt32 value, epicsUInt32 mask) {
+    static WriteResult bitsSet(PVInfo &baseInfo, epicsUInt32 value,
+                               epicsUInt32 mask) {
         WriteResult result;
         MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
         pvInfo.driver->shiftedRegister = (value & mask) << 3;

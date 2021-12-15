@@ -90,7 +90,7 @@ record(longout, "$(PREFIX):bits_sp") {
 }
 
 record(longin, "$(PREFIX):bits_rb") {
-    field(DESC, "Numeric representation of shifted register")
+    field(DESC, "Numeric value of shifted register")
     field(DTYP, "asynUInt32Digital")
     field(INP, "@asynMask($(PORT), 0, 0xFFFFFFFF) DIGIO")
 }
