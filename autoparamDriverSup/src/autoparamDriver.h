@@ -391,6 +391,9 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
     if (result.status == asynSuccess) {
         *value = result.value;
         setParamDispatch(pasynUser->reason, result.value);
+        if (result.processInterrupts) {
+            callParamCallbacks();
+        }
     }
     return result.status;
 }
@@ -405,6 +408,9 @@ asynStatus Driver::readScalar(asynUser *pasynUser, epicsUInt32 *value,
     if (result.status == asynSuccess) {
         *value = result.value;
         setUIntDigitalParam(pasynUser->reason, result.value, mask);
+        if (result.processInterrupts) {
+            callParamCallbacks();
+        }
     }
     return result.status;
 }
@@ -418,7 +424,9 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         setParamDispatch(pasynUser->reason, value);
-        callParamCallbacks();
+        if (result.processInterrupts) {
+            callParamCallbacks();
+        }
     }
     return result.status;
 }
@@ -432,7 +440,9 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, epicsUInt32 value,
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         setUIntDigitalParam(pasynUser->reason, value, mask);
-        callParamCallbacks();
+        if (result.processInterrupts) {
+            callParamCallbacks();
+        }
     }
     return result.status;
 }
@@ -448,6 +458,9 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
     if (result.status == asynSuccess) {
         *size = std::min(result.value.size(), maxSize);
         std::copy(result.value.data(), result.value.data() + *size, value);
+        if (result.status == asynSuccess && result.processInterrupts) {
+            return doCallbacksArrayDispatch(pvInfo->index(), result.value);
+        }
     }
     return result.status;
 }
@@ -461,7 +474,7 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
     typename Handlers<Array<T> >::WriteResult result =
         handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
+    if (result.status == asynSuccess && result.processInterrupts) {
         return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
     }
     return result.status;

@@ -72,26 +72,29 @@ struct ResultBase {
     asynStatus status;
     epicsAlarmCondition alarmStatus;
     epicsAlarmSeverity alarmSeverity;
+    bool processInterrupts;
 
     ResultBase()
         : status(asynSuccess), alarmStatus(epicsAlarmNone),
-          alarmSeverity(epicsSevNone) {}
+          alarmSeverity(epicsSevNone), processInterrupts(false) {}
 };
 
-template <typename T = void> struct Result : ResultBase {
+struct WriteResult : ResultBase {
+    WriteResult() : ResultBase() { processInterrupts = true; }
+};
+
+template <typename T> struct Result : ResultBase {
     T value;
 
     Result() : ResultBase(), value() {}
 };
-
-template <> struct Result<void> : ResultBase {};
 
 template <typename T> struct AsynType;
 
 template <typename T, bool array = IsArray<T>::value> struct Handlers;
 
 template <typename T> struct Handlers<T, false> {
-    typedef Result<void> WriteResult;
+    typedef Autoparam::WriteResult WriteResult;
     typedef Result<T> ReadResult;
     typedef WriteResult (*WriteHandler)(PVInfo &, T);
     typedef ReadResult (*ReadHandler)(PVInfo &);
@@ -104,7 +107,7 @@ template <typename T> struct Handlers<T, false> {
 };
 
 template <typename T> struct Handlers<Array<T>, true> {
-    typedef Result<void> WriteResult;
+    typedef Autoparam::WriteResult WriteResult;
     typedef Result<Array<T> > ReadResult;
     typedef WriteResult (*WriteHandler)(PVInfo &, Array<T>);
     typedef ReadResult (*ReadHandler)(PVInfo &, size_t);
@@ -198,7 +201,7 @@ template <> struct AsynType<Array<epicsFloat64> > {
 char const *AsynType<Array<epicsFloat64> >::name = "Float64Array";
 
 template <> struct Handlers<epicsUInt32, false> {
-    typedef Result<void> WriteResult;
+    typedef Autoparam::WriteResult WriteResult;
     typedef Result<epicsUInt32> ReadResult;
     typedef WriteResult (*WriteHandler)(PVInfo &, epicsUInt32, epicsUInt32);
     typedef ReadResult (*ReadHandler)(PVInfo &, epicsUInt32);
@@ -213,7 +216,7 @@ template <> struct Handlers<epicsUInt32, false> {
 namespace Convenience {
 using Autoparam::Array;
 using Autoparam::PVInfo;
-typedef Result<void> WriteResult;
+typedef Autoparam::WriteResult WriteResult;
 typedef Result<epicsInt32> Int32ReadResult;
 typedef Result<epicsInt64> Int64ReadResult;
 typedef Result<epicsUInt32> UInt32ReadResult;
