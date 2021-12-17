@@ -95,7 +95,8 @@ static void destroyDriver(void *driver) {
 Driver::Driver(const char *portName, const DriverOpts &params)
     : asynPortDriver(portName, 1, params.interfaceMask, params.interruptMask,
                      params.asynFlags, params.autoConnect, params.priority,
-                     params.stackSize) {
+                     params.stackSize),
+      opts(params) {
     if (params.autoDestruct) {
         epicsAtExit(destroyDriver, this);
     }

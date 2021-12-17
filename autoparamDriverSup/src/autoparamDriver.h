@@ -14,6 +14,7 @@ struct DriverOpts {
     int priority;
     int stackSize;
     bool autoDestruct;
+    bool autoInterrupts;
 
     DriverOpts &setBlocking(bool enable = true) {
         if (enable) {
@@ -44,6 +45,11 @@ struct DriverOpts {
         return *this;
     }
 
+    DriverOpts &setAutoInterrupts(bool enable) {
+        autoInterrupts = enable;
+        return *this;
+    }
+
     static const int minimalInterfaceMask = asynCommonMask | asynDrvUserMask;
     static const int defaultMask =
         asynInt32Mask | asynInt64Mask | asynUInt32DigitalMask |
@@ -54,7 +60,7 @@ struct DriverOpts {
     DriverOpts()
         : interfaceMask(minimalInterfaceMask | defaultMask),
           interruptMask(defaultMask), asynFlags(0), autoConnect(1), priority(0),
-          stackSize(0), autoDestruct(false) {}
+          stackSize(0), autoDestruct(false), autoInterrupts(true) {}
 };
 
 class Driver : public asynPortDriver {
@@ -368,6 +374,8 @@ class Driver : public asynPortDriver {
 
     static char const *driverName;
 
+    DriverOpts opts;
+
     typedef std::map<int, PVInfo *> ParamMap;
     ParamMap m_params;
     std::map<std::string, asynParamType> m_functionTypes;
@@ -577,7 +585,7 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
     if (result.status == asynSuccess) {
         *value = result.value;
         setParamDispatch(pasynUser->reason, result.value);
-        if (result.processInterrupts) {
+        if (result.processInterrupts == ProcessInterrupts::ON) {
             callParamCallbacks();
         }
     }
@@ -594,7 +602,7 @@ asynStatus Driver::readScalar(asynUser *pasynUser, epicsUInt32 *value,
     if (result.status == asynSuccess) {
         *value = result.value;
         setUIntDigitalParam(pasynUser->reason, result.value, mask);
-        if (result.processInterrupts) {
+        if (result.processInterrupts == ProcessInterrupts::ON) {
             callParamCallbacks();
         }
     }
@@ -610,7 +618,9 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         setParamDispatch(pasynUser->reason, value);
-        if (result.processInterrupts) {
+        if (result.processInterrupts == ProcessInterrupts::ON ||
+            (result.processInterrupts == ProcessInterrupts::DEFAULT &&
+             opts.autoInterrupts)) {
             callParamCallbacks();
         }
     }
@@ -626,7 +636,9 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, epicsUInt32 value,
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         setUIntDigitalParam(pasynUser->reason, value, mask);
-        if (result.processInterrupts) {
+        if (result.processInterrupts == ProcessInterrupts::ON ||
+            (result.processInterrupts == ProcessInterrupts::DEFAULT &&
+             opts.autoInterrupts)) {
             callParamCallbacks();
         }
     }
@@ -645,7 +657,7 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         *size = arrayRef.size();
-        if (result.processInterrupts) {
+        if (result.processInterrupts == ProcessInterrupts::ON) {
             return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
         }
     }
@@ -661,7 +673,11 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
     typename Handlers<Array<T> >::WriteResult result =
         handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess && result.processInterrupts) {
+    bool processInterrupts =
+        result.processInterrupts == ProcessInterrupts::ON ||
+        (result.processInterrupts == ProcessInterrupts::DEFAULT &&
+         opts.autoInterrupts);
+    if (result.status == asynSuccess && processInterrupts) {
         return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
     }
     return result.status;
@@ -677,14 +693,12 @@ asynStatus Driver::readOctetData(asynUser *pasynUser, char *value,
     handleResultStatus(pasynUser, result);
     if (result.status == asynSuccess) {
         *nRead = arrayRef.size();
-        if (result.processInterrupts) {
+        if (result.processInterrupts == ProcessInterrupts::ON) {
             // The handler should have ensured termination, but we can't be
             // sure.
             arrayRef.terminate();
             setParamDispatch(pvInfo->index(), arrayRef);
-            if (result.processInterrupts) {
-                callParamCallbacks();
-            }
+            callParamCallbacks();
         }
     }
     return result.status;
@@ -698,11 +712,13 @@ asynStatus Driver::writeOctetData(asynUser *pasynUser, char const *value,
         getHandlerMap<Octet>().at(pvInfo->function()).writeHandler;
     Handlers<Octet>::WriteResult result = handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess && result.processInterrupts) {
+    bool processInterrupts =
+        result.processInterrupts == ProcessInterrupts::ON ||
+        (result.processInterrupts == ProcessInterrupts::DEFAULT &&
+         opts.autoInterrupts);
+    if (result.status == asynSuccess && processInterrupts) {
         setParamDispatch(pvInfo->index(), arrayRef);
-        if (result.processInterrupts) {
-            callParamCallbacks();
-        }
+        callParamCallbacks();
     }
     return result.status;
 }

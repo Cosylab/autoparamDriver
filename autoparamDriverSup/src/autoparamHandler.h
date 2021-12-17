@@ -113,20 +113,35 @@ class Octet : public Array<char> {
     }
 };
 
+struct ProcessInterrupts {
+    enum ValueType {
+        OFF,
+        ON,
+        DEFAULT,
+    } value;
+
+    ProcessInterrupts() : value(DEFAULT) {}
+
+    ProcessInterrupts &operator=(bool v) {
+        value = v ? ON : OFF;
+        return *this;
+    }
+
+    bool operator==(ValueType v) { return value == v; }
+};
+
 struct ResultBase {
     asynStatus status;
     epicsAlarmCondition alarmStatus;
     epicsAlarmSeverity alarmSeverity;
-    bool processInterrupts;
+    ProcessInterrupts processInterrupts;
 
     ResultBase()
         : status(asynSuccess), alarmStatus(epicsAlarmNone),
-          alarmSeverity(epicsSevNone), processInterrupts(false) {}
+          alarmSeverity(epicsSevNone), processInterrupts() {}
 };
 
-struct WriteResult : ResultBase {
-    WriteResult() : ResultBase() { processInterrupts = true; }
-};
+struct WriteResult : ResultBase {};
 
 struct ArrayResult : ResultBase {};
 
