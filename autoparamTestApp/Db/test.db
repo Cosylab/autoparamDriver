@@ -4,6 +4,20 @@ record(longin, "$(PREFIX):random") {
     field(INP, "@asyn($(PORT)) RANDOM")
 }
 
+record(longin, "$(PREFIX):random_1") {
+    field(SCAN, "I/O Intr")
+    field(DESC, "Contains same number as random_2")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT)) RANDOM")
+}
+
+record(longin, "$(PREFIX):random_2") {
+    field(SCAN, "I/O Intr")
+    field(DESC, "Contains same number as random_1")
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT)) RANDOM")
+}
+
 record(longin, "$(PREFIX):sum_rb") {
     field(DESC, "Read the summed value")
     field(DTYP, "asynInt32")

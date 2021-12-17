@@ -4,8 +4,11 @@
 #include <cstdlib>
 #include <iocsh.h>
 #include <epicsExport.h>
+#include <epicsThread.h>
 
 using namespace Autoparam::Convenience;
+
+static const double interruptScanPeriod = 1.5;
 
 class AutoparamTest;
 
@@ -18,12 +21,48 @@ class MyInfo : public PVInfo {
 };
 
 class AutoparamTest : public Autoparam::Driver {
+
+    // Runs in a thread, updating IO Intr. records.
+    class Runnable : public epicsThreadRunable {
+      public:
+        Runnable(AutoparamTest *self) : self(self) {}
+
+        void run() {
+            while (true) {
+                epicsThreadSleep(interruptScanPeriod);
+                self->lock();
+                if (self->quitThread) {
+                    self->unlock();
+                    return;
+                }
+
+                std::vector<PVInfo *> intrs = self->getInterruptPVs();
+                for (std::vector<PVInfo *>::iterator i = intrs.begin(),
+                                                     end = intrs.end();
+                     i != end; ++i) {
+                    PVInfo &pv = **i;
+                    if (pv.function() == "RANDOM") {
+                        self->setParam(pv, (int32_t)rand_r(&self->randomSeed));
+                    }
+                }
+
+                self->callParamCallbacks();
+                self->unlock();
+            }
+        }
+
+      private:
+        AutoparamTest *self;
+    };
+
   public:
     AutoparamTest(char const *portName)
         : Autoparam::Driver(
               portName,
               Autoparam::DriverOpts().setAutoDestruct().setAutoConnect()),
-          randomSeed(time(NULL) + clock()), currentSum(0), shiftedRegister(0) {
+          randomSeed(time(NULL) + clock()), currentSum(0), shiftedRegister(0),
+          thread(runnable, "AutoparamTestThread", epicsThreadStackMedium),
+          runnable(this), quitThread(false) {
         registerHandlers<epicsInt32>("RANDOM", randomRead, NULL);
         registerHandlers<epicsInt32>("SUM", readSum, sumArgs);
         registerHandlers<epicsFloat64>("ERROR", erroredRead, NULL);
@@ -32,6 +71,15 @@ class AutoparamTest : public Autoparam::Driver {
         registerHandlers<epicsUInt32>("DIGIO", bitsGet, bitsSet);
         registerHandlers<Octet>("ARGECHO", argEcho, NULL);
         registerHandlers<Octet>("PRINT", NULL, stringPrint);
+
+        thread.start();
+    }
+
+    ~AutoparamTest() {
+        lock();
+        quitThread = true;
+        unlock();
+        thread.exitWait();
     }
 
   protected:
@@ -45,6 +93,7 @@ class AutoparamTest : public Autoparam::Driver {
         MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
         AutoparamTest *self = pvInfo.driver;
         result.value = rand_r(&self->randomSeed);
+        result.processInterrupts = true;
         return result;
     }
 
@@ -161,6 +210,9 @@ class AutoparamTest : public Autoparam::Driver {
     epicsInt32 currentSum;
     std::vector<epicsInt8> wfm8Data;
     epicsUInt32 shiftedRegister;
+    epicsThread thread;
+    Runnable runnable;
+    bool quitThread;
 };
 
 static int const num_args = 1;

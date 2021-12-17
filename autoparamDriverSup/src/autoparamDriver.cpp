@@ -168,4 +168,52 @@ PVInfo *Driver::pvInfoFromUser(asynUser *pasynUser) {
     }
 }
 
+template <typename IntType>
+void Driver::getInterruptPVsForInterface(std::vector<PVInfo *> &dest,
+                                         int canInterrupt, void *ifacePvt) {
+    ELLLIST *clients;
+    pasynManager->interruptStart(ifacePvt, &clients);
+    ELLNODE *node = ellFirst(clients);
+    while (node) {
+        interruptNode *inode = reinterpret_cast<interruptNode *>(node);
+        IntType *interrupt = static_cast<IntType *>(inode->drvPvt);
+        if (hasParam(interrupt->pasynUser->reason)) {
+            dest.push_back(pvInfoFromUser(interrupt->pasynUser));
+        }
+        node = ellNext(node);
+    }
+    pasynManager->interruptEnd(ifacePvt);
+}
+
+std::vector<PVInfo *> Driver::getInterruptPVs() {
+    std::vector<PVInfo *> infos;
+
+    asynStandardInterfaces *ifcs = getAsynStdInterfaces();
+    getInterruptPVsForInterface<asynOctetInterrupt>(
+        infos, ifcs->octetCanInterrupt, ifcs->octetInterruptPvt);
+    getInterruptPVsForInterface<asynUInt32DigitalInterrupt>(
+        infos, ifcs->uInt32DigitalCanInterrupt,
+        ifcs->uInt32DigitalInterruptPvt);
+    getInterruptPVsForInterface<asynInt32Interrupt>(
+        infos, ifcs->int32CanInterrupt, ifcs->int32InterruptPvt);
+    getInterruptPVsForInterface<asynInt64Interrupt>(
+        infos, ifcs->int64CanInterrupt, ifcs->int64InterruptPvt);
+    getInterruptPVsForInterface<asynFloat64Interrupt>(
+        infos, ifcs->float64CanInterrupt, ifcs->float64InterruptPvt);
+    getInterruptPVsForInterface<asynInt8ArrayInterrupt>(
+        infos, ifcs->int8ArrayCanInterrupt, ifcs->int8ArrayInterruptPvt);
+    getInterruptPVsForInterface<asynInt16ArrayInterrupt>(
+        infos, ifcs->int16ArrayCanInterrupt, ifcs->int16ArrayInterruptPvt);
+    getInterruptPVsForInterface<asynInt32ArrayInterrupt>(
+        infos, ifcs->int32ArrayCanInterrupt, ifcs->int32ArrayInterruptPvt);
+    getInterruptPVsForInterface<asynInt64ArrayInterrupt>(
+        infos, ifcs->int64ArrayCanInterrupt, ifcs->int64ArrayInterruptPvt);
+    getInterruptPVsForInterface<asynFloat32ArrayInterrupt>(
+        infos, ifcs->float32ArrayCanInterrupt, ifcs->float32ArrayInterruptPvt);
+    getInterruptPVsForInterface<asynFloat64ArrayInterrupt>(
+        infos, ifcs->float64ArrayCanInterrupt, ifcs->float64ArrayInterruptPvt);
+
+    return infos;
+}
+
 } // namespace Autoparam

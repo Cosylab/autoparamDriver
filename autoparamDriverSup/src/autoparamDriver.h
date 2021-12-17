@@ -116,6 +116,8 @@ class Driver : public asynPortDriver {
 
     PVInfo *pvInfoFromUser(asynUser *pasynUser);
 
+    std::vector<PVInfo *> getInterruptPVs();
+
   public:
     // Beyond this point, the methods are public because they are part of the
     // asyn interface, but derived classes shouldn't need to override them.
@@ -329,6 +331,10 @@ class Driver : public asynPortDriver {
 
   private:
     void handleResultStatus(asynUser *pasynUser, ResultBase const &result);
+
+    template <typename IntType>
+    void getInterruptPVsForInterface(std::vector<PVInfo *> &dest,
+                                     int canInterrupt, void *ifacePvt);
 
     template <typename T> bool hasReadHandler(int index);
     template <typename T> bool hasWriteHandler(int index);
