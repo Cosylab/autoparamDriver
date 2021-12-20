@@ -174,6 +174,9 @@ class Driver : public asynPortDriver {
     template <typename T> bool hasReadHandler(int index);
     template <typename T> bool hasWriteHandler(int index);
 
+    bool shouldProcessInterrupts(WriteResult const &result) const;
+    bool shouldProcessInterrupts(ResultBase const &result) const;
+
     asynStatus doCallbacksArrayDispatch(int index, Octet const &value);
     template <typename T>
     asynStatus doCallbacksArrayDispatch(int index, Array<T> &value);

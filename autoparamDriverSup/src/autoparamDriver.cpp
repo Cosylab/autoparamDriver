@@ -261,6 +261,18 @@ template <typename T> bool Driver::hasWriteHandler(int index) {
     return getWriteHandler<T>(m_params.at(index)->function()) != NULL;
 }
 
+bool Driver::shouldProcessInterrupts(WriteResult const &result) const {
+    return result.status == asynSuccess &&
+           (result.processInterrupts == ProcessInterrupts::ON ||
+            (result.processInterrupts == ProcessInterrupts::DEFAULT &&
+             opts.autoInterrupts));
+}
+
+bool Driver::shouldProcessInterrupts(ResultBase const &result) const {
+    return result.status == asynSuccess &&
+           result.processInterrupts == ProcessInterrupts::ON;
+}
+
 template <>
 asynStatus Driver::setParamDispatch<epicsInt32>(int index, epicsInt32 value) {
     return setIntegerParam(index, value);
@@ -528,12 +540,10 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
         getReadHandler<T>(pvInfo->function());
     typename Handlers<T>::ReadResult result = handler(*pvInfo);
     handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
-        *value = result.value;
+    *value = result.value;
+    if (shouldProcessInterrupts(result)) {
         setParamDispatch(pasynUser->reason, result.value);
-        if (result.processInterrupts == ProcessInterrupts::ON) {
-            callParamCallbacks();
-        }
+        callParamCallbacks();
     }
     return result.status;
 }
@@ -545,12 +555,10 @@ asynStatus Driver::readScalar(asynUser *pasynUser, epicsUInt32 *value,
         getReadHandler<epicsUInt32>(pvInfo->function());
     Handlers<epicsUInt32>::ReadResult result = handler(*pvInfo, mask);
     handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
-        *value = result.value;
+    *value = result.value;
+    if (shouldProcessInterrupts(result)) {
         setUIntDigitalParam(pasynUser->reason, result.value, mask);
-        if (result.processInterrupts == ProcessInterrupts::ON) {
-            callParamCallbacks();
-        }
+        callParamCallbacks();
     }
     return result.status;
 }
@@ -562,13 +570,9 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
         getWriteHandler<T>(pvInfo->function());
     typename Handlers<T>::WriteResult result = handler(*pvInfo, value);
     handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
+    if (shouldProcessInterrupts(result)) {
         setParamDispatch(pasynUser->reason, value);
-        if (result.processInterrupts == ProcessInterrupts::ON ||
-            (result.processInterrupts == ProcessInterrupts::DEFAULT &&
-             opts.autoInterrupts)) {
-            callParamCallbacks();
-        }
+        callParamCallbacks();
     }
     return result.status;
 }
@@ -580,13 +584,9 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, epicsUInt32 value,
         getWriteHandler<epicsUInt32>(pvInfo->function());
     Handlers<epicsUInt32>::WriteResult result = handler(*pvInfo, value, mask);
     handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
+    if (shouldProcessInterrupts(result)) {
         setUIntDigitalParam(pasynUser->reason, value, mask);
-        if (result.processInterrupts == ProcessInterrupts::ON ||
-            (result.processInterrupts == ProcessInterrupts::DEFAULT &&
-             opts.autoInterrupts)) {
-            callParamCallbacks();
-        }
+        callParamCallbacks();
     }
     return result.status;
 }
@@ -601,11 +601,9 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
     typename Handlers<Array<T> >::ReadResult result =
         handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
-        *size = arrayRef.size();
-        if (result.processInterrupts == ProcessInterrupts::ON) {
-            return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
-        }
+    *size = arrayRef.size();
+    if (shouldProcessInterrupts(result)) {
+        return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
     }
     return result.status;
 }
@@ -619,11 +617,7 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
     typename Handlers<Array<T> >::WriteResult result =
         handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
-    bool processInterrupts =
-        result.processInterrupts == ProcessInterrupts::ON ||
-        (result.processInterrupts == ProcessInterrupts::DEFAULT &&
-         opts.autoInterrupts);
-    if (result.status == asynSuccess && processInterrupts) {
+    if (shouldProcessInterrupts(result)) {
         return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
     }
     return result.status;
@@ -637,15 +631,12 @@ asynStatus Driver::readOctetData(asynUser *pasynUser, char *value,
         getHandlerMap<Octet>().at(pvInfo->function()).readHandler;
     Handlers<Octet>::ReadResult result = handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
-    if (result.status == asynSuccess) {
-        *nRead = arrayRef.size();
-        if (result.processInterrupts == ProcessInterrupts::ON) {
-            // The handler should have ensured termination, but we can't be
-            // sure.
-            arrayRef.terminate();
-            setParamDispatch(pvInfo->index(), arrayRef);
-            callParamCallbacks();
-        }
+    *nRead = arrayRef.size();
+    // The handler should have ensured termination, but we can't be sure.
+    arrayRef.terminate();
+    if (shouldProcessInterrupts(result)) {
+        setParamDispatch(pvInfo->index(), arrayRef);
+        callParamCallbacks();
     }
     return result.status;
 }
@@ -658,11 +649,7 @@ asynStatus Driver::writeOctetData(asynUser *pasynUser, char const *value,
         getHandlerMap<Octet>().at(pvInfo->function()).writeHandler;
     Handlers<Octet>::WriteResult result = handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
-    bool processInterrupts =
-        result.processInterrupts == ProcessInterrupts::ON ||
-        (result.processInterrupts == ProcessInterrupts::DEFAULT &&
-         opts.autoInterrupts);
-    if (result.status == asynSuccess && processInterrupts) {
+    if (shouldProcessInterrupts(result)) {
         setParamDispatch(pvInfo->index(), arrayRef);
         callParamCallbacks();
     }

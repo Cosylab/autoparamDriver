@@ -95,7 +95,11 @@ class Octet : public Array<char> {
   public:
     Octet(char *value, size_t size) : Array<char>(value, size) {}
 
-    void terminate() { m_data[m_size] = 0; }
+    void terminate() {
+        if (m_size > 0) {
+            m_data[m_size] = 0;
+        }
+    }
 
     void fillFrom(char const *data, size_t size) {
         Array<char>::fillFrom(data, size);
@@ -127,7 +131,7 @@ struct ProcessInterrupts {
         return *this;
     }
 
-    bool operator==(ValueType v) { return value == v; }
+    bool operator==(ValueType v) const { return value == v; }
 };
 
 struct ResultBase {
