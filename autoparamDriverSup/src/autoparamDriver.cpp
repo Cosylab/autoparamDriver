@@ -855,4 +855,16 @@ asynStatus Driver::writeOctet(asynUser *pasynUser, const char *value,
     return writeOctetData(pasynUser, value, nChars);
 }
 
+const asynParamType AsynType<epicsInt32>::value;
+const asynParamType AsynType<epicsInt64>::value;
+const asynParamType AsynType<epicsFloat64>::value;
+const asynParamType AsynType<epicsUInt32>::value;
+const asynParamType AsynType<Octet>::value;
+const asynParamType AsynType<Array<epicsInt8> >::value;
+const asynParamType AsynType<Array<epicsInt16> >::value;
+const asynParamType AsynType<Array<epicsInt32> >::value;
+const asynParamType AsynType<Array<epicsInt64> >::value;
+const asynParamType AsynType<Array<epicsFloat32> >::value;
+const asynParamType AsynType<Array<epicsFloat64> >::value;
+
 } // namespace Autoparam
