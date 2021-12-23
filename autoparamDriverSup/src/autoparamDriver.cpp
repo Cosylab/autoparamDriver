@@ -102,6 +102,7 @@ Driver::Driver(const char *portName, const DriverOpts &params)
     if (params.autoDestruct) {
         epicsAtExit(destroyDriver, this);
     }
+    installInterruptRegistrars();
 }
 
 Driver::~Driver() {
@@ -217,6 +218,52 @@ std::vector<PVInfo *> Driver::getInterruptPVs() {
         infos, ifcs->float64ArrayCanInterrupt, ifcs->float64ArrayInterruptPvt);
 
     return infos;
+}
+
+template <typename Ptr, typename Other>
+static void assignPtr(Ptr *&ptr, Other *other) {
+    ptr = reinterpret_cast<Ptr *>(other);
+}
+
+template <typename Iface, typename HType>
+void Driver::installAnInterruptRegistrar(void *piface) {
+    // I hate doing type erasure like this, but there aren't sane options ...
+    Iface *iface = static_cast<Iface *>(piface);
+    void *reg = reinterpret_cast<void *>(iface->registerInterruptUser);
+    void *canc = reinterpret_cast<void *>(iface->cancelInterruptUser);
+    m_originalIntrRegister[AsynType<HType>::value] = std::make_pair(reg, canc);
+    assignPtr(iface->cancelInterruptUser, Driver::cancelInterrupt<HType>);
+    if (AsynType<HType>::value == asynParamUInt32Digital) {
+        // UInt32Digital has a signature different from other registrars.
+        assignPtr(iface->registerInterruptUser,
+                  Driver::registerInterruptDigital);
+    } else {
+        assignPtr(iface->registerInterruptUser,
+                  Driver::registerInterrupt<HType>);
+    }
+}
+
+void Driver::installInterruptRegistrars() {
+    asynStandardInterfaces *ifcs = getAsynStdInterfaces();
+    installAnInterruptRegistrar<asynInt32, epicsInt32>(ifcs->int32.pinterface);
+    installAnInterruptRegistrar<asynInt64, epicsInt64>(ifcs->int64.pinterface);
+    installAnInterruptRegistrar<asynFloat64, epicsFloat64>(
+        ifcs->float64.pinterface);
+    installAnInterruptRegistrar<asynOctet, Octet>(ifcs->octet.pinterface);
+    installAnInterruptRegistrar<asynUInt32Digital, epicsUInt32>(
+        ifcs->uInt32Digital.pinterface);
+    installAnInterruptRegistrar<asynInt8Array, Array<epicsInt8> >(
+        ifcs->int8Array.pinterface);
+    installAnInterruptRegistrar<asynInt16Array, Array<epicsInt16> >(
+        ifcs->int16Array.pinterface);
+    installAnInterruptRegistrar<asynInt32Array, Array<epicsInt32> >(
+        ifcs->int32Array.pinterface);
+    installAnInterruptRegistrar<asynInt64Array, Array<epicsInt64> >(
+        ifcs->int64Array.pinterface);
+    installAnInterruptRegistrar<asynFloat32Array, Array<epicsFloat32> >(
+        ifcs->float32Array.pinterface);
+    installAnInterruptRegistrar<asynFloat64Array, Array<epicsFloat64> >(
+        ifcs->float64Array.pinterface);
 }
 
 template <typename T>
@@ -409,7 +456,8 @@ Driver::getHandlerMap<Array<epicsFloat64> >() {
 template <typename T>
 void Driver::registerHandlers(std::string const &function,
                               typename Handlers<T>::ReadHandler reader,
-                              typename Handlers<T>::WriteHandler writer) {
+                              typename Handlers<T>::WriteHandler writer,
+                              InterruptRegistrar intrRegistrar) {
     if (m_functionTypes.find(function) != m_functionTypes.end() &&
         m_functionTypes[function] != Handlers<T>::type) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
@@ -423,51 +471,61 @@ void Driver::registerHandlers(std::string const &function,
 
     getHandlerMap<T>()[function].readHandler = reader;
     getHandlerMap<T>()[function].writeHandler = writer;
+    getHandlerMap<T>()[function].intrRegistrar = intrRegistrar;
     m_functionTypes[function] = Handlers<T>::type;
 }
 
 template void
 Driver::registerHandlers<epicsInt32>(std::string const &function,
                                      Handlers<epicsInt32>::ReadHandler reader,
-                                     Handlers<epicsInt32>::WriteHandler writer);
+                                     Handlers<epicsInt32>::WriteHandler writer,
+                                     InterruptRegistrar intrRegistrar);
 template void
 Driver::registerHandlers<epicsInt64>(std::string const &function,
                                      Handlers<epicsInt64>::ReadHandler reader,
-                                     Handlers<epicsInt64>::WriteHandler writer);
+                                     Handlers<epicsInt64>::WriteHandler writer,
+                                     InterruptRegistrar intrRegistrar);
 template void Driver::registerHandlers<epicsFloat64>(
     std::string const &function, Handlers<epicsFloat64>::ReadHandler reader,
-    Handlers<epicsFloat64>::WriteHandler writer);
+    Handlers<epicsFloat64>::WriteHandler writer,
+    InterruptRegistrar intrRegistrar);
 template void Driver::registerHandlers<epicsUInt32>(
     std::string const &function, Handlers<epicsUInt32>::ReadHandler reader,
-    Handlers<epicsUInt32>::WriteHandler writer);
-template void
-Driver::registerHandlers<Octet>(std::string const &function,
-                                Handlers<Octet>::ReadHandler reader,
-                                Handlers<Octet>::WriteHandler writer);
+    Handlers<epicsUInt32>::WriteHandler writer,
+    InterruptRegistrar intrRegistrar);
+template void Driver::registerHandlers<Octet>(
+    std::string const &function, Handlers<Octet>::ReadHandler reader,
+    Handlers<Octet>::WriteHandler writer, InterruptRegistrar intrRegistrar);
 template void Driver::registerHandlers<Array<epicsInt8> >(
     std::string const &function,
     Handlers<Array<epicsInt8> >::ReadHandler reader,
-    Handlers<Array<epicsInt8> >::WriteHandler writer);
+    Handlers<Array<epicsInt8> >::WriteHandler writer,
+    InterruptRegistrar intrRegistrar);
 template void Driver::registerHandlers<Array<epicsInt16> >(
     std::string const &function,
     Handlers<Array<epicsInt16> >::ReadHandler reader,
-    Handlers<Array<epicsInt16> >::WriteHandler writer);
+    Handlers<Array<epicsInt16> >::WriteHandler writer,
+    InterruptRegistrar intrRegistrar);
 template void Driver::registerHandlers<Array<epicsInt32> >(
     std::string const &function,
     Handlers<Array<epicsInt32> >::ReadHandler reader,
-    Handlers<Array<epicsInt32> >::WriteHandler writer);
+    Handlers<Array<epicsInt32> >::WriteHandler writer,
+    InterruptRegistrar intrRegistrar);
 template void Driver::registerHandlers<Array<epicsInt64> >(
     std::string const &function,
     Handlers<Array<epicsInt64> >::ReadHandler reader,
-    Handlers<Array<epicsInt64> >::WriteHandler writer);
+    Handlers<Array<epicsInt64> >::WriteHandler writer,
+    InterruptRegistrar intrRegistrar);
 template void Driver::registerHandlers<Array<epicsFloat32> >(
     std::string const &function,
     Handlers<Array<epicsFloat32> >::ReadHandler reader,
-    Handlers<Array<epicsFloat32> >::WriteHandler writer);
+    Handlers<Array<epicsFloat32> >::WriteHandler writer,
+    InterruptRegistrar intrRegistrar);
 template void Driver::registerHandlers<Array<epicsFloat64> >(
     std::string const &function,
     Handlers<Array<epicsFloat64> >::ReadHandler reader,
-    Handlers<Array<epicsFloat64> >::WriteHandler writer);
+    Handlers<Array<epicsFloat64> >::WriteHandler writer,
+    InterruptRegistrar intrRegistrar);
 
 template <typename T>
 asynStatus Driver::doCallbacksArray(PVInfo const &pvInfo, Array<T> &value,
@@ -532,6 +590,68 @@ template asynStatus Driver::setParam<epicsFloat64>(PVInfo const &pvInfo,
                                                    int alarmSeverity);
 template asynStatus Driver::setParam<Octet>(PVInfo const &pvInfo, Octet value,
                                             int alarmStatus, int alarmSeverity);
+
+template <typename T>
+asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
+                                     void *callback, void *userPvt,
+                                     void **registrarPvt) {
+    Driver *self = static_cast<Driver *>(drvPvt);
+    PVInfo *pvInfo = self->pvInfoFromUser(pasynUser);
+    InterruptRegistrar registrar =
+        self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
+    if (registrar != NULL) {
+        registrar(*pvInfo, false);
+    }
+
+    // I hate doing type erasure like this, but there aren't sane options ...
+    typedef asynStatus (*RegisterIntrFunc)(void *drvPvt, asynUser *pasynUser,
+                                           void *callback, void *userPvt,
+                                           void **registrarPvt);
+    RegisterIntrFunc original = reinterpret_cast<RegisterIntrFunc>(
+        self->m_originalIntrRegister.at(AsynType<T>::value).first);
+    return original(drvPvt, pasynUser, callback, userPvt, registrarPvt);
+}
+
+template <typename T>
+asynStatus Driver::cancelInterrupt(void *drvPvt, asynUser *pasynUser,
+                                   void *registrarPvt) {
+    Driver *self = static_cast<Driver *>(drvPvt);
+    PVInfo *pvInfo = self->pvInfoFromUser(pasynUser);
+    InterruptRegistrar registrar =
+        self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
+    if (registrar != NULL) {
+        registrar(*pvInfo, true);
+    }
+
+    // I hate doing type erasure like this, but there aren't sane options ...
+    typedef asynStatus (*CancelIntrFunc)(void *drvPvt, asynUser *pasynUser,
+                                         void *registrarPvt);
+    CancelIntrFunc original = reinterpret_cast<CancelIntrFunc>(
+        self->m_originalIntrRegister.at(AsynType<T>::value).second);
+    return original(drvPvt, pasynUser, registrarPvt);
+}
+
+asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
+                                            void *callback, void *userPvt,
+                                            epicsUInt32 mask,
+                                            void **registrarPvt) {
+    typedef epicsUInt32 T;
+    Driver *self = static_cast<Driver *>(drvPvt);
+    PVInfo *pvInfo = self->pvInfoFromUser(pasynUser);
+    InterruptRegistrar registrar =
+        self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
+    if (registrar != NULL) {
+        registrar(*pvInfo, false);
+    }
+
+    // UInt32Digital has a signature different from other registrars.
+    typedef asynStatus (*RegisterIntrFunc)(
+        void *drvPvt, asynUser *pasynUser, void *callback, void *userPvt,
+        epicsUInt32 mask, void **registrarPvt);
+    RegisterIntrFunc original = reinterpret_cast<RegisterIntrFunc>(
+        self->m_originalIntrRegister.at(AsynType<T>::value).first);
+    return original(drvPvt, pasynUser, callback, userPvt, mask, registrarPvt);
+}
 
 template <typename T>
 asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {

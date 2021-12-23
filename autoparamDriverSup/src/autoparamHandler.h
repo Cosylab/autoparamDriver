@@ -161,6 +161,8 @@ char const *getAsynTypeName(asynParamType type);
 
 template <typename T> struct AsynType;
 
+typedef void (*InterruptRegistrar)(PVInfo &, bool);
+
 // The value member is only true when T = Array. This does not include Octet.
 template <typename T, bool array = IsArray<T>::value> struct Handlers;
 
@@ -173,8 +175,9 @@ template <typename T> struct Handlers<T, false> {
     static const asynParamType type = AsynType<T>::value;
     WriteHandler writeHandler;
     ReadHandler readHandler;
+    InterruptRegistrar intrRegistrar;
 
-    Handlers() : writeHandler(NULL), readHandler(NULL) {}
+    Handlers() : writeHandler(NULL), readHandler(NULL), intrRegistrar(NULL) {}
 };
 
 template <typename T> struct Handlers<Array<T>, true> {
@@ -187,8 +190,9 @@ template <typename T> struct Handlers<Array<T>, true> {
 
     WriteHandler writeHandler;
     ReadHandler readHandler;
+    InterruptRegistrar intrRegistrar;
 
-    Handlers() : writeHandler(NULL), readHandler(NULL) {}
+    Handlers() : writeHandler(NULL), readHandler(NULL), intrRegistrar(NULL) {}
 };
 
 typedef Handlers<epicsInt32> Int32Handlers;
@@ -253,8 +257,9 @@ template <> struct Handlers<epicsUInt32, false> {
     static const asynParamType type = AsynType<epicsUInt32>::value;
     WriteHandler writeHandler;
     ReadHandler readHandler;
+    InterruptRegistrar intrRegistrar;
 
-    Handlers() : writeHandler(NULL), readHandler(NULL) {}
+    Handlers() : writeHandler(NULL), readHandler(NULL), intrRegistrar(NULL) {}
 };
 
 template <> struct Handlers<Octet, false> {
@@ -267,8 +272,9 @@ template <> struct Handlers<Octet, false> {
 
     WriteHandler writeHandler;
     ReadHandler readHandler;
+    InterruptRegistrar intrRegistrar;
 
-    Handlers() : writeHandler(NULL), readHandler(NULL) {}
+    Handlers() : writeHandler(NULL), readHandler(NULL), intrRegistrar(NULL) {}
 };
 
 namespace Convenience {

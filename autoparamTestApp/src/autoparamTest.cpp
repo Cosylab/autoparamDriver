@@ -63,14 +63,14 @@ class AutoparamTest : public Autoparam::Driver {
           randomSeed(time(NULL) + clock()), currentSum(0), shiftedRegister(0),
           thread(runnable, "AutoparamTestThread", epicsThreadStackMedium),
           runnable(this), quitThread(false) {
-        registerHandlers<epicsInt32>("RANDOM", randomRead, NULL);
-        registerHandlers<epicsInt32>("SUM", readSum, sumArgs);
-        registerHandlers<epicsFloat64>("ERROR", erroredRead, NULL);
-        registerHandlers<Array<epicsInt8> >("WFM8", wfm8Read, wfm8Write);
-        registerHandlers<epicsInt32>("DEFHANDLER", NULL, NULL);
-        registerHandlers<epicsUInt32>("DIGIO", bitsGet, bitsSet);
-        registerHandlers<Octet>("ARGECHO", argEcho, NULL);
-        registerHandlers<Octet>("PRINT", NULL, stringPrint);
+        registerHandlers<epicsInt32>("RANDOM", randomRead, NULL, interruptReg);
+        registerHandlers<epicsInt32>("SUM", readSum, sumArgs, NULL);
+        registerHandlers<epicsFloat64>("ERROR", erroredRead, NULL, NULL);
+        registerHandlers<Array<epicsInt8> >("WFM8", wfm8Read, wfm8Write, NULL);
+        registerHandlers<epicsInt32>("DEFHANDLER", NULL, NULL, NULL);
+        registerHandlers<epicsUInt32>("DIGIO", bitsGet, bitsSet, NULL);
+        registerHandlers<Octet>("ARGECHO", argEcho, NULL, NULL);
+        registerHandlers<Octet>("PRINT", NULL, stringPrint, NULL);
 
         thread.start();
     }
@@ -88,6 +88,11 @@ class AutoparamTest : public Autoparam::Driver {
     }
 
   private:
+    static void interruptReg(PVInfo &baseInfo, bool cancel) {
+        printf("Interrupt %s: %s\n", (cancel ? "cancelled" : "registered"),
+               baseInfo.normalized().c_str());
+    }
+
     static Int32ReadResult randomRead(PVInfo &baseInfo) {
         Int32ReadResult result;
         MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);

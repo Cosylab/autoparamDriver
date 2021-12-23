@@ -75,7 +75,8 @@ class Driver : public asynPortDriver {
     template <typename T>
     void registerHandlers(std::string const &function,
                           typename Handlers<T>::ReadHandler reader,
-                          typename Handlers<T>::WriteHandler writer);
+                          typename Handlers<T>::WriteHandler writer,
+                          InterruptRegistrar intrRegistrar);
 
     template <typename T>
     asynStatus doCallbacksArray(PVInfo const &pvInfo, Array<T> &value,
@@ -207,6 +208,22 @@ class Driver : public asynPortDriver {
 
     template <typename T> std::map<std::string, Handlers<T> > &getHandlerMap();
 
+    template <typename Iface, typename HType>
+    void installAnInterruptRegistrar(void *interface);
+    void installInterruptRegistrars();
+    template <typename T>
+    static asynStatus registerInterrupt(void *drvPvt, asynUser *pasynUser,
+                                        void *callback, void *userPvt,
+                                        void **registrarPvt);
+    static asynStatus registerInterruptDigital(void *drvPvt,
+                                               asynUser *pasynUser,
+                                               void *callback, void *userPvt,
+                                               epicsUInt32 mask,
+                                               void **registrarPvt);
+    template <typename T>
+    static asynStatus cancelInterrupt(void *drvPvt, asynUser *pasynUser,
+                                      void *registrarPvt);
+
     static char const *driverName;
 
     DriverOpts opts;
@@ -214,6 +231,7 @@ class Driver : public asynPortDriver {
     typedef std::map<int, PVInfo *> ParamMap;
     ParamMap m_params;
     std::map<std::string, asynParamType> m_functionTypes;
+    std::map<asynParamType, std::pair<void *, void *> > m_originalIntrRegister;
 
     std::map<std::string, Handlers<epicsInt32> > m_Int32HandlerMap;
     std::map<std::string, Handlers<epicsInt64> > m_Int64HandlerMap;
