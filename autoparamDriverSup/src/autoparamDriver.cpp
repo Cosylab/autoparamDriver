@@ -5,7 +5,7 @@
 
 namespace Autoparam {
 
-char const *Driver::driverName = "Autoparam::Driver";
+static char const *driverName = "Autoparam::Driver";
 
 static char const *skipSpaces(char const *cursor) {
     while (*cursor != 0 && *cursor == ' ') {
@@ -135,8 +135,14 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
 
     int index;
     if (findParam(normalized.c_str(), &index) == asynSuccess) {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+                  "%s: port=%s reusing an existing parameter for '%s'\n",
+                  driverName, portName, normalized.c_str());
         pasynUser->reason = index;
     } else {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+                  "%s: port=%s creating a new parameter for '%s'\n", driverName,
+                  portName, normalized.c_str());
         createParam(normalized.c_str(), type, &index);
         m_params[index] = createPVInfo(parsed);
         m_params[index]->setIndex(index);
@@ -600,6 +606,9 @@ asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
     InterruptRegistrar registrar =
         self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
     if (registrar != NULL) {
+        asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
+                  "%s: port=%s registering interrupt handler for '%s'\n",
+                  driverName, self->portName, pvInfo->normalized().c_str());
         registrar(*pvInfo, false);
     }
 
@@ -620,6 +629,9 @@ asynStatus Driver::cancelInterrupt(void *drvPvt, asynUser *pasynUser,
     InterruptRegistrar registrar =
         self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
     if (registrar != NULL) {
+        asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
+                  "%s: port=%s cancelling interrupt handler for '%s'\n",
+                  driverName, self->portName, pvInfo->normalized().c_str());
         registrar(*pvInfo, true);
     }
 
@@ -641,6 +653,9 @@ asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
     InterruptRegistrar registrar =
         self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
     if (registrar != NULL) {
+        asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
+                  "%s: port=%s registering interrupt handler for '%s'\n",
+                  driverName, self->portName, pvInfo->normalized().c_str());
         registrar(*pvInfo, false);
     }
 

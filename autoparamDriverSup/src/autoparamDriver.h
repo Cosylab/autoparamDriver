@@ -224,8 +224,6 @@ class Driver : public asynPortDriver {
     static asynStatus cancelInterrupt(void *drvPvt, asynUser *pasynUser,
                                       void *registrarPvt);
 
-    static char const *driverName;
-
     DriverOpts opts;
 
     typedef std::map<int, PVInfo *> ParamMap;
