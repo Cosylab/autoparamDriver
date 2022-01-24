@@ -285,6 +285,7 @@ namespace Convenience {
 using Autoparam::Array;
 using Autoparam::Octet;
 using Autoparam::PVInfo;
+using Autoparam::Result;
 typedef Autoparam::WriteResult WriteResult;
 typedef Autoparam::ArrayResult ArrayReadResult;
 typedef Result<epicsInt32> Int32ReadResult;
