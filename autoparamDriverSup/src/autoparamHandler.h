@@ -161,7 +161,7 @@ char const *getAsynTypeName(asynParamType type);
 
 template <typename T> struct AsynType;
 
-typedef void (*InterruptRegistrar)(PVInfo &, bool);
+typedef asynStatus (*InterruptRegistrar)(PVInfo &, bool);
 
 // The value member is only true when T = Array. This does not include Octet.
 template <typename T, bool array = IsArray<T>::value> struct Handlers;

@@ -88,9 +88,10 @@ class AutoparamTest : public Autoparam::Driver {
     }
 
   private:
-    static void interruptReg(PVInfo &baseInfo, bool cancel) {
+    static asynStatus interruptReg(PVInfo &baseInfo, bool cancel) {
         printf("Interrupt %s: %s\n", (cancel ? "cancelled" : "registered"),
                baseInfo.normalized().c_str());
+        return asynSuccess;
     }
 
     static Int32ReadResult randomRead(PVInfo &baseInfo) {

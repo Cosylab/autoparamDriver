@@ -609,7 +609,15 @@ asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
         asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
                   "%s: port=%s registering interrupt handler for '%s'\n",
                   driverName, self->portName, pvInfo->normalized().c_str());
-        registrar(*pvInfo, false);
+        asynStatus status = registrar(*pvInfo, false);
+        if (status != asynSuccess) {
+            asynPrint(self->pasynUserSelf, ASYN_TRACE_ERROR,
+                      "%s: port=%s error %d calling interrupt registrar for "
+                      "'%s'\n",
+                      driverName, self->portName, status,
+                      pvInfo->normalized().c_str());
+            return status;
+        }
     }
 
     // I hate doing type erasure like this, but there aren't sane options ...
@@ -632,7 +640,15 @@ asynStatus Driver::cancelInterrupt(void *drvPvt, asynUser *pasynUser,
         asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
                   "%s: port=%s cancelling interrupt handler for '%s'\n",
                   driverName, self->portName, pvInfo->normalized().c_str());
-        registrar(*pvInfo, true);
+        asynStatus status = registrar(*pvInfo, true);
+        if (status != asynSuccess) {
+            asynPrint(self->pasynUserSelf, ASYN_TRACE_ERROR,
+                      "%s: port=%s error %d calling interrupt registrar for "
+                      "'%s'\n",
+                      driverName, self->portName, status,
+                      pvInfo->normalized().c_str());
+            return status;
+        }
     }
 
     // I hate doing type erasure like this, but there aren't sane options ...
@@ -656,7 +672,15 @@ asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
         asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
                   "%s: port=%s registering interrupt handler for '%s'\n",
                   driverName, self->portName, pvInfo->normalized().c_str());
-        registrar(*pvInfo, false);
+        asynStatus status = registrar(*pvInfo, false);
+        if (status != asynSuccess) {
+            asynPrint(self->pasynUserSelf, ASYN_TRACE_ERROR,
+                      "%s: port=%s error %d calling interrupt registrar for "
+                      "'%s'\n",
+                      driverName, self->portName, status,
+                      pvInfo->normalized().c_str());
+            return status;
+        }
     }
 
     // UInt32Digital has a signature different from other registrars.
