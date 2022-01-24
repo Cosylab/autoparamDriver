@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2022 Cosylab d.d.
+//
+// SPDX-License-Identifier: MIT
+
 #include <autoparamDriver.h>
 #include <sstream>
 #include <ctime>

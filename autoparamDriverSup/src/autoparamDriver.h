@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2022 Cosylab d.d.
+//
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include "autoparamHandler.h"

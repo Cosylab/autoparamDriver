@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2022 Cosylab d.d.
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # CONFIG_SITE
 
 # Make any application-specific changes to the EPICS build
