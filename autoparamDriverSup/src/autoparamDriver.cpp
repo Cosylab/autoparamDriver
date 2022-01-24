@@ -60,6 +60,7 @@ PVInfo::PVInfo(PVInfo const &other) { *this = other; }
 
 PVInfo &PVInfo::operator=(PVInfo const &other) {
     m_asynParamIndex = other.m_asynParamIndex;
+    m_asynParamType = other.m_asynParamType;
     m_function = other.m_function;
     m_arguments = other.m_arguments;
     return *this;
@@ -148,8 +149,8 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
                   "%s: port=%s creating a new parameter for '%s'\n", driverName,
                   portName, normalized.c_str());
         createParam(normalized.c_str(), type, &index);
+        parsed.setAsynIndex(index, type);
         m_params[index] = createPVInfo(parsed);
-        m_params[index]->setIndex(index);
         pasynUser->reason = index;
     }
 
@@ -540,9 +541,9 @@ template void Driver::registerHandlers<Array<epicsFloat64> >(
 template <typename T>
 asynStatus Driver::doCallbacksArray(PVInfo const &pvInfo, Array<T> &value,
                                     int alarmStatus, int alarmSeverity) {
-    setParamAlarmStatus(pvInfo.index(), alarmStatus);
-    setParamAlarmSeverity(pvInfo.index(), alarmSeverity);
-    return doCallbacksArrayDispatch(pvInfo.index(), value);
+    setParamAlarmStatus(pvInfo.asynIndex(), alarmStatus);
+    setParamAlarmSeverity(pvInfo.asynIndex(), alarmSeverity);
+    return doCallbacksArrayDispatch(pvInfo.asynIndex(), value);
 }
 
 template asynStatus Driver::doCallbacksArray<epicsInt8>(PVInfo const &pvInfo,
@@ -573,17 +574,17 @@ Driver::doCallbacksArray<epicsFloat64>(PVInfo const &pvInfo,
 template <typename T>
 asynStatus Driver::setParam(PVInfo const &pvInfo, T value, int alarmStatus,
                             int alarmSeverity) {
-    setParamAlarmStatus(pvInfo.index(), alarmStatus);
-    setParamAlarmSeverity(pvInfo.index(), alarmSeverity);
-    return setParamDispatch(pvInfo.index(), value);
+    setParamAlarmStatus(pvInfo.asynIndex(), alarmStatus);
+    setParamAlarmSeverity(pvInfo.asynIndex(), alarmSeverity);
+    return setParamDispatch(pvInfo.asynIndex(), value);
 }
 
 asynStatus Driver::setParam(PVInfo const &pvInfo, epicsUInt32 value,
                             epicsUInt32 mask, int alarmStatus,
                             int alarmSeverity) {
-    setParamAlarmStatus(pvInfo.index(), alarmStatus);
-    setParamAlarmSeverity(pvInfo.index(), alarmSeverity);
-    return setUIntDigitalParam(pvInfo.index(), value, mask);
+    setParamAlarmStatus(pvInfo.asynIndex(), alarmStatus);
+    setParamAlarmSeverity(pvInfo.asynIndex(), alarmSeverity);
+    return setUIntDigitalParam(pvInfo.asynIndex(), value, mask);
 }
 
 template asynStatus Driver::setParam<epicsInt32>(PVInfo const &pvInfo,
@@ -766,7 +767,7 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
     handleResultStatus(pasynUser, result);
     *size = arrayRef.size();
     if (shouldProcessInterrupts(result)) {
-        return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
+        return doCallbacksArrayDispatch(pvInfo->asynIndex(), arrayRef);
     }
     return result.status;
 }
@@ -781,7 +782,7 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
         handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
     if (shouldProcessInterrupts(result)) {
-        return doCallbacksArrayDispatch(pvInfo->index(), arrayRef);
+        return doCallbacksArrayDispatch(pvInfo->asynIndex(), arrayRef);
     }
     return result.status;
 }
@@ -798,7 +799,7 @@ asynStatus Driver::readOctetData(asynUser *pasynUser, char *value,
     // The handler should have ensured termination, but we can't be sure.
     arrayRef.terminate();
     if (shouldProcessInterrupts(result)) {
-        setParamDispatch(pvInfo->index(), arrayRef);
+        setParamDispatch(pvInfo->asynIndex(), arrayRef);
         callParamCallbacks();
     }
     return result.status;
@@ -813,7 +814,7 @@ asynStatus Driver::writeOctetData(asynUser *pasynUser, char const *value,
     Handlers<Octet>::WriteResult result = handler(*pvInfo, arrayRef);
     handleResultStatus(pasynUser, result);
     if (shouldProcessInterrupts(result)) {
-        setParamDispatch(pvInfo->index(), arrayRef);
+        setParamDispatch(pvInfo->asynIndex(), arrayRef);
         callParamCallbacks();
     }
     return result.status;

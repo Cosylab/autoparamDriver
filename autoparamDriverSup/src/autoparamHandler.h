@@ -34,14 +34,20 @@ class PVInfo {
 
     std::string normalized() const;
 
+    int asynIndex() const { return m_asynParamIndex; }
+
+    asynParamType asynType() const { return m_asynParamType; }
+
   private:
     friend class Driver;
 
-    void setIndex(int index) { m_asynParamIndex = index; }
-
-    int index() const { return m_asynParamIndex; }
+    void setAsynIndex(int index, asynParamType type) {
+        m_asynParamIndex = index;
+        m_asynParamType = type;
+    }
 
     int m_asynParamIndex;
+    asynParamType m_asynParamType;
     std::string m_function;
     ArgumentList m_arguments;
 };
