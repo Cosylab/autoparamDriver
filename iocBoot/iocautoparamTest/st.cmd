@@ -12,8 +12,8 @@ dbLoadDatabase "dbd/autoparamTest.dbd"
 autoparamTest_registerRecordDeviceDriver pdbbase
 
 drvAutoparamTestConfigure("TST1")
-asynSetTraceInfoMask("TST1", 0, ASYN_TRACEINFO_SOURCE)
-asynSetTraceMask("TST1", 0, ASYN_TRACE_FLOW)
+asynSetTraceInfoMask("TST1", 0, SOURCE)
+asynSetTraceMask("TST1", 0, ERROR+WARNING+FLOW)
 
 ## Load record instances
 dbLoadRecords("db/test.db","PREFIX=test,PORT=TST1")
