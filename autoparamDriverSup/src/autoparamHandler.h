@@ -20,8 +20,6 @@ class PVInfo {
   public:
     typedef std::vector<std::string> ArgumentList;
 
-    explicit PVInfo(char const *asynReason);
-
     PVInfo(PVInfo const &other);
 
     PVInfo &operator=(PVInfo const &other);
@@ -40,6 +38,8 @@ class PVInfo {
 
   private:
     friend class Driver;
+
+    explicit PVInfo(char const *asynReason);
 
     void setAsynIndex(int index, asynParamType type) {
         m_asynParamIndex = index;
