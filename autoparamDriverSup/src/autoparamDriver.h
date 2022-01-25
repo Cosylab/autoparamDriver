@@ -84,16 +84,19 @@ class Driver : public asynPortDriver {
 
     template <typename T>
     asynStatus doCallbacksArray(PVInfo const &pvInfo, Array<T> &value,
+                                asynStatus status = asynSuccess,
                                 int alarmStatus = epicsAlarmNone,
                                 int alarmSeverity = epicsSevNone);
 
     template <typename T>
     asynStatus setParam(PVInfo const &pvInfo, T value,
+                        asynStatus status = asynSuccess,
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
     asynStatus setParam(PVInfo const &pvInfo, epicsUInt32 value,
-                        epicsUInt32 mask, int alarmStatus = epicsAlarmNone,
+                        epicsUInt32 mask, asynStatus status = asynSuccess,
+                        int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
     bool hasParam(int index);

@@ -540,7 +540,9 @@ template void Driver::registerHandlers<Array<epicsFloat64> >(
 
 template <typename T>
 asynStatus Driver::doCallbacksArray(PVInfo const &pvInfo, Array<T> &value,
-                                    int alarmStatus, int alarmSeverity) {
+                                    asynStatus status, int alarmStatus,
+                                    int alarmSeverity) {
+    setParamStatus(pvInfo.asynIndex(), status);
     setParamAlarmStatus(pvInfo.asynIndex(), alarmStatus);
     setParamAlarmSeverity(pvInfo.asynIndex(), alarmSeverity);
     return doCallbacksArrayDispatch(pvInfo.asynIndex(), value);
@@ -548,40 +550,38 @@ asynStatus Driver::doCallbacksArray(PVInfo const &pvInfo, Array<T> &value,
 
 template asynStatus Driver::doCallbacksArray<epicsInt8>(PVInfo const &pvInfo,
                                                         Array<epicsInt8> &value,
+                                                        asynStatus status,
                                                         int alarmStatus,
                                                         int alarmSeverity);
-template asynStatus
-Driver::doCallbacksArray<epicsInt16>(PVInfo const &pvInfo,
-                                     Array<epicsInt16> &value, int alarmStatus,
-                                     int alarmSeverity);
-template asynStatus
-Driver::doCallbacksArray<epicsInt32>(PVInfo const &pvInfo,
-                                     Array<epicsInt32> &value, int alarmStatus,
-                                     int alarmSeverity);
-template asynStatus
-Driver::doCallbacksArray<epicsInt64>(PVInfo const &pvInfo,
-                                     Array<epicsInt64> &value, int alarmStatus,
-                                     int alarmSeverity);
-template asynStatus
-Driver::doCallbacksArray<epicsFloat32>(PVInfo const &pvInfo,
-                                       Array<epicsFloat32> &value,
-                                       int alarmStatus, int alarmSeverity);
-template asynStatus
-Driver::doCallbacksArray<epicsFloat64>(PVInfo const &pvInfo,
-                                       Array<epicsFloat64> &value,
-                                       int alarmStatus, int alarmSeverity);
+template asynStatus Driver::doCallbacksArray<epicsInt16>(
+    PVInfo const &pvInfo, Array<epicsInt16> &value, asynStatus status,
+    int alarmStatus, int alarmSeverity);
+template asynStatus Driver::doCallbacksArray<epicsInt32>(
+    PVInfo const &pvInfo, Array<epicsInt32> &value, asynStatus status,
+    int alarmStatus, int alarmSeverity);
+template asynStatus Driver::doCallbacksArray<epicsInt64>(
+    PVInfo const &pvInfo, Array<epicsInt64> &value, asynStatus status,
+    int alarmStatus, int alarmSeverity);
+template asynStatus Driver::doCallbacksArray<epicsFloat32>(
+    PVInfo const &pvInfo, Array<epicsFloat32> &value, asynStatus status,
+    int alarmStatus, int alarmSeverity);
+template asynStatus Driver::doCallbacksArray<epicsFloat64>(
+    PVInfo const &pvInfo, Array<epicsFloat64> &value, asynStatus status,
+    int alarmStatus, int alarmSeverity);
 
 template <typename T>
-asynStatus Driver::setParam(PVInfo const &pvInfo, T value, int alarmStatus,
-                            int alarmSeverity) {
+asynStatus Driver::setParam(PVInfo const &pvInfo, T value, asynStatus status,
+                            int alarmStatus, int alarmSeverity) {
+    setParamStatus(pvInfo.asynIndex(), status);
     setParamAlarmStatus(pvInfo.asynIndex(), alarmStatus);
     setParamAlarmSeverity(pvInfo.asynIndex(), alarmSeverity);
     return setParamDispatch(pvInfo.asynIndex(), value);
 }
 
 asynStatus Driver::setParam(PVInfo const &pvInfo, epicsUInt32 value,
-                            epicsUInt32 mask, int alarmStatus,
-                            int alarmSeverity) {
+                            epicsUInt32 mask, asynStatus status,
+                            int alarmStatus, int alarmSeverity) {
+    setParamStatus(pvInfo.asynIndex(), status);
     setParamAlarmStatus(pvInfo.asynIndex(), alarmStatus);
     setParamAlarmSeverity(pvInfo.asynIndex(), alarmSeverity);
     return setUIntDigitalParam(pvInfo.asynIndex(), value, mask);
@@ -589,18 +589,22 @@ asynStatus Driver::setParam(PVInfo const &pvInfo, epicsUInt32 value,
 
 template asynStatus Driver::setParam<epicsInt32>(PVInfo const &pvInfo,
                                                  epicsInt32 value,
+                                                 asynStatus status,
                                                  int alarmStatus,
                                                  int alarmSeverity);
 template asynStatus Driver::setParam<epicsInt64>(PVInfo const &pvInfo,
                                                  epicsInt64 value,
+                                                 asynStatus status,
                                                  int alarmStatus,
                                                  int alarmSeverity);
 template asynStatus Driver::setParam<epicsFloat64>(PVInfo const &pvInfo,
                                                    epicsFloat64 value,
+                                                   asynStatus status,
                                                    int alarmStatus,
                                                    int alarmSeverity);
 template asynStatus Driver::setParam<Octet>(PVInfo const &pvInfo, Octet value,
-                                            int alarmStatus, int alarmSeverity);
+                                            asynStatus status, int alarmStatus,
+                                            int alarmSeverity);
 
 template <typename T>
 asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
