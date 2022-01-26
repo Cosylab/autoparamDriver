@@ -16,10 +16,14 @@
 
 namespace Autoparam {
 
+/*! represents a process variable and is a handle for asyn parameters.
+ * A placeholder for a longer description.
+ */
 class PVInfo {
   public:
     typedef std::vector<std::string> ArgumentList;
 
+    //! Brief description goes here
     PVInfo(PVInfo const &other);
 
     PVInfo &operator=(PVInfo const &other);

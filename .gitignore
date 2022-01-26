@@ -12,3 +12,5 @@ dbd/
 db/
 lib/
 include/
+docs/build/*
+docs/doxygen/*
