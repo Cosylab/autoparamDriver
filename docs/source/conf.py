@@ -59,7 +59,8 @@ html_static_path = ['_static']
 
 # -- Breathe setup -----------------------------------------------------------
 
-breathe_projects = { "autoparamDriver": "../doxygen/xml" }
-breathe_default_project =  "autoparamDriver"
+breathe_projects = { 'autoparamDriver': '../doxygen/xml' }
+breathe_default_project =  'autoparamDriver'
+breathe_default_members = ( 'members', 'protected-members' )
 
 subprocess.check_call('cd ../..; doxygen docs/Doxyfile', shell=True)

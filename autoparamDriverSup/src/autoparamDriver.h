@@ -10,16 +10,36 @@
 
 namespace Autoparam {
 
-struct DriverOpts {
-    int interfaceMask;
-    int interruptMask;
-    int asynFlags;
-    int autoConnect;
-    int priority;
-    int stackSize;
-    bool autoDestruct;
-    bool autoInterrupts;
-
+/*! Options controlling the behavior of Driver.
+ *
+ * Certain behaviors of Driver and the underlying asynPortDriver can be
+ * controlled through DriverOpts. The value passed to the Driver's constructor
+ * can be created and modified in place, like so:
+ *
+ *     Driver(portName,
+ *            DriverOpts().setBlocking(true)
+ *                        .setAutoInterrupts(false)
+ *                        .setPriority(epicsThreadPriorityLow));
+ */
+class DriverOpts {
+  public:
+    /*! Declare whether read and write handlers can block.
+     *
+     * If any read or write handler can block in any situation, the driver needs
+     * to declare this. What "blocking" means is explained in [EPICS Application
+     * Developer's Guide](
+     * https://epics.anl.gov/base/R3-16/2-docs/AppDevGuide.pdf) in chapter
+     * *Device Support*.
+     *
+     * In short, if read and write handlers return "immediately", the driver
+     * does not need to declare itself as blocking. On the other hand, if
+     * handlers are "slow" (e.g. because the device is network-connected), the
+     * driver **must** declare itself as blocking. This causes the EPICS device
+     * support layer to implement asynchronous processing, calling read and
+     * write handlers from a separate thread.
+     *
+     * Default: non-blocking
+     */
     DriverOpts &setBlocking(bool enable = true) {
         if (enable) {
             asynFlags |= ASYN_CANBLOCK;
@@ -29,31 +49,79 @@ struct DriverOpts {
         return *this;
     }
 
+    /*! Enable/disable asyn autoconnect functionality.
+     *
+     * When enabled, the driver's `connect()` and `disconnect()` functions are
+     * called automatically when the driver is set up and subsequently if it
+     * gets disconnected.
+     *
+     * Please refer to [asyn
+     * documentation](https://epics.anl.gov/modules/soft/asyn/R4-38/asynDriver.html)
+     * for more information. If overriding `asynPortDriver::connect()`, be aware
+     * that it can be called before your driver is completely initialized.
+     *
+     * Default: enabled
+     */
     DriverOpts &setAutoConnect(bool enable = true) {
         autoConnect = enable;
         return *this;
     }
 
-    DriverOpts &setPriority(int prio) {
-        priority = prio;
-        return *this;
-    }
-
-    DriverOpts &setStacksize(int size) {
-        stackSize = size;
-        return *this;
-    }
-
+    /*! Instruct the driver to clean up on IOC exit.
+     *
+     * If enabled, the Driver will register a hook that is run at IOC exit and
+     * deletes the Driver, which ensures that the destructor is run. This is
+     * convenient because the Driver can be allocated using `new` from an
+     * iocshell command, then let be.
+     *
+     * Default: disabled
+     */
     DriverOpts &setAutoDestruct(bool enable = true) {
         autoDestruct = enable;
         return *this;
     }
 
+    /*! Enable/disable default `IO Intr` behavior for write handlers.
+     *
+     * When enabled, successful writes will process `IO Intr` records bound to
+     * the parameter written to, unless overriden by
+     * ResultBase::processInterrupts.
+     *
+     * Default: enabled
+     */
     DriverOpts &setAutoInterrupts(bool enable) {
         autoInterrupts = enable;
         return *this;
     }
 
+    /*! Set the thread priority of read/write handlers in blocking mode.
+     *
+     * If setBlocking() was enabled, read and write handlers run in a separate
+     * thread. This setting controls the priority of this thread.
+     *
+     * Default: `epicsThreadPriorityMedium`
+     */
+    DriverOpts &setPriority(int prio) {
+        priority = prio;
+        return *this;
+    }
+
+    /*! Set the thread stack size of read/write handlers in blocking mode.
+     *
+     * If setBlocking() was enabled, read and write handlers run in a separate
+     * thread. This setting controls the priority of this thread.
+     *
+     * Default: `epicsThreadStackMedium`
+     */
+    DriverOpts &setStacksize(int size) {
+        stackSize = size;
+        return *this;
+    }
+
+    // We have a fixed interface mask. Whether an interface is implemented or
+    // not is decided implicitly by which handlers are registered. That's why we
+    // enable all the relevant interfaces, and let the read and write functions
+    // error out if there is no handler.
     static const int minimalInterfaceMask = asynCommonMask | asynDrvUserMask;
     static const int defaultMask =
         asynInt32Mask | asynInt64Mask | asynUInt32DigitalMask |
@@ -65,45 +133,173 @@ struct DriverOpts {
         : interfaceMask(minimalInterfaceMask | defaultMask),
           interruptMask(defaultMask), asynFlags(0), autoConnect(1), priority(0),
           stackSize(0), autoDestruct(false), autoInterrupts(true) {}
+
+  private:
+    friend class Driver;
+
+    int interfaceMask;
+    int interruptMask;
+    int asynFlags;
+    int autoConnect;
+    int priority;
+    int stackSize;
+    bool autoDestruct;
+    bool autoInterrupts;
 };
 
+/*! An asynPortDriver that dynamically creates parameters referenced by records.
+ *
+ * Normally, an asynPortDriver instantiates a predefined set of parameters, each
+ * associated with a string that can subsequently be used to reference a
+ * parameter from records in the EPICS database.
+ *
+ * Autoparam::Driver works differently. The string a record uses to refer to a
+ * parameter is split into a "function" and its "arguments" which, together,
+ * define a "parameter". This is handled by the `PVInfo` class. No parameters
+ * exist when the Driver is created; instead, instances of `PVInfo` are created
+ * as EPICS database records are initialized.
+ *
+ * Drivers based on Autoparam::Driver do not need to override the read and write
+ * methods. Instead, they register read and write handlers for "functions" used
+ * by records. Autoparam::Driver will then call these handlers when records are
+ * processed.
+ *
+ * To facilitate updating `IO Intr` records, two mechanisms are provided:
+ *
+ * - When a parameter is written to (or read from), the value can optionally be
+ *   propagated to `IO Intr` records bound to the same parameter. See
+ *   DriverOpts::setAutoInterrupts() and ResultBase::processInterrupts.
+ *
+ * - The driver can process `IO Intr` records at any time (e.g. from a
+ *   background thread or in response to hardware interrupts) by
+ *   - (scalars) setting the value using Driver::setParam(), then calling
+ *     Driver::callParamCallbacks();
+ *   - (arrays) calling Driver::doCallbacksArray().
+ *
+ * To create a new driver based on Autoparam::Driver:
+ *   1. Create a derived class.
+ *   2. Implement the `createPVInfo()` method.
+ *   3. Define static functions that will act as read and write handlers (see
+ *      Autoparam::Handlers for signatures) and register them as handlers in the
+ *      driver's constructor.
+ *   4. Create one or more iocshell commands to instatiate and configure the
+ *      driver.
+ *
+ * Apart from read and write functions, methods of `asynPortDriver` such as
+ * `asynPortDriver::connect()` can be overriden as needed. To facilitate that,
+ * Driver::pvInfoFromUser() is provided to obtain `PVInfo` from the `asynUser`
+ * pointer that `asynPortDriver` methods are provided.
+ */
 class Driver : public asynPortDriver {
   public:
+    /*! Constructs the Driver with the given options.
+     *
+     * \param portName The user-provided name of the port used to refer to this
+     *                 driver instance.
+     * \param params   Options controlling the behavior of Driver.
+     */
     explicit Driver(const char *portName, DriverOpts const &params);
 
     virtual ~Driver();
 
   protected:
+    /*! Convert the given `PVInfo` into an instance of a derived class.
+     *
+     * `PVInfo` is meant to be subclassed. As records are initialized, Driver
+     * creates instances of the `PVInfo` base class, then passes them to this
+     * method to convert them to whichever subclass the implementation decides
+     * to return.
+     */
     virtual PVInfo *createPVInfo(PVInfo const &baseInfo) = 0;
 
+    /*! Register handlers for the combination of `function` and type `T`.
+     *
+     * Note that the driver is implicitly locked when when handlers are called.
+     *
+     * \tparam T A type corresponding to one of asyn interfaces/parameter types.
+     *         See Autoparam::AsynType.
+     *
+     * \param function The name of the "function" (in the sense of "device
+     *        function", see `PVInfo`).
+     *
+     * \param reader Handler function that is called when an input record
+     *        referencing `function` with `DTYP` corresponding to `T` is
+     *        processed;
+     *
+     * \param writer Handler function that is called when an output record
+     *        referencing `function` with `DTYP` corresponding to `T` is
+     *        processed;
+     *
+     * \param intrRegistrar A function that is called when a record referencing
+     *        `function` switches to or from `IO Intr`.
+     */
     template <typename T>
     void registerHandlers(std::string const &function,
                           typename Handlers<T>::ReadHandler reader,
                           typename Handlers<T>::WriteHandler writer,
                           InterruptRegistrar intrRegistrar);
 
-    template <typename T>
-    asynStatus doCallbacksArray(PVInfo const &pvInfo, Array<T> &value,
-                                asynStatus status = asynSuccess,
-                                int alarmStatus = epicsAlarmNone,
-                                int alarmSeverity = epicsSevNone);
+    /*! Propagate the array data to `IO Intr` records bound to `pvInfo`.
+     *
+     * Unless this function is called from a read or write handler, the driver
+     * needs to be locked. `See asynPortDriver::lock()`.
+     *
+     * Status and alarms of the records are set according to the same principles
+     * as on completion of a write handler. See `Autoparam::ResultBase`.
+     */
+    template <typename T> asynStatus
+    doCallbacksArray(PVInfo const &pvInfo, Array<T> &value, asynStatus status =
+    asynSuccess, int alarmStatus = epicsAlarmNone, int alarmSeverity =
+    epicsSevNone);
 
+    /*! Set the value of the parameter represented by `pvInfo`.
+     *
+     * Unless this function is called from a read or write handler, the driver
+     * needs to be locked. See `asynPortDriver::lock()`.
+     *
+     * Status and alarms of the records are set according to the same principles
+     * as on completion of a write handler. See `Autoparam::ResultBase`.
+     *
+     * Unlike `doCallbacksArray()`, no `IO Intr` records are processed. Use
+     * `asynPortDriver::callParamCallbacks()` after setting the value. This
+     * allows more than one parameter to have its value set before doing record
+     * processing.
+     */
     template <typename T>
     asynStatus setParam(PVInfo const &pvInfo, T value,
                         asynStatus status = asynSuccess,
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
+    /*! Set the value of the parameter represented by `pvInfo`.
+     *
+     * This is an overload for digital IO, where `mask` specifies which bits of
+     * `value` are of interest. While the default overload works with
+     * `epicsUInt32`, it uses the mask value `0xFFFFFFFF`.
+     */
     asynStatus setParam(PVInfo const &pvInfo, epicsUInt32 value,
                         epicsUInt32 mask, asynStatus status = asynSuccess,
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
-    bool hasParam(int index);
-
-    PVInfo *pvInfoFromUser(asynUser *pasynUser);
-
+    /*! Obtain a list of `IO Intr` records.
+     *
+     * The list of `PVInfo` pointers returned by this method is useful if you
+     * need to implement periodic polling for data and would like to know which
+     * data to poll. It is meant to be used together with `doCallbacksArray()`,
+     * `setParam()` and `asynPortDriver::callParamCallbacks()`.
+     */
     std::vector<PVInfo *> getInterruptPVs();
+
+    /*! Obtain a `PVInfo` given an `asynUser`.
+     *
+     * This facilitates overriding `asynPortDriver` methods if need be. Be
+     * aware, though, that the `asynUser` structure is used in asyn to represent
+     * any number of different things and the one you have may not correspond to
+     * any `PVInfo`. The argument to `asynPortDriver::connect()` is an example.
+     * Use of this method is subject to "know what you are doing" constraints.
+     */
+    PVInfo *pvInfoFromUser(asynUser *pasynUser);
 
   public:
     // Beyond this point, the methods are public because they are part of the
@@ -173,6 +369,8 @@ class Driver : public asynPortDriver {
                           size_t *nActual);
 
   private:
+    bool hasParam(int index);
+
     void handleResultStatus(asynUser *pasynUser, ResultBase const &result);
 
     template <typename IntType>
