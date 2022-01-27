@@ -581,15 +581,6 @@ asynStatus Driver::setParam(PVInfo const &pvInfo, T value, asynStatus status,
 asynStatus Driver::setParam(PVInfo const &pvInfo, epicsUInt32 value,
                             epicsUInt32 mask, asynStatus status,
                             int alarmStatus, int alarmSeverity) {
-    if (mask == 0) {
-        getUInt32DigitalInterrupt(pvInfo.asynIndex(), &mask, interruptOnBoth);
-    }
-    if (mask == 0) {
-        // In current version of asyn (R4-38 when this was written), EPICS
-        // device support never sets the interrupt mask. So let's unmask all
-        // bits.
-        mask = 0xffffffff;
-    }
     setParamStatus(pvInfo.asynIndex(), status);
     setParamAlarmStatus(pvInfo.asynIndex(), alarmStatus);
     setParamAlarmSeverity(pvInfo.asynIndex(), alarmSeverity);
