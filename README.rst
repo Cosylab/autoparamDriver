@@ -4,3 +4,67 @@
 
 autoparamDriver
 ===============
+
+``autoparamDriver`` is an EPICS module that facilitates writing a generic device
+driver based on ``asyn`` that does not know ahead of time which (or how many)
+parameters the device supports, delegating the job of defining them to the EPICS
+database. If you've ever used EPICS modules like ``modbus`` or ``s7plc``, you
+already know what this is about. In any case, check out the documentation to
+learn what ``autoparamDriver`` can do for you.
+
+Online documentation: **TODO add link when available on readthedocs**
+
+Installation
+------------
+
+Familiarity with installation of EPICS modules is assumed.
+
+Dependencies:
+
+* `EPICS base <https://epics-controls.org/>`_, tested with version 7.0.5
+* `asyn <https://epics.anl.gov/modules/soft/asyn/>`_, tested with version R4-41
+
+Dependencies for building documentation:
+
+* `doxygen <https://www.doxygen.nl/index.html>`_
+* `sphinx <https://www.sphinx-doc.org>`_
+* `breathe <https://breathe.readthedocs.io>`_
+
+To install:
+
+* configure the ``configuration/RELEASE`` file, pointing the ``EPICS_BASE`` and
+  ``ASYN`` variables to the locations where EPICS base and ``asyn`` are
+  installed (this is more efficiently done by placing a ``RELEASE.local`` file a
+  level above the ``autoparamDriver`` directory);
+* configure any other build settings as needed for your EPICS environment (if
+  you don't know what this means, it's probably not needed);
+* run ``make``.
+
+To use from another module:
+
+* configure the ``configuration/RELEASE`` file *of the depending module*,
+  setting the ``EPICS_BASE``, ``ASYN`` and ``AUTOPARAM`` variables to the
+  locations where the respective modules are installed;
+* update ``yourIocApp/src/Makefile`` adding
+
+  * ``yourIoc_DBD += asyn.dbd``
+  * ``yourIoc_LIBS += autoparamDriver``
+  * ``yourIoc_LIBS += asyn``
+
+* follow the tutorial in the documentation.
+
+To build documentation:
+
+* install ``doxygen``, ``sphinx`` and ``breathe``;
+* run ``make docs``;
+* find the documentation at ``docs/build/html/index.html``.
+
+License
+=======
+
+Copyright 2022 Cosylab d.d. https://www.cosylab.com
+
+Provided under the terms of the MIT license. Trivial files are provided under
+the terms of the CC0-1.0 license. See the ``LICENSES/`` directory and headers of
+individual files for more information. This package is `REUSE
+<https://reuse.software/>`_ compliant.
