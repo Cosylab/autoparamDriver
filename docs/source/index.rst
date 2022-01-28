@@ -9,9 +9,10 @@ Welcome to autoparamDriver's documentation!
 driver based on ``asyn`` that does not know ahead of time which (or how many)
 parameters the device supports, delegating the job of defining them to the EPICS
 database. If you've ever used EPICS modules like ``modbus`` or ``s7plc``, you
-already know what this is about. If not, the :doc:`introduction`
-gives an explanation, while the :doc:`tutorial` shows how to base your driver on
-``autoparamDriver``.
+already know what this is about. If not, the :doc:`introduction` gives an
+explanation, while the :doc:`tutorial` shows how to base your driver on
+``autoparamDriver``. Otherwise, jump directly to the list of
+:ref:`autoparam-features`.
 
 ``asyn`` documentation, while otherwise excellent, tries to be agnostic with
 respect to different users of ``asyn`` interfaces and is thus a bit hard to
