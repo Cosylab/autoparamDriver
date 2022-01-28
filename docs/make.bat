@@ -1,4 +1,4 @@
-REM SPDX-FileCopyrightText: 2022 Cosylab d.d.
+REM SPDX-FileCopyrightText: 2022 Cosylab d.d. https://www.cosylab.com
 REM
 REM SPDX-License-Identifier: CC0-1.0
 
