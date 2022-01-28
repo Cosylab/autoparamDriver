@@ -12,11 +12,20 @@ SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
 
-# Put it first so that "make" without argument is like "make help".
+.PHONY: all docs clean distclean realclean help Makefile
+
+docs: html
+
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile
+clean distclean realclean:
+	rm -rf doxygen build
+
+# EPICS compatibility: ignore a bunch of targets that need to be supported by
+# all makefiles
+all inc build install buildInstall rebuild archclean depclean cvsclean runtests tapfiles test-results clean-tests host archuninstall uninstall realuninstall:
+	true
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
