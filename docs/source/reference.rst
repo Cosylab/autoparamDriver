@@ -25,8 +25,8 @@ The driver
 .. doxygenclass:: Autoparam::Driver
 .. doxygenclass:: Autoparam::DriverOpts
 
-Record-specific information
----------------------------
+PV-specific information
+-----------------------
 
 .. doxygenclass:: Autoparam::PVInfo
    :undoc-members:
