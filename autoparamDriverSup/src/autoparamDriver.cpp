@@ -150,7 +150,15 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
                   portName, normalized.c_str());
         createParam(normalized.c_str(), type, &index);
         parsed.setAsynIndex(index, type);
-        m_params[index] = createPVInfo(parsed);
+        PVInfo *pvInfo = createPVInfo(parsed);
+        if (pvInfo == NULL) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                      "%s: port=%s could not create PVInfo for '%s'\n",
+                      driverName, portName, normalized.c_str());
+            return asynError;
+        }
+
+        m_params[index] = pvInfo;
         pasynUser->reason = index;
     }
 
