@@ -610,7 +610,8 @@ template <>
 asynStatus Driver::setParam<epicsUInt32>(PVInfo const &pvInfo,
                                          epicsUInt32 value, asynStatus status,
                                          int alarmStatus, int alarmSeverity) {
-    return setParam(pvInfo, value, 0xffffffff, status, alarmStatus, alarmSeverity);
+    return setParam(pvInfo, value, 0xffffffff, status, alarmStatus,
+                    alarmSeverity);
 }
 
 template <typename T>
