@@ -64,3 +64,7 @@ breathe_default_project =  'autoparamDriver'
 breathe_default_members = ( 'members', 'protected-members' )
 
 subprocess.check_call('cd ../..; doxygen docs/Doxyfile', shell=True)
+
+# -- C++ setup ---------------------------------------------------------------
+
+cpp_index_common_prefix = [ 'Autoparam::' ]
