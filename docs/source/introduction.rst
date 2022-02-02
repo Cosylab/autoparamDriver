@@ -69,6 +69,15 @@ Concepts and terminology
 .. contents::
    :local:
 
+.. rubric:: See also
+
+* `General asynDriver documentation`_
+* `asynPortDriver class reference`_
+
+.. _General asynDriver documentation: https://epics.anl.gov/modules/soft/asyn/R4-38/asynDriver.html#genericEpicsSupport
+.. _asynPortDriver class reference: https://epics.anl.gov/modules/soft/asyn/R4-38/asynDoxygenHTML/classasyn_port_driver.html
+
+
 PVs, records and reasons
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -123,9 +132,6 @@ general status, alarm status, and (for scalars) value. While handlers (described
 below) are used to update records on request from the EPICS database, parameters
 are used to update records on request from the driver (e.g. in response to
 hardware interrupts).
-
-An argument may not begin with a `[` or `{`. This limitation is in place to
-allow extending argument parsing to JSON data in the future.
 
 How does the driver refer to a device PV?
 `````````````````````````````````````````

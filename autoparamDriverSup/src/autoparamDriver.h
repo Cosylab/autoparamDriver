@@ -10,10 +10,10 @@
 
 namespace Autoparam {
 
-/*! Options controlling the behavior of Driver.
+/*! Options controlling the behavior of `Driver`.
  *
- * Certain behaviors of Driver and the underlying asynPortDriver can be
- * controlled through DriverOpts. The value passed to the Driver's constructor
+ * Certain behaviors of `Driver` and the underlying `asynPortDriver` can be
+ * controlled through `DriverOpts`. The value passed to the `Driver`'s constructor
  * can be created and modified in place, like so:
  *
  *     Driver(portName,
@@ -69,9 +69,9 @@ class DriverOpts {
 
     /*! Instruct the driver to clean up on IOC exit.
      *
-     * If enabled, the Driver will register a hook that is run at IOC exit and
-     * deletes the Driver, which ensures that the destructor is run. This is
-     * convenient because the Driver can be allocated using `new` from an
+     * If enabled, the `Driver` will register a hook that is run at IOC exit and
+     * deletes the `Driver`, which ensures that the destructor is run. This is
+     * convenient because the `Driver` can be allocated using `new` from an
      * iocshell command, then let be.
      *
      * Default: disabled
@@ -85,7 +85,11 @@ class DriverOpts {
      *
      * When enabled, successful writes will process `IO Intr` records bound to
      * the parameter written to, unless overriden by
-     * ResultBase::processInterrupts.
+     * `ResultBase::processInterrupts`.
+     *
+     * Note that default write handlers (passed as `NULL` to
+     * `Driver::registerHandlers()`) are not affected by this: the write handler
+     * will always process interrupts.
      *
      * Default: enabled
      */
@@ -96,7 +100,7 @@ class DriverOpts {
 
     /*! Set the thread priority of read/write handlers in blocking mode.
      *
-     * If setBlocking() was enabled, read and write handlers run in a separate
+     * If `setBlocking()` was enabled, read and write handlers run in a separate
      * thread. This setting controls the priority of this thread.
      *
      * Default: `epicsThreadPriorityMedium`
@@ -108,7 +112,7 @@ class DriverOpts {
 
     /*! Set the thread stack size of read/write handlers in blocking mode.
      *
-     * If setBlocking() was enabled, read and write handlers run in a separate
+     * If `setBlocking()` was enabled, read and write handlers run in a separate
      * thread. This setting controls the priority of this thread.
      *
      * Default: `epicsThreadStackMedium`
@@ -147,56 +151,56 @@ class DriverOpts {
     bool autoInterrupts;
 };
 
-/*! An asynPortDriver that dynamically creates parameters referenced by records.
+/*! An `asynPortDriver` that dynamically creates parameters referenced by records.
  *
- * Normally, an asynPortDriver instantiates a predefined set of parameters, each
- * associated with a string that can subsequently be used to reference a
+ * Normally, an `asynPortDriver` instantiates a predefined set of parameters,
+ * each associated with a string that can subsequently be used to reference a
  * parameter from records in the EPICS database.
  *
- * Autoparam::Driver works differently. The string a record uses to refer to a
+ * `Autoparam::Driver` works differently. The string a record uses to refer to a
  * parameter is split into a "function" and its "arguments" which, together,
  * define a "parameter". This is handled by the `PVInfo` class. No parameters
- * exist when the Driver is created; instead, instances of `PVInfo` are created
- * as EPICS database records are initialized.
+ * exist when the `Driver` is created; instead, instances of `PVInfo` are
+ * created as EPICS database records are initialized.
  *
- * Drivers based on Autoparam::Driver do not need to override the read and write
- * methods. Instead, they register read and write handlers for "functions" used
- * by records. Autoparam::Driver will then call these handlers when records are
- * processed.
+ * Drivers based on `Autoparam::Driver` do not need to override the read and
+ * write methods. Instead, they register read and write handlers for "functions"
+ * used by records. `Autoparam::Driver` will then call these handlers when
+ * records are processed.
  *
  * To facilitate updating `IO Intr` records, two mechanisms are provided:
  *
  * - When a parameter is written to (or read from), the value can optionally be
  *   propagated to `IO Intr` records bound to the same parameter. See
- *   DriverOpts::setAutoInterrupts() and ResultBase::processInterrupts.
+ *   `DriverOpts::setAutoInterrupts()` and `ResultBase::processInterrupts`.
  *
  * - The driver can process `IO Intr` records at any time (e.g. from a
  *   background thread or in response to hardware interrupts) by
- *   - (scalars) setting the value using Driver::setParam(), then calling
- *     Driver::callParamCallbacks();
- *   - (arrays) calling Driver::doCallbacksArray().
+ *   - (scalars) setting the value using `Driver::setParam()`, then calling
+ *     `Driver::callParamCallbacks()`;
+ *   - (arrays) calling `Driver::doCallbacksArray()`.
  *
- * To create a new driver based on Autoparam::Driver:
+ * To create a new driver based on `Autoparam::Driver`:
  *   1. Create a derived class.
  *   2. Implement the `createPVInfo()` method.
  *   3. Define static functions that will act as read and write handlers (see
- *      Autoparam::Handlers for signatures) and register them as handlers in the
+ *      `Autoparam::Handlers` for signatures) and register them as handlers in the
  *      driver's constructor.
  *   4. Create one or more iocshell commands to instatiate and configure the
  *      driver.
  *
  * Apart from read and write functions, methods of `asynPortDriver` such as
  * `asynPortDriver::connect()` can be overriden as needed. To facilitate that,
- * Driver::pvInfoFromUser() is provided to obtain `PVInfo` from the `asynUser`
+ * `Driver::pvInfoFromUser()` is provided to obtain `PVInfo` from the `asynUser`
  * pointer that `asynPortDriver` methods are provided.
  */
 class Driver : public asynPortDriver {
   public:
-    /*! Constructs the Driver with the given options.
+    /*! Constructs the `Driver` with the given options.
      *
      * \param portName The user-provided name of the port used to refer to this
      *                 driver instance.
-     * \param params   Options controlling the behavior of Driver.
+     * \param params   Options controlling the behavior of `Driver`.
      */
     explicit Driver(const char *portName, DriverOpts const &params);
 
@@ -205,7 +209,7 @@ class Driver : public asynPortDriver {
   protected:
     /*! Convert the given `PVInfo` into an instance of a derived class.
      *
-     * `PVInfo` is meant to be subclassed. As records are initialized, Driver
+     * `PVInfo` is meant to be subclassed. As records are initialized, `Driver`
      * creates instances of the `PVInfo` base class, then passes them to this
      * method to convert them to whichever subclass the implementation decides
      * to return.
@@ -217,7 +221,7 @@ class Driver : public asynPortDriver {
      * Note that the driver is implicitly locked when when handlers are called.
      *
      * \tparam T A type corresponding to one of asyn interfaces/parameter types.
-     *         See Autoparam::AsynType.
+     *         See `Autoparam::AsynType`.
      *
      * \param function The name of the "function" (in the sense of "device
      *        function", see `PVInfo`).
@@ -242,7 +246,7 @@ class Driver : public asynPortDriver {
     /*! Propagate the array data to `IO Intr` records bound to `pvInfo`.
      *
      * Unless this function is called from a read or write handler, the driver
-     * needs to be locked. `See asynPortDriver::lock()`.
+     * needs to be locked. See `asynPortDriver::lock()`.
      *
      * Status and alarms of the records are set according to the same principles
      * as on completion of a write handler. See `Autoparam::ResultBase`.

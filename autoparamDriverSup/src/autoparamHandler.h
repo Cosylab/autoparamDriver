@@ -20,13 +20,13 @@ namespace Autoparam {
  * By itself, this class doesn't do much:
  *   - It splits the INP/OUT link of an EPICS record into a "function" and
  *     "arguments"
- *   - It can be used as a handle referring to an EPICS record, e.g. in
- *     read and write handlers or Driver::setParam().
+ *   - It can be used as a handle referring to a device process variabla
+ *     (PV), e.g. in read and write handlers or `Driver::setParam()`.
  *
- * PVInfo is meant to be subclassed for use by the derived driver. This greatly
- * increases its utility as it can hold any information related to a PV (i.e. an
- * EPICS record) that the derived driver might require. This is done via
- * Driver::createPvInfo(PVInfo const&).
+ * `PVInfo` is meant to be subclassed for use by the derived driver. This
+ * greatly increases its utility as it can hold any information related to a PV
+ * that the derived driver might require. This is done via
+ * `Driver::createPVInfo(PVInfo const&)`.
  *
  * Currently, the "function" and "arguments" are obtained by splitting the
  * IN/OUT link on spaces. Starting an argument with a `[` or `{` is forbidden —
@@ -65,20 +65,20 @@ class PVInfo {
 
     /*! Returns the type of the underlying asyn parameter.
      *
-     * Apart from complementing asynIndex(), it allows the driver (or the
-     * constructor of the derived class of PVInfo) to act differently based on
+     * Apart from complementing `asynIndex()`, it allows the driver (or the
+     * constructor of the derived class of `PVInfo`) to act differently based on
      * the type. While the derived driver can also determine this information
-     * from function() (it knows which type each function handler is registered
-     * for) using asynType() is faster and more convenient.
+     * from `function()` (it knows which type each function handler is
+     * registered for), using `asynType()` is faster and more convenient.
      */
     asynParamType asynType() const { return m_asynParamType; }
 
   private:
     friend class Driver;
 
-    // Only the Driver has access to the reason string, so this constructor is
-    // private. It also doesn't completely initialize PVInfo. That job is up to
-    // Driver::drvUserCreate().
+    // Only the `Driver` has access to the reason string, so this constructor is
+    // private. It also doesn't completely initialize `PVInfo`. That job is up
+    // to `Driver::drvUserCreate()`.
     explicit PVInfo(char const *asynReason);
 
     void setAsynIndex(int index, asynParamType type) {
@@ -92,19 +92,20 @@ class PVInfo {
     ArgumentList m_arguments;
 };
 
-/*! A non-owning reference to a a data buffer.
+/*! A non-owning reference to a data buffer.
  *
- * Array is used to pass around a reference to a contiguous buffer of type `T`.
- * For example, read and write handlers called by Driver receive an Array as an
- * argument, pointing to the data of a waveform record.
+ * `Array` is used to pass around a reference to a contiguous buffer of type
+ * `T`. For example, read and write handlers called by `Driver` receive an
+ * `Array` as an argument, pointing to the data of a waveform record.
  *
- * An Array contains a data pointer, the current size of the buffer and the
+ * An `Array` contains a data pointer, the current size of the buffer and the
  * maximum size of the buffer. It also provides convenience function to copy
  * data to and from other buffers.
  */
 template <typename T> class Array {
   public:
-    //! Construct an Array reference to `value`, setting it's size to `maxSize`.
+    //! Construct an `Array` reference to `value`, setting it's size to
+    //! `maxSize`.
     Array(T *value, size_t maxSize)
         : m_data(value), m_size(maxSize), m_maxSize(maxSize) {
         if (value == NULL && maxSize != 0) {
@@ -131,7 +132,7 @@ template <typename T> class Array {
         return fillFrom(vector.data(), vector.size());
     }
 
-    //! Copy data to the provided buffer, up to maxSize.
+    //! Copy data to the provided buffer, up to `maxSize`.
     size_t writeTo(T *data, size_t maxSize) const {
         size_t size = std::min(maxSize, m_size);
         std::copy(m_data, m_data + size, data);
@@ -144,8 +145,8 @@ template <typename T> class Array {
     size_t m_maxSize;
 };
 
-// A SFINAE trick to determine if T is an Array, in which case, IsArray::value
-// is true.
+// A SFINAE trick to determine if `T` is an `Array`, in which case,
+// `IsArray::value` is `true`.
 template <typename T> class IsArray {
   private:
     template <typename C> static int check(Array<C> *);
@@ -156,11 +157,11 @@ template <typename T> class IsArray {
     static const bool value = (sizeof(check(static_cast<T *>(NULL))) > 1);
 };
 
-/*! A specialization of Array to deal with string data.
+/*! A specialization of `Array` to deal with string data.
  *
- * This class is called Octet instead of String to match the asyn nomenclature.
- * It is an Array of `char` and provides convenience function to ensure
- * null-termination required by C strings.
+ * This class is called `Octet` instead of `String` to match the asyn
+ * nomenclature. It is an `Array` of `char` and provides convenience function to
+ * ensure null-termination required by C strings.
  */
 class Octet : public Array<char> {
   public:
@@ -196,11 +197,11 @@ class Octet : public Array<char> {
 
 /*! A tri-state determining whether `IO Intr` records should be processed.
  *
- * Used in ResultBase to determine whether interrupts should be processed. When
- * left alone, it specifies the default behavior. When a `bool` is assigned to
- * it, it overrides the default.
+ * Used in `ResultBase` to determine whether interrupts should be processed.
+ * When left alone, it specifies the default behavior. When a `bool` is assigned
+ * to it, it overrides the default.
  *
- * \sa ResultBase::processInterrupts
+ * \sa `ResultBase::processInterrupts`
  */
 struct ProcessInterrupts {
     enum ValueType {
@@ -221,9 +222,9 @@ struct ProcessInterrupts {
 
 /*! The result returned from a read or write handler.
  *
- * ResultBase tells the Driver calling a read or write handler whether the call
- * was successful and how to proceed. Based on this, the Driver will set the
- * appropriate alarm status on the EPICS record that caused the call.
+ * `ResultBase` tells the `Driver` calling a read or write handler whether the
+ * call was successful and how to proceed. Based on this, the `Driver` will set
+ * the appropriate alarm status on the EPICS record that caused the call.
  *
  * The default-constructed result represents a successful handling; thus, in the
  * happy case, the handler need not change anything. If something went wrong,
@@ -234,7 +235,8 @@ struct ResultBase {
     /*! The overall status of read/write handling.
      *
      * If `status` is set to `asynSuccess` (the default) upon returning from a
-     * handler, interrupts may be processed (see ResultBase::processInterrupts).
+     * handler, interrupts may be processed (see
+     * `ResultBase::processInterrupts`).
      *
      * If `status` is set to anything else except `asynSuccess`, interrupts will
      * not be processed.
@@ -242,7 +244,7 @@ struct ResultBase {
      * For read handlers, the value read will be passed to the record regardless
      * of `status`.
      *
-     * Unless ResultBase::alarmStatus and ResultBase::alarmSeverity are also
+     * Unless `ResultBase::alarmStatus` and `ResultBase::alarmSeverity` are also
      * set, the record's alarm and severity are determined according to the
      * value of `status` and the type of record. For example, on `asynError`, an
      * input record will be put into `READ_ALARM` and an output record will be
@@ -260,8 +262,8 @@ struct ResultBase {
      * When a read or write handler finishes with `asynSuccess`, it may be
      * appropriate to process `IO Intr` records that are bound to the same
      * parameter. The decision can be done globally via
-     * Autoparam::DriverOpts::autoInterrupts, but can always be overriden by a
-     * handler by setting ResultBase::processInterrupts.
+     * `Autoparam::DriverOpts::setAutoInterrupts`, but can always be overriden
+     * by a handler by setting `ResultBase::processInterrupts`.
      *
      * The default setting follows the default behavior of `asynPortDriver`:
      *   - do not process interrupts upon returning from a read handler;
@@ -292,7 +294,7 @@ template <typename T> struct Result : ResultBase {
     Result() : ResultBase(), value() {}
 };
 
-/*! %Result returned from Octet read handler, status only.
+/*! %Result returned from `Octet` read handler, status only.
  *
  * Octets behave like arrays in this respect.
  */
@@ -340,7 +342,7 @@ typedef asynStatus (*InterruptRegistrar)(PVInfo &pvInfo, bool cancel);
  * write handler, and interrupt registrar for the given type `T`. Functions with
  * these signatures are passed as arguments to Driver::registerHandlers().
  *
- * This struct is defined separately for scalars, arrays, strings (Octets) and
+ * This struct is defined separately for scalars, arrays, strings (`Octet`s) and
  * digital IO. See the specializations for concrete signatures.
  */
 // The value member is only true when T = Array. This does not include Octet.
@@ -353,7 +355,7 @@ template <typename T> struct Handlers<T, false> {
     typedef Result<T> ReadResult;
     //! Writes `value` to the device.
     typedef WriteResult (*WriteHandler)(PVInfo &pvInfo, T value);
-    //! Reads a value from the device, returning it inside ReadResult.
+    //! Reads a value from the device, returning it inside `ReadResult`.
     typedef ReadResult (*ReadHandler)(PVInfo &pvInfo);
 
     static const asynParamType type = AsynType<T>::value;
@@ -374,7 +376,7 @@ template <typename T> struct Handlers<Array<T>, true> {
     /*! Reads an array from the device, storing data in `value`.
      *
      * Unlike a scalar read handler, the value is *not* returned as a
-     * ReadResult, but written directly to the given buffer, up to the amount
+     * `ReadResult`, but written directly to the given buffer, up to the amount
      * returned by `value.maxSize()`.
      */
     typedef ReadResult (*ReadHandler)(PVInfo &pvInfo, Array<T> &value);
@@ -456,7 +458,7 @@ template <> struct Handlers<epicsUInt32, false> {
     typedef WriteResult (*WriteHandler)(PVInfo &pvInfo, epicsUInt32 value,
                                         epicsUInt32 mask);
     //! Reads a value from the device, honoring `mask`, returning it inside
-    //! ReadResult.
+    //! `ReadResult`.
     typedef ReadResult (*ReadHandler)(PVInfo &pvInfo, epicsUInt32 mask);
 
     static const asynParamType type = AsynType<epicsUInt32>::value;
@@ -467,13 +469,13 @@ template <> struct Handlers<epicsUInt32, false> {
     Handlers() : writeHandler(NULL), readHandler(NULL), intrRegistrar(NULL) {}
 };
 
-/*! Signatures of handlers for Octet.
+/*! Signatures of handlers for `Octet`.
  *
- * For the purpose of read and write handlers, Octet behaves as an array.
+ * For the purpose of read and write handlers, `Octet` behaves as an array.
  */
 template <> struct Handlers<Octet, false> {
     typedef Autoparam::WriteResult WriteResult;
-    //! %Result type for Octet reads (essentially ArrayResult).
+    //! %Result type for `Octet` reads (essentially `ArrayResult`).
     typedef Result<Octet> ReadResult;
     //! Writes `value` to the device.
     typedef WriteResult (*WriteHandler)(PVInfo &pvInfo, Octet const &value);
@@ -497,10 +499,10 @@ template <> struct Handlers<Octet, false> {
  *
  * This makes the symbols declared herein easily accessible. Apart from the
  * typdefs shown below, this namespace exposes also:
- *   - Autoparam::PVInfo
- *   - Autoparam::Array
- *   - Autoparam::Octet
- *   - Autoparam::Result
+ *   - `Autoparam::PVInfo`
+ *   - `Autoparam::Array`
+ *   - `Autoparam::Octet`
+ *   - `Autoparam::Result`
  */
 namespace Convenience {
 // using directives are not picked up by doxygen

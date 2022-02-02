@@ -12,12 +12,21 @@ API Reference
 
    When updating code, ensure that the index below is updated if needed.
 
-All symbols of `autoparamDriver` are in the `Autoparam` namespace. A limited
-selection of symbols that are most needed when writing a driver based on
-`Autoparam::Driver` are put into the `Autoparam::Convenience` namespaces which
-is meant to be imported with a `using` directive.
+All symbols of ``autoparamDriver`` are in the :cpp:any:`Autoparam` namespace. A
+limited selection of symbols that are most needed when writing a driver based on
+:cpp:class:`Autoparam::Driver` are put into the
+:cpp:any:`Autoparam::Convenience` namespace which is meant to be imported with
+a ``using`` directive.
 
 .. contents::
+
+.. rubric:: See also
+
+* `General asynDriver documentation`_
+* `asynPortDriver class reference`_
+
+.. _General asynDriver documentation: https://epics.anl.gov/modules/soft/asyn/R4-38/asynDriver.html#genericEpicsSupport
+.. _asynPortDriver class reference: https://epics.anl.gov/modules/soft/asyn/R4-38/asynDoxygenHTML/classasyn_port_driver.html
 
 The driver
 ----------
