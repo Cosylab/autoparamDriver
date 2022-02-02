@@ -286,12 +286,14 @@ class Driver : public asynPortDriver {
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
-    /*! Obtain a list of `IO Intr` records.
+    /*! Obtain a list of PVs bound by `IO Intr` records.
      *
      * The list of `PVInfo` pointers returned by this method is useful if you
      * need to implement periodic polling for data and would like to know which
      * data to poll. It is meant to be used together with `doCallbacksArray()`,
      * `setParam()` and `asynPortDriver::callParamCallbacks()`.
+     *
+     * This function is threadsafe, locking the driver is not necessary.
      */
     std::vector<PVInfo *> getInterruptPVs();
 
