@@ -51,7 +51,7 @@ until a record requesting it is initialized.
 * handling the first stage of parsing the INP/OUT links;
 * dynamic creation of handles for each device process variable requested by
   EPICS records during IOC initialization;
-* providing facilities for forwarding hardware interrupts to ``IO Intr`` records;
+* providing facilities for forwarding hardware interrupts to ``I/O Intr`` records;
 * being based on ``asynPortDriver`` with all the benefits this brings — most
   importantly, generic EPICS device support layer with a number of useful
   features;
@@ -142,7 +142,7 @@ serve as handles:
 
 * when a record is processed, the driver is given a ``PVInfo`` identifying which
   PV the record is interested in;
-* when the driver wants to update ``IO Intr`` records asynchronously, it uses
+* when the driver wants to update ``I/O Intr`` records asynchronously, it uses
   ``PVInfo`` to specify which parameters to update.
 
 The :cpp:class:`Autoparam::PVInfo` class as used by the
@@ -181,10 +181,10 @@ the parameter associated with the PV while the write handler stores the value
 provided by the record in that same parameter. For arrays, both handlers return
 an error since array parameters cannot store values themselves.
 
-How does the driver process ``IO Intr`` records?
+How does the driver process ``I/O Intr`` records?
 ````````````````````````````````````````````````
 
-There are three mechanisms that can be used to push values into ``IO Intr``
+There are three mechanisms that can be used to push values into ``I/O Intr``
 records that are appropriate for different situations:
 
 * during or after running write or read handlers,
@@ -198,7 +198,7 @@ Which mechanism is appropriate depends on the device; they may also be combined.
 
 By default, should the write handler for some PV complete successfully, the
 driver will automatically update the cached parameter value and process the
-callbacks registered by ``IO Intr`` records that are bound to the same PV to
+callbacks registered by ``I/O Intr`` records that are bound to the same PV to
 update them with *the written value*. This follows the behavior of default (i.e.
 ``NULL``) handlers and is appropriate when a PV is not really backed by
 hardware, but is a "soft" PV in the driver.
@@ -215,14 +215,14 @@ automatic processing of interrupts can be overridden for normal handlers either
 * or on a per-write (or read) basis by setting
   :cpp:member:`Autoparam::ResultBase::processInterrupts`.
 
-The latter also allows *reads* to update ``IO Intr`` records bound to the same
+The latter also allows *reads* to update ``I/O Intr`` records bound to the same
 PV. This is an edge use case and is thus not done by default, but the mechanism
 is there and can be used explicitly.
 
 A more common use case is a "write-read" operation which writes to the device
 and obtains a readback of the value in the same transaction. The default
 behavior of write handlers is not appropriate: while it does update the value of
-``IO Intr`` records, it uses the *value that was written*. To instead use the
+``I/O Intr`` records, it uses the *value that was written*. To instead use the
 value that was read back, the write handler should
 
 * disable automatic processing of interrupts,
@@ -267,6 +267,6 @@ can change at any time, something would need to check the list periodically and
 enable or disable the appropriate interrupts.
 
 A more appropriate approach is to register a function that is called whenever a
-record's ``SCAN`` field changes to or from ``IO Intr``. Such an
+record's ``SCAN`` field changes to or from ``I/O Intr``. Such an
 :cpp:type:`Autoparam::InterruptRegistrar` can be registered together with read
 and write handlers.

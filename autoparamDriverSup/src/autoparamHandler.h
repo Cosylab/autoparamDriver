@@ -195,7 +195,7 @@ class Octet : public Array<char> {
     }
 };
 
-/*! A tri-state determining whether `IO Intr` records should be processed.
+/*! A tri-state determining whether `I/O Intr` records should be processed.
  *
  * Used in `ResultBase` to determine whether interrupts should be processed.
  * When left alone, it specifies the default behavior. When a `bool` is assigned
@@ -260,7 +260,7 @@ struct ResultBase {
     /*! Determines whether interrupts should be processed on success.
      *
      * When a read or write handler finishes with `asynSuccess`, it may be
-     * appropriate to process `IO Intr` records that are bound to the same
+     * appropriate to process `I/O Intr` records that are bound to the same
      * parameter. The decision can be done globally via
      * `Autoparam::DriverOpts::setAutoInterrupts`, but can always be overriden
      * by a handler by setting `ResultBase::processInterrupts`.
@@ -326,17 +326,17 @@ template <typename T> struct AsynType { static const asynParamType value; };
 template <typename T> struct AsynType;
 #endif
 
-/*! Called when a PV switches to or from `IO Intr` scanning.
+/*! Called when a PV switches to or from `I/O Intr` scanning.
  *
- * The registrar function is called both when a PV switches to `IO Intr` and
+ * The registrar function is called both when a PV switches to `I/O Intr` and
  * when it switches away; the `cancel` argument reflects that, being `false` in
  * the former case and `true` in the latter. The purpose of the registrar
  * function is to set up or tear down a subscription for events (or interrupts)
  * relevant to the given `pvInfo`.
  *
  * To be more precise: a PV can be referred to by several EPICS records, any
- * number of which can be set to `IO Intr` scanning. This function is called
- * with `cancel = false` when the number of `IO Intr` records increases to 1,
+ * number of which can be set to `I/O Intr` scanning. This function is called
+ * with `cancel = false` when the number of `I/O Intr` records increases to 1,
  * and with `cancel = true` when the number decreases to 0.
  */
 typedef asynStatus (*InterruptRegistrar)(PVInfo &pvInfo, bool cancel);

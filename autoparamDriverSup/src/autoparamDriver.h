@@ -13,8 +13,8 @@ namespace Autoparam {
 /*! Options controlling the behavior of `Driver`.
  *
  * Certain behaviors of `Driver` and the underlying `asynPortDriver` can be
- * controlled through `DriverOpts`. The value passed to the `Driver`'s constructor
- * can be created and modified in place, like so:
+ * controlled through `DriverOpts`. The value passed to the `Driver`'s
+ * constructor can be created and modified in place, like so:
  *
  *     Driver(portName,
  *            DriverOpts().setBlocking(true)
@@ -81,9 +81,9 @@ class DriverOpts {
         return *this;
     }
 
-    /*! Enable/disable default `IO Intr` behavior for write handlers.
+    /*! Enable/disable default `I/O Intr` behavior for write handlers.
      *
-     * When enabled, successful writes will process `IO Intr` records bound to
+     * When enabled, successful writes will process `I/O Intr` records bound to
      * the parameter written to, unless overriden by
      * `ResultBase::processInterrupts`.
      *
@@ -151,7 +151,8 @@ class DriverOpts {
     bool autoInterrupts;
 };
 
-/*! An `asynPortDriver` that dynamically creates parameters referenced by records.
+/*! An `asynPortDriver` that dynamically creates parameters referenced by
+ * records.
  *
  * Normally, an `asynPortDriver` instantiates a predefined set of parameters,
  * each associated with a string that can subsequently be used to reference a
@@ -168,13 +169,13 @@ class DriverOpts {
  * used by records. `Autoparam::Driver` will then call these handlers when
  * records are processed.
  *
- * To facilitate updating `IO Intr` records, two mechanisms are provided:
+ * To facilitate updating `I/O Intr` records, two mechanisms are provided:
  *
  * - When a parameter is written to (or read from), the value can optionally be
- *   propagated to `IO Intr` records bound to the same parameter. See
+ *   propagated to `I/O Intr` records bound to the same parameter. See
  *   `DriverOpts::setAutoInterrupts()` and `ResultBase::processInterrupts`.
  *
- * - The driver can process `IO Intr` records at any time (e.g. from a
+ * - The driver can process `I/O Intr` records at any time (e.g. from a
  *   background thread or in response to hardware interrupts) by
  *   - (scalars) setting the value using `Driver::setParam()`, then calling
  *     `Driver::callParamCallbacks()`;
@@ -184,8 +185,8 @@ class DriverOpts {
  *   1. Create a derived class.
  *   2. Implement the `createPVInfo()` method.
  *   3. Define static functions that will act as read and write handlers (see
- *      `Autoparam::Handlers` for signatures) and register them as handlers in the
- *      driver's constructor.
+ *      `Autoparam::Handlers` for signatures) and register them as handlers in
+ *      the driver's constructor.
  *   4. Create one or more iocshell commands to instatiate and configure the
  *      driver.
  *
@@ -235,7 +236,7 @@ class Driver : public asynPortDriver {
      *        processed;
      *
      * \param intrRegistrar A function that is called when a record referencing
-     *        `function` switches to or from `IO Intr`.
+     *        `function` switches to or from `I/O Intr`.
      */
     template <typename T>
     void registerHandlers(std::string const &function,
@@ -243,7 +244,7 @@ class Driver : public asynPortDriver {
                           typename Handlers<T>::WriteHandler writer,
                           InterruptRegistrar intrRegistrar);
 
-    /*! Propagate the array data to `IO Intr` records bound to `pvInfo`.
+    /*! Propagate the array data to `I/O Intr` records bound to `pvInfo`.
      *
      * Unless this function is called from a read or write handler, the driver
      * needs to be locked. See `asynPortDriver::lock()`.
@@ -251,10 +252,11 @@ class Driver : public asynPortDriver {
      * Status and alarms of the records are set according to the same principles
      * as on completion of a write handler. See `Autoparam::ResultBase`.
      */
-    template <typename T> asynStatus
-    doCallbacksArray(PVInfo const &pvInfo, Array<T> &value, asynStatus status =
-    asynSuccess, int alarmStatus = epicsAlarmNone, int alarmSeverity =
-    epicsSevNone);
+    template <typename T>
+    asynStatus doCallbacksArray(PVInfo const &pvInfo, Array<T> &value,
+                                asynStatus status = asynSuccess,
+                                int alarmStatus = epicsAlarmNone,
+                                int alarmSeverity = epicsSevNone);
 
     /*! Set the value of the parameter represented by `pvInfo`.
      *
@@ -264,7 +266,7 @@ class Driver : public asynPortDriver {
      * Status and alarms of the records are set according to the same principles
      * as on completion of a write handler. See `Autoparam::ResultBase`.
      *
-     * Unlike `doCallbacksArray()`, no `IO Intr` records are processed. Use
+     * Unlike `doCallbacksArray()`, no `I/O Intr` records are processed. Use
      * `asynPortDriver::callParamCallbacks()` after setting the value. This
      * allows more than one parameter to have its value set before doing record
      * processing.
@@ -286,7 +288,7 @@ class Driver : public asynPortDriver {
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
-    /*! Obtain a list of PVs bound by `IO Intr` records.
+    /*! Obtain a list of PVs bound by `I/O Intr` records.
      *
      * The list of `PVInfo` pointers returned by this method is useful if you
      * need to implement periodic polling for data and would like to know which
