@@ -441,6 +441,7 @@ class Driver : public asynPortDriver {
     ParamMap m_params;
     std::map<std::string, asynParamType> m_functionTypes;
     std::map<asynParamType, std::pair<void *, void *> > m_originalIntrRegister;
+    std::map<PVInfo *, int> m_interruptRefcount;
 
     std::map<std::string, Handlers<epicsInt32> > m_Int32HandlerMap;
     std::map<std::string, Handlers<epicsInt64> > m_Int64HandlerMap;

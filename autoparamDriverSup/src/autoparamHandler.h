@@ -326,13 +326,18 @@ template <typename T> struct AsynType { static const asynParamType value; };
 template <typename T> struct AsynType;
 #endif
 
-/*! Called when a record switches to or from `IO Intr` scanning.
+/*! Called when a PV switches to or from `IO Intr` scanning.
  *
- * The registrar function is called both when a record switches to `IO Intr` and
+ * The registrar function is called both when a PV switches to `IO Intr` and
  * when it switches away; the `cancel` argument reflects that, being `false` in
  * the former case and `true` in the latter. The purpose of the registrar
- * function is to set up or tear dows a subscription for events (or interrupts)
+ * function is to set up or tear down a subscription for events (or interrupts)
  * relevant to the given `pvInfo`.
+ *
+ * To be more precise: a PV can be referred to by several EPICS records, any
+ * number of which can be set to `IO Intr` scanning. This function is called
+ * with `cancel = false` when the number of `IO Intr` records increases to 1,
+ * and with `cancel = true` when the number decreases to 0.
  */
 typedef asynStatus (*InterruptRegistrar)(PVInfo &pvInfo, bool cancel);
 

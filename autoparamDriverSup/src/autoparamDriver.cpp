@@ -160,6 +160,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
 
         m_params[index] = pvInfo;
         pasynUser->reason = index;
+        m_interruptRefcount[pvInfo] = 0;
     }
 
     return asynSuccess;
@@ -628,22 +629,6 @@ asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
                                      void **registrarPvt) {
     Driver *self = static_cast<Driver *>(drvPvt);
     PVInfo *pvInfo = self->pvInfoFromUser(pasynUser);
-    InterruptRegistrar registrar =
-        self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
-    if (registrar != NULL) {
-        asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
-                  "%s: port=%s registering interrupt handler for '%s'\n",
-                  driverName, self->portName, pvInfo->normalized().c_str());
-        asynStatus status = registrar(*pvInfo, false);
-        if (status != asynSuccess) {
-            asynPrint(self->pasynUserSelf, ASYN_TRACE_ERROR,
-                      "%s: port=%s error %d calling interrupt registrar for "
-                      "'%s'\n",
-                      driverName, self->portName, status,
-                      pvInfo->normalized().c_str());
-            return status;
-        }
-    }
 
     // I hate doing type erasure like this, but there aren't sane options ...
     typedef asynStatus (*RegisterIntrFunc)(void *drvPvt, asynUser *pasynUser,
@@ -651,7 +636,34 @@ asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
                                            void **registrarPvt);
     RegisterIntrFunc original = reinterpret_cast<RegisterIntrFunc>(
         self->m_originalIntrRegister.at(AsynType<T>::value).first);
-    return original(drvPvt, pasynUser, callback, userPvt, registrarPvt);
+    asynStatus status = original(drvPvt, pasynUser, callback, userPvt, registrarPvt);
+    if (status != asynSuccess) {
+        return status;
+    }
+
+    self->m_interruptRefcount[pvInfo] += 1;
+
+    if (self->m_interruptRefcount[pvInfo] == 1) {
+        InterruptRegistrar registrar =
+            self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
+        if (registrar != NULL) {
+            asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
+                      "%s: port=%s registering interrupt handler for '%s'\n",
+                      driverName, self->portName, pvInfo->normalized().c_str());
+            status = registrar(*pvInfo, false);
+            if (status != asynSuccess) {
+                asynPrint(
+                    self->pasynUserSelf, ASYN_TRACE_ERROR,
+                    "%s: port=%s error %d calling interrupt registrar for "
+                    "'%s'\n",
+                    driverName, self->portName, status,
+                    pvInfo->normalized().c_str());
+                return status;
+            }
+        }
+    }
+
+    return status;
 }
 
 template <typename T>
@@ -659,29 +671,49 @@ asynStatus Driver::cancelInterrupt(void *drvPvt, asynUser *pasynUser,
                                    void *registrarPvt) {
     Driver *self = static_cast<Driver *>(drvPvt);
     PVInfo *pvInfo = self->pvInfoFromUser(pasynUser);
-    InterruptRegistrar registrar =
-        self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
-    if (registrar != NULL) {
-        asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
-                  "%s: port=%s cancelling interrupt handler for '%s'\n",
-                  driverName, self->portName, pvInfo->normalized().c_str());
-        asynStatus status = registrar(*pvInfo, true);
-        if (status != asynSuccess) {
-            asynPrint(self->pasynUserSelf, ASYN_TRACE_ERROR,
-                      "%s: port=%s error %d calling interrupt registrar for "
-                      "'%s'\n",
-                      driverName, self->portName, status,
-                      pvInfo->normalized().c_str());
-            return status;
-        }
-    }
 
     // I hate doing type erasure like this, but there aren't sane options ...
     typedef asynStatus (*CancelIntrFunc)(void *drvPvt, asynUser *pasynUser,
                                          void *registrarPvt);
     CancelIntrFunc original = reinterpret_cast<CancelIntrFunc>(
         self->m_originalIntrRegister.at(AsynType<T>::value).second);
-    return original(drvPvt, pasynUser, registrarPvt);
+    asynStatus status = original(drvPvt, pasynUser, registrarPvt);
+    if (status != asynSuccess) {
+        return status;
+    }
+
+    self->m_interruptRefcount[pvInfo] -= 1;
+
+    if (self->m_interruptRefcount[pvInfo] < 0) {
+        asynPrint(self->pasynUserSelf, ASYN_TRACE_ERROR,
+                  "%s: port=%s logic error: interrupt refcount negative for"
+                  "'%s'\n",
+                  driverName, self->portName, pvInfo->normalized().c_str());
+        self->m_interruptRefcount[pvInfo] = 0;
+        return asynError;
+    }
+
+    if (self->m_interruptRefcount[pvInfo] == 0) {
+        InterruptRegistrar registrar =
+            self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
+        if (registrar != NULL) {
+            asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
+                      "%s: port=%s cancelling interrupt handler for '%s'\n",
+                      driverName, self->portName, pvInfo->normalized().c_str());
+            status = registrar(*pvInfo, true);
+            if (status != asynSuccess) {
+                asynPrint(
+                    self->pasynUserSelf, ASYN_TRACE_ERROR,
+                    "%s: port=%s error %d calling interrupt registrar for "
+                    "'%s'\n",
+                    driverName, self->portName, status,
+                    pvInfo->normalized().c_str());
+                return status;
+            }
+        }
+    }
+
+    return status;
 }
 
 asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
@@ -691,22 +723,6 @@ asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
     typedef epicsUInt32 T;
     Driver *self = static_cast<Driver *>(drvPvt);
     PVInfo *pvInfo = self->pvInfoFromUser(pasynUser);
-    InterruptRegistrar registrar =
-        self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
-    if (registrar != NULL) {
-        asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
-                  "%s: port=%s registering interrupt handler for '%s'\n",
-                  driverName, self->portName, pvInfo->normalized().c_str());
-        asynStatus status = registrar(*pvInfo, false);
-        if (status != asynSuccess) {
-            asynPrint(self->pasynUserSelf, ASYN_TRACE_ERROR,
-                      "%s: port=%s error %d calling interrupt registrar for "
-                      "'%s'\n",
-                      driverName, self->portName, status,
-                      pvInfo->normalized().c_str());
-            return status;
-        }
-    }
 
     // UInt32Digital has a signature different from other registrars.
     typedef asynStatus (*RegisterIntrFunc)(
@@ -714,7 +730,34 @@ asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
         epicsUInt32 mask, void **registrarPvt);
     RegisterIntrFunc original = reinterpret_cast<RegisterIntrFunc>(
         self->m_originalIntrRegister.at(AsynType<T>::value).first);
-    return original(drvPvt, pasynUser, callback, userPvt, mask, registrarPvt);
+    asynStatus status = original(drvPvt, pasynUser, callback, userPvt, mask, registrarPvt);
+    if (status != asynSuccess) {
+        return status;
+    }
+
+    self->m_interruptRefcount[pvInfo] += 1;
+
+    if (self->m_interruptRefcount[pvInfo] == 1) {
+        InterruptRegistrar registrar =
+            self->getHandlerMap<T>().at(pvInfo->function()).intrRegistrar;
+        if (registrar != NULL) {
+            asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
+                      "%s: port=%s registering interrupt handler for '%s'\n",
+                      driverName, self->portName, pvInfo->normalized().c_str());
+            status = registrar(*pvInfo, false);
+            if (status != asynSuccess) {
+                asynPrint(
+                    self->pasynUserSelf, ASYN_TRACE_ERROR,
+                    "%s: port=%s error %d calling interrupt registrar for "
+                    "'%s'\n",
+                    driverName, self->portName, status,
+                    pvInfo->normalized().c_str());
+                return status;
+            }
+        }
+    }
+
+    return status;
 }
 
 template <typename T>
