@@ -7,6 +7,8 @@
 #include <errlog.h>
 #include <epicsExit.h>
 
+#include <algorithm>
+
 namespace Autoparam {
 
 static char const *driverName = "Autoparam::Driver";
@@ -236,6 +238,11 @@ std::vector<PVInfo *> Driver::getInterruptPVs() {
         infos, ifcs->float32ArrayCanInterrupt, ifcs->float32ArrayInterruptPvt);
     getInterruptPVsForInterface<asynFloat64ArrayInterrupt>(
         infos, ifcs->float64ArrayCanInterrupt, ifcs->float64ArrayInterruptPvt);
+
+    // The list contains all records, so we need to remove duplicates.
+    std::sort(infos.begin(), infos.end());
+    infos.erase(std::unique(infos.begin(), infos.end()),
+                infos.end());
 
     return infos;
 }
