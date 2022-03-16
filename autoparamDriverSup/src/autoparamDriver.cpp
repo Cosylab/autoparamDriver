@@ -256,8 +256,8 @@ template <typename Iface, typename HType>
 void Driver::installAnInterruptRegistrar(void *piface) {
     // I hate doing type erasure like this, but there aren't sane options ...
     Iface *iface = static_cast<Iface *>(piface);
-    void *reg = reinterpret_cast<void *>(iface->registerInterruptUser);
-    void *canc = reinterpret_cast<void *>(iface->cancelInterruptUser);
+    VoidFuncPtr reg = reinterpret_cast<VoidFuncPtr>(iface->registerInterruptUser);
+    VoidFuncPtr canc = reinterpret_cast<VoidFuncPtr>(iface->cancelInterruptUser);
     m_originalIntrRegister[AsynType<HType>::value] = std::make_pair(reg, canc);
     assignPtr(iface->cancelInterruptUser, Driver::cancelInterrupt<HType>);
     if (AsynType<HType>::value == asynParamUInt32Digital) {

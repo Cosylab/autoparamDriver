@@ -442,7 +442,11 @@ class Driver : public asynPortDriver {
     typedef std::map<int, PVInfo *> ParamMap;
     ParamMap m_params;
     std::map<std::string, asynParamType> m_functionTypes;
-    std::map<asynParamType, std::pair<void *, void *> > m_originalIntrRegister;
+
+    // Type erasure for function pointers.
+    typedef void (*VoidFuncPtr) (void);
+    std::map<asynParamType, std::pair<VoidFuncPtr, VoidFuncPtr> >
+        m_originalIntrRegister;
     std::map<PVInfo *, int> m_interruptRefcount;
 
     std::map<std::string, Handlers<epicsInt32> > m_Int32HandlerMap;
