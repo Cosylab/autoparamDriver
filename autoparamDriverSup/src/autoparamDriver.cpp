@@ -241,8 +241,7 @@ std::vector<PVInfo *> Driver::getInterruptPVs() {
 
     // The list contains all records, so we need to remove duplicates.
     std::sort(infos.begin(), infos.end());
-    infos.erase(std::unique(infos.begin(), infos.end()),
-                infos.end());
+    infos.erase(std::unique(infos.begin(), infos.end()), infos.end());
 
     return infos;
 }
@@ -643,7 +642,8 @@ asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
                                            void **registrarPvt);
     RegisterIntrFunc original = reinterpret_cast<RegisterIntrFunc>(
         self->m_originalIntrRegister.at(AsynType<T>::value).first);
-    asynStatus status = original(drvPvt, pasynUser, callback, userPvt, registrarPvt);
+    asynStatus status =
+        original(drvPvt, pasynUser, callback, userPvt, registrarPvt);
     if (status != asynSuccess) {
         return status;
     }
@@ -737,7 +737,8 @@ asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
         epicsUInt32 mask, void **registrarPvt);
     RegisterIntrFunc original = reinterpret_cast<RegisterIntrFunc>(
         self->m_originalIntrRegister.at(AsynType<T>::value).first);
-    asynStatus status = original(drvPvt, pasynUser, callback, userPvt, mask, registrarPvt);
+    asynStatus status =
+        original(drvPvt, pasynUser, callback, userPvt, mask, registrarPvt);
     if (status != asynSuccess) {
         return status;
     }
