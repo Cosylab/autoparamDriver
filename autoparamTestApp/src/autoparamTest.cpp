@@ -62,8 +62,8 @@ class AutoparamTest : public Autoparam::Driver {
   public:
     AutoparamTest(char const *portName)
         : Autoparam::Driver(
-              portName,
-              Autoparam::DriverOpts().setAutoDestruct().setAutoConnect()),
+              portName, Autoparam::DriverOpts().setAutoDestruct().setInitHook(
+                            AutoparamTest::testInitHook)),
           randomSeed(time(NULL) + clock()), currentSum(0), shiftedRegister(0),
           thread(runnable, "AutoparamTestThread", epicsThreadStackMedium),
           runnable(this), quitThread(false) {
@@ -92,6 +92,17 @@ class AutoparamTest : public Autoparam::Driver {
     }
 
   private:
+    static void testInitHook(Autoparam::Driver *driver) {
+        AutoparamTest *self = static_cast<AutoparamTest *>(driver);
+        printf("Running init hook for Autoparam::Driver 0x%p "
+               "with the following PVs:\n",
+               driver);
+        std::vector<PVInfo *> pvs = self->getAllPVs();
+        for (size_t i = 0; i < pvs.size(); ++i) {
+            printf("    0x%p: %s\n", pvs[i], pvs[i]->normalized().c_str());
+        }
+    }
+
     static asynStatus interruptReg(PVInfo &baseInfo, bool cancel) {
         printf("Interrupt %s: %s\n", (cancel ? "cancelled" : "registered"),
                baseInfo.normalized().c_str());
