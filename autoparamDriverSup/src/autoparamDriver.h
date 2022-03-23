@@ -51,6 +51,10 @@ class DriverOpts {
 
     /*! Enable/disable asyn autoconnect functionality.
      *
+     * Note: in practice, asyn does not call `connect()` and `disconnect()` if
+     * the driver is used solely by EPICS records. If that's the only intended
+     * use of the driver, this option makes no difference.
+     *
      * When enabled, the driver's `connect()` and `disconnect()` functions are
      * called automatically when the driver is set up and subsequently if it
      * gets disconnected.
