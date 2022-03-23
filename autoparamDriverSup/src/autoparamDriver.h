@@ -10,6 +10,8 @@
 
 namespace Autoparam {
 
+class Driver;
+
 /*! Options controlling the behavior of `Driver`.
  *
  * Certain behaviors of `Driver` and the underlying `asynPortDriver` can be
@@ -23,6 +25,9 @@ namespace Autoparam {
  */
 class DriverOpts {
   public:
+    //! A function that can be set to run after IOC init.
+    typedef void (*InitHook)(Driver *);
+
     /*! Declare whether read and write handlers can block.
      *
      * If any read or write handler can block in any situation, the driver needs
@@ -126,6 +131,23 @@ class DriverOpts {
         return *this;
     }
 
+    /*! Set a function to run after IOC initialization is done.
+     *
+     * If the driver needs to do something (like open communication to device)
+     * *after* all the records (and consequently, `PVInfo`) are constructed,
+     * registering a hook function here is the way to go.
+     *
+     * The hook is run after the IOC is built, but before any record processing
+     * occurs. Specifically, it is hooked to
+     * `initHookState::initHookAfterScanInit`
+     *
+     * Default: `NULL`
+     */
+    DriverOpts &setInitHook(InitHook hook = NULL) {
+        initHook = hook;
+        return *this;
+    }
+
     // We have a fixed interface mask. Whether an interface is implemented or
     // not is decided implicitly by which handlers are registered. That's why we
     // enable all the relevant interfaces, and let the read and write functions
@@ -140,7 +162,8 @@ class DriverOpts {
     DriverOpts()
         : interfaceMask(minimalInterfaceMask | defaultMask),
           interruptMask(defaultMask), asynFlags(0), autoConnect(1), priority(0),
-          stackSize(0), autoDestruct(false), autoInterrupts(true) {}
+          stackSize(0), autoDestruct(false), autoInterrupts(true),
+          initHook(NULL) {}
 
   private:
     friend class Driver;
@@ -153,6 +176,7 @@ class DriverOpts {
     int stackSize;
     bool autoDestruct;
     bool autoInterrupts;
+    InitHook initHook;
 };
 
 /*! An `asynPortDriver` that dynamically creates parameters referenced by

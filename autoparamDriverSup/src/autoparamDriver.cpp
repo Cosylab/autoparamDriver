@@ -6,12 +6,15 @@
 
 #include <errlog.h>
 #include <epicsExit.h>
+#include <initHooks.h>
 
 #include <algorithm>
 
 namespace Autoparam {
 
 static char const *driverName = "Autoparam::Driver";
+
+static std::map<Driver *, DriverOpts::InitHook> allInitHooks;
 
 static char const *skipSpaces(char const *cursor) {
     while (*cursor != 0 && *cursor == ' ') {
@@ -101,6 +104,26 @@ static void destroyDriver(void *driver) {
     delete drv;
 }
 
+static void runInitHooks(initHookState state) {
+    if (state != initHookAfterScanInit) {
+        return;
+    }
+
+    for (std::map<Driver *, DriverOpts::InitHook>::iterator
+             i = allInitHooks.begin(),
+             end = allInitHooks.end();
+         i != end; ++i) {
+        i->second(i->first);
+    }
+}
+
+static void addInitHook(Driver *driver, DriverOpts::InitHook hook) {
+    static int const isRegistered __attribute__((unused)) =
+        initHookRegister(runInitHooks);
+
+    allInitHooks[driver] = hook;
+}
+
 Driver::Driver(const char *portName, const DriverOpts &params)
     : asynPortDriver(portName, 1, params.interfaceMask, params.interruptMask,
                      params.asynFlags, params.autoConnect, params.priority,
@@ -109,6 +132,11 @@ Driver::Driver(const char *portName, const DriverOpts &params)
     if (params.autoDestruct) {
         epicsAtExit(destroyDriver, this);
     }
+
+    if (params.initHook) {
+        addInitHook(this, params.initHook);
+    }
+
     installInterruptRegistrars();
 }
 
