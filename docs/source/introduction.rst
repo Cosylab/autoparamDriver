@@ -182,7 +182,7 @@ provided by the record in that same parameter. For arrays, both handlers return
 an error since array parameters cannot store values themselves.
 
 How does the driver process ``I/O Intr`` records?
-````````````````````````````````````````````````
+`````````````````````````````````````````````````
 
 There are three mechanisms that can be used to push values into ``I/O Intr``
 records that are appropriate for different situations:
