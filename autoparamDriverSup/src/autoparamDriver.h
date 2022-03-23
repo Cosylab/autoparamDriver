@@ -288,6 +288,12 @@ class Driver : public asynPortDriver {
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
+    /*! Obtain a list of all PVs.
+     *
+     * This function is threadsafe, locking the driver is not necessary.
+     */
+    std::vector<PVInfo *> getAllPVs() const;
+
     /*! Obtain a list of PVs bound by `I/O Intr` records.
      *
      * The list of `PVInfo` pointers returned by this method is useful if you

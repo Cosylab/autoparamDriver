@@ -194,6 +194,19 @@ PVInfo *Driver::pvInfoFromUser(asynUser *pasynUser) {
     }
 }
 
+// This function is documented as threadsafe, which it is, based on the fact
+// that m_params is not supposed to change at runtime. I wish more functions
+// could be made const-correct ...
+std::vector<PVInfo *> Driver::getAllPVs() const {
+    std::vector<PVInfo *> pvs;
+    pvs.reserve(m_params.size());
+    for (ParamMap::const_iterator i = m_params.begin(), end = m_params.end();
+         i != end; ++i) {
+        pvs.push_back(i->second);
+    }
+    return pvs;
+}
+
 template <typename IntType>
 void Driver::getInterruptPVsForInterface(std::vector<PVInfo *> &dest,
                                          int canInterrupt, void *ifacePvt) {
