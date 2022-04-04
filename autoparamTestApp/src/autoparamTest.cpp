@@ -99,13 +99,13 @@ class AutoparamTest : public Autoparam::Driver {
                driver);
         std::vector<PVInfo *> pvs = self->getAllPVs();
         for (size_t i = 0; i < pvs.size(); ++i) {
-            printf("    0x%p: %s\n", pvs[i], pvs[i]->normalized().c_str());
+            printf("    0x%p: %s\n", pvs[i], pvs[i]->asString().c_str());
         }
     }
 
     static asynStatus interruptReg(PVInfo &baseInfo, bool cancel) {
         printf("Interrupt %s: %s\n", (cancel ? "cancelled" : "registered"),
-               baseInfo.normalized().c_str());
+               baseInfo.asString().c_str());
         return asynSuccess;
     }
 

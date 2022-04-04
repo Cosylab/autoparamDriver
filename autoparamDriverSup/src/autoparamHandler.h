@@ -54,7 +54,7 @@ class PVInfo {
      * same underlying parameter. Thus, records whose IN/OUT links differ in
      * whitespace only will be referred to by the same instance of PVInfo.
      */
-    std::string normalized() const;
+    std::string asString() const;
 
     /*! Returns the index of the underlying asyn parameter.
      *

@@ -75,7 +75,7 @@ PVInfo::~PVInfo() {
     // Nothing to do here.
 }
 
-std::string PVInfo::normalized() const {
+std::string PVInfo::asString() const {
     std::string norm(function());
     ArgumentList const &args = arguments();
     for (ArgumentList::const_iterator i = args.begin(), end = args.end();
@@ -157,7 +157,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
         return asynError;
     }
 
-    std::string normalized = parsed.normalized();
+    std::string normalized = parsed.asString();
     asynParamType type;
     try {
         type = m_functionTypes.at(parsed.function());
@@ -699,7 +699,7 @@ asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
         if (registrar != NULL) {
             asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
                       "%s: port=%s registering interrupt handler for '%s'\n",
-                      driverName, self->portName, pvInfo->normalized().c_str());
+                      driverName, self->portName, pvInfo->asString().c_str());
             status = registrar(*pvInfo, false);
             if (status != asynSuccess) {
                 asynPrint(
@@ -707,7 +707,7 @@ asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
                     "%s: port=%s error %d calling interrupt registrar for "
                     "'%s'\n",
                     driverName, self->portName, status,
-                    pvInfo->normalized().c_str());
+                    pvInfo->asString().c_str());
                 return status;
             }
         }
@@ -738,7 +738,7 @@ asynStatus Driver::cancelInterrupt(void *drvPvt, asynUser *pasynUser,
         asynPrint(self->pasynUserSelf, ASYN_TRACE_ERROR,
                   "%s: port=%s logic error: interrupt refcount negative for"
                   "'%s'\n",
-                  driverName, self->portName, pvInfo->normalized().c_str());
+                  driverName, self->portName, pvInfo->asString().c_str());
         self->m_interruptRefcount[pvInfo] = 0;
         return asynError;
     }
@@ -749,7 +749,7 @@ asynStatus Driver::cancelInterrupt(void *drvPvt, asynUser *pasynUser,
         if (registrar != NULL) {
             asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
                       "%s: port=%s cancelling interrupt handler for '%s'\n",
-                      driverName, self->portName, pvInfo->normalized().c_str());
+                      driverName, self->portName, pvInfo->asString().c_str());
             status = registrar(*pvInfo, true);
             if (status != asynSuccess) {
                 asynPrint(
@@ -757,7 +757,7 @@ asynStatus Driver::cancelInterrupt(void *drvPvt, asynUser *pasynUser,
                     "%s: port=%s error %d calling interrupt registrar for "
                     "'%s'\n",
                     driverName, self->portName, status,
-                    pvInfo->normalized().c_str());
+                    pvInfo->asString().c_str());
                 return status;
             }
         }
@@ -794,7 +794,7 @@ asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
         if (registrar != NULL) {
             asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
                       "%s: port=%s registering interrupt handler for '%s'\n",
-                      driverName, self->portName, pvInfo->normalized().c_str());
+                      driverName, self->portName, pvInfo->asString().c_str());
             status = registrar(*pvInfo, false);
             if (status != asynSuccess) {
                 asynPrint(
@@ -802,7 +802,7 @@ asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
                     "%s: port=%s error %d calling interrupt registrar for "
                     "'%s'\n",
                     driverName, self->portName, status,
-                    pvInfo->normalized().c_str());
+                    pvInfo->asString().c_str());
                 return status;
             }
         }
