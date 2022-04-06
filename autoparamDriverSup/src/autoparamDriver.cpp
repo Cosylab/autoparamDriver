@@ -9,6 +9,7 @@
 #include <initHooks.h>
 
 #include <algorithm>
+#include <sstream>
 
 namespace Autoparam {
 
@@ -16,54 +17,12 @@ static char const *driverName = "Autoparam::Driver";
 
 static std::map<Driver *, DriverOpts::InitHook> allInitHooks;
 
-static char const *skipSpaces(char const *cursor) {
-    while (*cursor != 0 && *cursor == ' ') {
-        ++cursor;
-    }
-    return cursor;
-}
-
-static char const *findSpace(char const *cursor) {
-    while (*cursor != 0 && *cursor != ' ') {
-        ++cursor;
-    }
-    return cursor;
-}
-
-PVInfo::PVInfo(char const *asynReason) : m_parsed(NULL) {
-    // TODO escaping spaces, quoting. Perhaps this shouldn't be allowed at all,
-    // and we should simply go with JSON if we ever need that.
-
-    // Skip any initial spaces.
-    char const *curr = skipSpaces(asynReason);
-    if (*curr == 0) {
-        return;
-    }
-
-    // Find first space; this determines the function.
-    char const *funcEnd = findSpace(curr);
-    m_function = std::string(curr, funcEnd);
-    curr = skipSpaces(funcEnd);
-
-    // Now let's collect the arguments by jumping over consecutive spaces.
-    while (*curr != 0) {
-        if (*curr == '{' || *curr == '[') {
-            errlogPrintf("Autoparam::PVInfo: error parsing '%s', arguments may "
-                         "not start with a curly brace or square bracket\n",
-                         asynReason);
-            m_function = std::string();
-            m_arguments = ArgumentList();
-            return;
-        }
-        char const *argEnd = findSpace(curr);
-        m_arguments.push_back(std::string(curr, argEnd));
-        curr = skipSpaces(argEnd);
-    }
-}
+PVInfo::PVInfo(char const *reason, std::string const &function, Parsed *parsed)
+    : m_reasonString(reason), m_function(function), m_parsed(parsed) {}
 
 PVInfo::PVInfo(PVInfo *other) {
     m_function = other->m_function;
-    m_arguments = other->m_arguments;
+    m_reasonString = other->m_reasonString;
     m_asynParamType = other->m_asynParamType;
     m_asynParamIndex = other->m_asynParamIndex;
     m_parsed = other->m_parsed;
@@ -74,17 +33,6 @@ PVInfo::~PVInfo() {
     if (m_parsed) {
         delete m_parsed;
     }
-}
-
-std::string PVInfo::asString() const {
-    std::string norm(function());
-    ArgumentList const &args = arguments();
-    for (ArgumentList::const_iterator i = args.begin(), end = args.end();
-         i != end; ++i) {
-        norm += ' ';
-        norm += *i;
-    }
-    return norm;
 }
 
 // Copied from asyn. I wish they made this public.
@@ -164,31 +112,48 @@ struct cmpParsed {
 
 asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
                                  const char **, size_t *) {
-    PVInfo baseInfo(reason);
-    if (baseInfo.function().empty()) {
+    std::string function;
+    std::string arguments;
+    {
+        std::istringstream is(reason);
+        if (!(is >> function)) {
+            // Nice of us to do this check, but it seems we can't even get here,
+            // asyn won't call us with an empty reason :)
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                      "%s: port=%s empty reason '%s'\n", driverName, portName,
+                      reason);
+            return asynError;
+        }
+
+        while (is && std::isspace(is.peek())) {
+            is.ignore();
+        }
+
+        std::ostringstream os;
+        os << is.rdbuf();
+        arguments = os.str();
+    }
+
+    // Let the derived driver parse the arguments.
+    PVInfo::Parsed *parsed = parsePVInfo(function, arguments);
+    if (parsed == NULL) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s: port=%s empty reason '%s'\n", driverName, portName,
+                  "%s: port=%s could not parse '%s'\n", driverName, portName,
                   reason);
         return asynError;
     }
 
-    // Let's first check if we already have this PV.
-    baseInfo.m_parsed = parsePVInfo(baseInfo.function(), baseInfo.arguments());
-    if (baseInfo.m_parsed == NULL) {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s: port=%s could not parse '%s'\n", driverName, portName,
-                  baseInfo.asString().c_str());
-        return asynError;
-    }
-
-    ParamMap::iterator infoIter = std::find_if(m_params.begin(), m_params.end(),
-                                               cmpParsed(baseInfo.m_parsed));
+    // Let's check if we already have the PV.
+    ParamMap::iterator infoIter =
+        std::find_if(m_params.begin(), m_params.end(), cmpParsed(parsed));
     if (infoIter != m_params.end()) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
                   "%s: port=%s reusing an existing parameter for '%s'\n",
-                  driverName, portName, baseInfo.asString().c_str());
+                  driverName, portName, reason);
         pasynUser->reason = infoIter->second->asynIndex();
     } else {
+        // No PV found, let's create a new one. It takes ownership of `parsed`.
+        PVInfo baseInfo = PVInfo(reason, function, parsed);
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
                   "%s: port=%s creating a new parameter for '%s'\n", driverName,
                   portName, baseInfo.asString().c_str());
@@ -205,6 +170,8 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
         createParam(baseInfo.asString().c_str(), baseInfo.m_asynParamType,
                     &baseInfo.m_asynParamIndex);
 
+        // Let the derived driver construct a subclass of PVInfo based on ours.
+        // Takes ownership of stuff in our `baseInfo`.
         PVInfo *pvInfo = createPVInfo(&baseInfo);
         if (pvInfo == NULL) {
             asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,

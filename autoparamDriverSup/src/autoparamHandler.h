@@ -38,8 +38,6 @@ namespace Autoparam {
  */
 class PVInfo {
   public:
-    typedef std::vector<std::string> ArgumentList;
-
     /*! Represents parsed PV information.
      *
      * The derived driver needs to subclass this and return it from the
@@ -78,18 +76,15 @@ class PVInfo {
      *   instantiate a subclass of `PVInfo` that contains everything that the
      *   driver needs to access the underlying device PV.
      */
-    PVInfo(PVInfo *other);
+    explicit PVInfo(PVInfo *other);
 
     virtual ~PVInfo();
 
     //! Returns the "function" given in the record.
     std::string const &function() const { return m_function; }
 
-    //! Returns the "arguments" given to the record's "function".
-    ArgumentList const &arguments() const { return m_arguments; }
-
-    //! Reconstructs "function+arguments", normalizing spaces.
-    std::string asString() const;
+    //! Returns the "function+arguments" string representation.
+    std::string const &asString() const { return m_reasonString; };
 
     /*! Returns the index of the underlying asyn parameter.
      *
@@ -116,11 +111,12 @@ class PVInfo {
 
     // Only the `Driver` has access to the reason string, so this constructor is
     // private. It also doesn't completely initialize `PVInfo`. That job is up
-    // to `Driver::drvUserCreate()`.
-    explicit PVInfo(char const *asynReason);
+    // to `Driver::drvUserCreate()`. PVInfo takes ownership of the provided
+    // Parsed object.
+    PVInfo(char const *reason, std::string const &function, Parsed *parsed);
 
+    std::string m_reasonString;
     std::string m_function;
-    ArgumentList m_arguments;
     asynParamType m_asynParamType;
     int m_asynParamIndex;
     Parsed *m_parsed;

@@ -16,13 +16,7 @@ static const double interruptScanPeriod = 1.5;
 
 class AutoparamTest;
 
-class MyInfo : public PVInfo {
-  public:
-    MyInfo(PVInfo *baseInfo, AutoparamTest *driver)
-        : PVInfo(baseInfo), driver(driver) {}
-
-    AutoparamTest *driver;
-};
+typedef std::vector<std::string> ArgumentList;
 
 class MyParsedInfo : public PVInfo::Parsed {
   public:
@@ -32,7 +26,19 @@ class MyParsedInfo : public PVInfo::Parsed {
     }
 
     std::string function;
-    std::vector<std::string> arguments;
+    ArgumentList arguments;
+};
+
+class MyInfo : public PVInfo {
+  public:
+    MyInfo(PVInfo *baseInfo, AutoparamTest *driver)
+        : PVInfo(baseInfo), driver(driver) {}
+
+    ArgumentList const &arguments() const {
+        return static_cast<MyParsedInfo const &>(parsed()).arguments;
+    }
+
+    AutoparamTest *driver;
 };
 
 class AutoparamTest : public Autoparam::Driver {
@@ -99,10 +105,16 @@ class AutoparamTest : public Autoparam::Driver {
 
   protected:
     PVInfo::Parsed *parsePVInfo(std::string const &function,
-                                std::vector<std::string> const &arguments) {
+                                std::string const &arguments) {
         MyParsedInfo *p = new MyParsedInfo;
         p->function = function;
-        p->arguments = arguments;
+
+        std::istringstream is(arguments);
+        std::string arg;
+        while (is >> arg) {
+            p->arguments.push_back(arg);
+        }
+
         return p;
     }
 
@@ -145,7 +157,7 @@ class AutoparamTest : public Autoparam::Driver {
         if (pvInfo.arguments().front() == "set") {
             self->currentSum = value;
         } else {
-            typedef PVInfo::ArgumentList::const_iterator Iter;
+            typedef ArgumentList::const_iterator Iter;
             for (Iter i = pvInfo.arguments().begin(),
                       end = pvInfo.arguments().end();
                  i != end; ++i) {
@@ -224,11 +236,12 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
-    static OctetReadResult argEcho(PVInfo &info, Octet &value) {
+    static OctetReadResult argEcho(PVInfo &baseInfo, Octet &value) {
         OctetReadResult result;
         std::string argcat;
-        for (PVInfo::ArgumentList::const_iterator i = info.arguments().begin(),
-                                                  end = info.arguments().end();
+        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
+        for (ArgumentList::const_iterator i = pvInfo.arguments().begin(),
+                                          end = pvInfo.arguments().end();
              i != end; ++i) {
             argcat += *i;
         }

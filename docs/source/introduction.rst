@@ -48,9 +48,8 @@ until a record requesting it is initialized.
 
 ``autoparamDriver`` makes implementing such a generic driver easier by
 
-* handling the first stage of parsing the INP/OUT links;
-* dynamic creation of handles for each device process variable requested by
-  EPICS records during IOC initialization;
+* dynamic creation of handles for each device process variable that is requested
+  by EPICS records during IOC initialization;
 * providing facilities for forwarding hardware interrupts to ``I/O Intr`` records;
 * being based on ``asynPortDriver`` with all the benefits this brings — most
   importantly, generic EPICS device support layer with a number of useful
@@ -109,15 +108,9 @@ to obtain a so-called "reason string". A record thus looks like::
 
 Here, the macro ``$(PORT_NAME)`` refers to an instance of a driver derived from
 :cpp:class:`Autoparam::Driver`. When the record is initialized, the driver will
-be given the entire reason string. It is split on spaces and the first word is
-called a **function** while the rest are called **arguments**. To be more
-explicit:
-
-* function: "this"
-* argument 1: "is"
-* argument 2: "a"
-* argument 3: "reason"
-* argument 4: "string"
+be given the entire reason string. It is split on the first space and the first
+word (in the above example, "this") is called a **function** while the rest are
+called **arguments**.
 
 The combination of a function and its arguments is called a **process variable
 (PV)**. Any record referring to the same combination of function and arguments

@@ -245,9 +245,8 @@ class Driver : public asynPortDriver {
      *
      * May return NULL on error.
      */
-    virtual PVInfo::Parsed *
-    parsePVInfo(std::string const &function,
-                std::vector<std::string> const &arguments) = 0;
+    virtual PVInfo::Parsed *parsePVInfo(std::string const &function,
+                                        std::string const &arguments) = 0;
 
     /*! Convert the given `PVInfo` into an instance of a derived class.
      *
