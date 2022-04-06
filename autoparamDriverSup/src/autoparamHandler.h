@@ -20,13 +20,17 @@ namespace Autoparam {
  * By itself, this class doesn't do much:
  *   - It splits the INP/OUT link of an EPICS record into a "function" and
  *     "arguments"
- *   - It can be used as a handle referring to a device process variabla
+ *   - It can be used as a handle referring to a device process variable
  *     (PV), e.g. in read and write handlers or `Driver::setParam()`.
  *
  * `PVInfo` is meant to be subclassed for use by the derived driver. This
  * greatly increases its utility as it can hold any information related to a PV
  * that the derived driver might require. This is done via
  * `Driver::createPVInfo(PVInfo const&)`.
+ *
+ * `PVInfo` instances are created only once per device PV, but are shared
+ * between records referring to the same device PV. They are destroyed when the
+ * driver is destroyed.
  *
  * Currently, the "function" and "arguments" are obtained by splitting the
  * IN/OUT link on spaces. Starting an argument with a `[` or `{` is forbidden —
@@ -36,9 +40,45 @@ class PVInfo {
   public:
     typedef std::vector<std::string> ArgumentList;
 
-    PVInfo(PVInfo const &other);
+    /*! Represents parsed PV information.
+     *
+     * The derived driver needs to subclass this and return it from the
+     * overridden `Autoparam::Driver::parsePVInfo()`. It is used to identify
+     * which records refer to the same PV and what the data type of the variable
+     * is.
+     *
+     * Unlike `PVInfo`, this class should not take any device resources, or
+     * should at least release them when destroyed. Unlike `PVInfo`, many
+     * instances of `Parsed` can be created per PV, then destroyed even before
+     * the IOC is initialized.
+     */
+    class Parsed {
+      public:
+        virtual ~Parsed() {}
 
-    PVInfo &operator=(PVInfo const &other);
+        //! Compare to another PV. Must be overridden.
+        virtual bool operator==(Parsed const &other) const = 0;
+    };
+
+    /*! Construct `PVInfo` from another. The other one is invalidated.
+     *
+     * Being the only public constructor, this is the only way the driver
+     * deriving from `Autoparam::Driver` can construct a PVInfo. The usage
+     * pattern is the following:
+     *
+     * - The driver overrides `Autoparam::Driver::parsePVInfo()`. That method
+     *   interprets the provided `function` and `arguments`, returning an
+     *   instance of `PVInfo::Parsed`.
+     *
+     * - The `Autoparam::Driver` base class creates an instance of `PVInfo`
+     *   which contains the necessary data to refer to the underlying PV.
+     *
+     * - The driver overrides `Autoparam::Driver::createPVInfo()`. In that
+     *   method, it uses the `PVInfo` copy constructor and `PVInfo::parsed()` to
+     *   instantiate a subclass of `PVInfo` that contains everything that the
+     *   driver needs to access the underlying device PV.
+     */
+    PVInfo(PVInfo *other);
 
     virtual ~PVInfo();
 
@@ -48,12 +88,7 @@ class PVInfo {
     //! Returns the "arguments" given to the record's "function".
     ArgumentList const &arguments() const { return m_arguments; }
 
-    /*! Reconstructs "function+arguments", normalizing spaces.
-     *
-     * The resulting string is used to identify records that should bind to the
-     * same underlying parameter. Thus, records whose IN/OUT links differ in
-     * whitespace only will be referred to by the same instance of PVInfo.
-     */
+    //! Reconstructs "function+arguments", normalizing spaces.
     std::string asString() const;
 
     /*! Returns the index of the underlying asyn parameter.
@@ -73,6 +108,9 @@ class PVInfo {
      */
     asynParamType asynType() const { return m_asynParamType; }
 
+    //! Returns the pre-parsed representation of the PV.
+    Parsed const &parsed() const { return *m_parsed; }
+
   private:
     friend class Driver;
 
@@ -81,15 +119,11 @@ class PVInfo {
     // to `Driver::drvUserCreate()`.
     explicit PVInfo(char const *asynReason);
 
-    void setAsynIndex(int index, asynParamType type) {
-        m_asynParamIndex = index;
-        m_asynParamType = type;
-    }
-
-    int m_asynParamIndex;
-    asynParamType m_asynParamType;
     std::string m_function;
     ArgumentList m_arguments;
+    asynParamType m_asynParamType;
+    int m_asynParamIndex;
+    Parsed *m_parsed;
 };
 
 /*! A non-owning reference to a data buffer.

@@ -121,10 +121,9 @@ explicit:
 
 The combination of a function and its arguments is called a **process variable
 (PV)**. Any record referring to the same combination of function and arguments
-will thus bind to the same PV. For example, records referring to
-``"@asyn(PORT) FUNC a=1 b=2 c=3"`` and ``"@asyn(PORT) FUNC a=1  b=2    c=3"``
-will bind to the same PV (spaces are not important) while a record referring to
-``"@asyn(PORT) FUNC a=1 c=3 b=2"`` will bind to a *different* PV.
+will thus bind to the same PV. Whether two sets of arguments refer to the same
+PV is decided by the driver when the arguments are examined (c.f.
+:cpp:class:`Autoparam::PVInfo::Parsed`).
 
 Each PV is backed by a **parameter**. This term refers to asyn-managed cache of
 PV properties (c.f. :cpp:func:`asynPortDriver::createParam()`), such as

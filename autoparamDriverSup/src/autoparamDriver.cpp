@@ -30,7 +30,7 @@ static char const *findSpace(char const *cursor) {
     return cursor;
 }
 
-PVInfo::PVInfo(char const *asynReason) {
+PVInfo::PVInfo(char const *asynReason) : m_parsed(NULL) {
     // TODO escaping spaces, quoting. Perhaps this shouldn't be allowed at all,
     // and we should simply go with JSON if we ever need that.
 
@@ -61,18 +61,19 @@ PVInfo::PVInfo(char const *asynReason) {
     }
 }
 
-PVInfo::PVInfo(PVInfo const &other) { *this = other; }
-
-PVInfo &PVInfo::operator=(PVInfo const &other) {
-    m_asynParamIndex = other.m_asynParamIndex;
-    m_asynParamType = other.m_asynParamType;
-    m_function = other.m_function;
-    m_arguments = other.m_arguments;
-    return *this;
+PVInfo::PVInfo(PVInfo *other) {
+    m_function = other->m_function;
+    m_arguments = other->m_arguments;
+    m_asynParamType = other->m_asynParamType;
+    m_asynParamIndex = other->m_asynParamIndex;
+    m_parsed = other->m_parsed;
+    other->m_parsed = NULL;
 }
 
 PVInfo::~PVInfo() {
-    // Nothing to do here.
+    if (m_parsed) {
+        delete m_parsed;
+    }
 }
 
 std::string PVInfo::asString() const {
@@ -147,50 +148,74 @@ Driver::~Driver() {
     }
 }
 
+namespace {
+
+struct cmpParsed {
+    PVInfo::Parsed *parsed;
+
+    cmpParsed(PVInfo::Parsed *p) : parsed(p) {}
+
+    bool operator()(std::map<int, PVInfo *>::value_type const &x) {
+        return x.second->parsed() == *parsed;
+    }
+};
+
+} // namespace
+
 asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
                                  const char **, size_t *) {
-    PVInfo parsed(reason);
-    if (parsed.function().empty()) {
+    PVInfo baseInfo(reason);
+    if (baseInfo.function().empty()) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                   "%s: port=%s empty reason '%s'\n", driverName, portName,
                   reason);
         return asynError;
     }
 
-    std::string normalized = parsed.asString();
-    asynParamType type;
-    try {
-        type = m_functionTypes.at(parsed.function());
-    } catch (std::out_of_range const &) {
+    // Let's first check if we already have this PV.
+    baseInfo.m_parsed = parsePVInfo(baseInfo.function(), baseInfo.arguments());
+    if (baseInfo.m_parsed == NULL) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s: port=%s no handler registered for '%s'\n", driverName,
-                  portName, parsed.function().c_str());
+                  "%s: port=%s could not parse '%s'\n", driverName, portName,
+                  baseInfo.asString().c_str());
         return asynError;
     }
 
-    int index;
-    if (findParam(normalized.c_str(), &index) == asynSuccess) {
+    ParamMap::iterator infoIter = std::find_if(m_params.begin(), m_params.end(),
+                                               cmpParsed(baseInfo.m_parsed));
+    if (infoIter != m_params.end()) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
                   "%s: port=%s reusing an existing parameter for '%s'\n",
-                  driverName, portName, normalized.c_str());
-        pasynUser->reason = index;
+                  driverName, portName, baseInfo.asString().c_str());
+        pasynUser->reason = infoIter->second->asynIndex();
     } else {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
                   "%s: port=%s creating a new parameter for '%s'\n", driverName,
-                  portName, normalized.c_str());
-        createParam(normalized.c_str(), type, &index);
-        parsed.setAsynIndex(index, type);
-        PVInfo *pvInfo = createPVInfo(parsed);
-        if (pvInfo == NULL) {
+                  portName, baseInfo.asString().c_str());
+
+        try {
+            baseInfo.m_asynParamType = m_functionTypes.at(baseInfo.function());
+        } catch (std::out_of_range const &) {
             asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                      "%s: port=%s could not create PVInfo for '%s'\n",
-                      driverName, portName, normalized.c_str());
+                      "%s: port=%s no handler registered for '%s'\n",
+                      driverName, portName, baseInfo.function().c_str());
             return asynError;
         }
 
-        m_params[index] = pvInfo;
-        pasynUser->reason = index;
+        createParam(baseInfo.asString().c_str(), baseInfo.m_asynParamType,
+                    &baseInfo.m_asynParamIndex);
+
+        PVInfo *pvInfo = createPVInfo(&baseInfo);
+        if (pvInfo == NULL) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                      "%s: port=%s could not create PVInfo for '%s'\n",
+                      driverName, portName, baseInfo.asString().c_str());
+            return asynError;
+        }
+
+        m_params[pvInfo->asynIndex()] = pvInfo;
         m_interruptRefcount[pvInfo] = 0;
+        pasynUser->reason = pvInfo->asynIndex();
     }
 
     return asynSuccess;

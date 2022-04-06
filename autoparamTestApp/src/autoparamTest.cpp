@@ -18,10 +18,21 @@ class AutoparamTest;
 
 class MyInfo : public PVInfo {
   public:
-    MyInfo(PVInfo const &parsed, AutoparamTest *driver)
-        : PVInfo(parsed), driver(driver) {}
+    MyInfo(PVInfo *baseInfo, AutoparamTest *driver)
+        : PVInfo(baseInfo), driver(driver) {}
 
     AutoparamTest *driver;
+};
+
+class MyParsedInfo : public PVInfo::Parsed {
+  public:
+    bool operator==(PVInfo::Parsed const &other) const {
+        MyParsedInfo const &o = static_cast<MyParsedInfo const &>(other);
+        return function == o.function && arguments == o.arguments;
+    }
+
+    std::string function;
+    std::vector<std::string> arguments;
 };
 
 class AutoparamTest : public Autoparam::Driver {
@@ -87,7 +98,15 @@ class AutoparamTest : public Autoparam::Driver {
     }
 
   protected:
-    MyInfo *createPVInfo(PVInfo const &baseInfo) {
+    PVInfo::Parsed *parsePVInfo(std::string const &function,
+                                std::vector<std::string> const &arguments) {
+        MyParsedInfo *p = new MyParsedInfo;
+        p->function = function;
+        p->arguments = arguments;
+        return p;
+    }
+
+    PVInfo *createPVInfo(PVInfo *baseInfo) {
         return new MyInfo(baseInfo, this);
     }
 

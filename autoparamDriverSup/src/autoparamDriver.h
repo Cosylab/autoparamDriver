@@ -211,11 +211,12 @@ class DriverOpts {
  *
  * To create a new driver based on `Autoparam::Driver`:
  *   1. Create a derived class.
- *   2. Implement the `createPVInfo()` method.
- *   3. Define static functions that will act as read and write handlers (see
+ *   2. Implement the `parsePVInfo()` method.
+ *   3. Implement the `createPVInfo()` method.
+ *   4. Define static functions that will act as read and write handlers (see
  *      `Autoparam::Handlers` for signatures) and register them as handlers in
- *      the driver's constructor.
- *   4. Create one or more iocshell commands to instatiate and configure the
+ *      the driver's constructor (c.f. `Driver::registerHandlers()`).
+ *   5. Create one or more iocshell commands to instatiate and configure the
  *      driver.
  *
  * Apart from read and write functions, methods of `asynPortDriver` such as
@@ -236,14 +237,28 @@ class Driver : public asynPortDriver {
     virtual ~Driver();
 
   protected:
+    /*! Parse the given `function` and `arguments`.
+     *
+     * `PVInfo::Parsed` is meant to be subclassed. As records are initialized,
+     * `Driver` needs some information on the device PV referred to by
+     * `function` and `arguments`, thus it calls this method.
+     *
+     * May return NULL on error.
+     */
+    virtual PVInfo::Parsed *
+    parsePVInfo(std::string const &function,
+                std::vector<std::string> const &arguments) = 0;
+
     /*! Convert the given `PVInfo` into an instance of a derived class.
      *
      * `PVInfo` is meant to be subclassed. As records are initialized, `Driver`
      * creates instances of the `PVInfo` base class, then passes them to this
      * method to convert them to whichever subclass the implementation decides
      * to return.
+     *
+     * May return NULL on error.
      */
-    virtual PVInfo *createPVInfo(PVInfo const &baseInfo) = 0;
+    virtual PVInfo *createPVInfo(PVInfo *baseInfo) = 0;
 
     /*! Register handlers for the combination of `function` and type `T`.
      *
