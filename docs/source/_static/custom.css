@@ -1,0 +1,9 @@
+@import 'agogo.css';
+
+/* This is a copy of h4 from agogo */
+p.rubric {
+  font-family: "Georgia", "Times New Roman", serif;
+  font-weight: normal;
+  color: #3465a4;
+  margin-bottom: .8em;
+}
