@@ -211,7 +211,7 @@ class DriverOpts {
  *
  * To create a new driver based on `Autoparam::Driver`:
  *   1. Create a derived class.
- *   2. Implement the `parsePVInfo()` method.
+ *   2. Implement the `parsePVArguments()` method.
  *   3. Implement the `createPVInfo()` method.
  *   4. Define static functions that will act as read and write handlers (see
  *      `Autoparam::Handlers` for signatures) and register them as handlers in
@@ -245,8 +245,8 @@ class Driver : public asynPortDriver {
      *
      * May return NULL on error.
      */
-    virtual PVInfo::Parsed *parsePVInfo(std::string const &function,
-                                        std::string const &arguments) = 0;
+    virtual PVInfo::Parsed *parsePVArguments(std::string const &function,
+                                             std::string const &arguments) = 0;
 
     /*! Convert the given `PVInfo` into an instance of a derived class.
      *

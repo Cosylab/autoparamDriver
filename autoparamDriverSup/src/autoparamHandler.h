@@ -26,7 +26,7 @@ namespace Autoparam {
  * `PVInfo` is meant to be subclassed for use by the derived driver. This
  * greatly increases its utility as it can hold any information related to a PV
  * that the derived driver might require. This is done via
- * `Driver::createPVInfo(PVInfo const&)`.
+ * `Driver::createPVInfo()`.
  *
  * `PVInfo` instances are created only once per device PV, but are shared
  * between records referring to the same device PV. They are destroyed when the
@@ -41,9 +41,9 @@ class PVInfo {
     /*! Represents parsed PV information.
      *
      * The derived driver needs to subclass this and return it from the
-     * overridden `Autoparam::Driver::parsePVInfo()`. It is used to identify
-     * which records refer to the same PV and what the data type of the variable
-     * is.
+     * overridden `Autoparam::Driver::parsePVArguments()`. It is used to
+     * identify which records refer to the same PV and what the data type of the
+     * variable is.
      *
      * Unlike `PVInfo`, this class should not take any device resources, or
      * should at least release them when destroyed. Unlike `PVInfo`, many
@@ -64,8 +64,8 @@ class PVInfo {
      * deriving from `Autoparam::Driver` can construct a PVInfo. The usage
      * pattern is the following:
      *
-     * - The driver overrides `Autoparam::Driver::parsePVInfo()`. That method
-     *   interprets the provided `function` and `arguments`, returning an
+     * - The driver overrides `Autoparam::Driver::parsePVArguments()`. That
+     *   method interprets the provided `function` and `arguments`, returning an
      *   instance of `PVInfo::Parsed`.
      *
      * - The `Autoparam::Driver` base class creates an instance of `PVInfo`

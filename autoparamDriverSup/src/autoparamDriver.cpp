@@ -135,7 +135,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
     }
 
     // Let the derived driver parse the arguments.
-    PVInfo::Parsed *parsed = parsePVInfo(function, arguments);
+    PVInfo::Parsed *parsed = parsePVArguments(function, arguments);
     if (parsed == NULL) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                   "%s: port=%s could not parse '%s'\n", driverName, portName,

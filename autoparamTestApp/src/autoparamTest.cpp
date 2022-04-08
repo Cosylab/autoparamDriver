@@ -104,8 +104,8 @@ class AutoparamTest : public Autoparam::Driver {
     }
 
   protected:
-    PVInfo::Parsed *parsePVInfo(std::string const &function,
-                                std::string const &arguments) {
+    PVInfo::Parsed *parsePVArguments(std::string const &function,
+                                     std::string const &arguments) {
         MyParsedInfo *p = new MyParsedInfo;
         p->function = function;
 
