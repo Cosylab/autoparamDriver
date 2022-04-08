@@ -17,11 +17,9 @@
 namespace Autoparam {
 
 /*! Represents a process variable and is a handle for asyn parameters.
- * By itself, this class doesn't do much:
- *   - It splits the INP/OUT link of an EPICS record into a "function" and
- *     "arguments"
- *   - It can be used as a handle referring to a device process variable
- *     (PV), e.g. in read and write handlers or `Driver::setParam()`.
+ *
+ * This class is used as a handle referring to a device process variable (PV),
+ * e.g. in read and write handlers or `Driver::setParam()`.
  *
  * `PVInfo` is meant to be subclassed for use by the derived driver. This
  * greatly increases its utility as it can hold any information related to a PV
@@ -31,24 +29,22 @@ namespace Autoparam {
  * `PVInfo` instances are created only once per device PV, but are shared
  * between records referring to the same device PV. They are destroyed when the
  * driver is destroyed.
- *
- * Currently, the "function" and "arguments" are obtained by splitting the
- * IN/OUT link on spaces. Starting an argument with a `[` or `{` is forbidden —
- * it makes it possible to add JSON parsing in the future.
  */
 class PVInfo {
   public:
     /*! Represents parsed PV information.
      *
      * The derived driver needs to subclass this and return it from the
-     * overridden `Autoparam::Driver::parsePVArguments()`. It is used to
-     * identify which records refer to the same PV and what the data type of the
-     * variable is.
+     * overridden `Autoparam::Driver::parsePVArguments()`. It is intended for
+     * the derived driver to store parsed PV arguments here, e.g. numeric
+     * addresses and offsets. It is used by the base `Driver` to identify which
+     * records refer to the same PV and what the data type of the variable is.
      *
-     * Unlike `PVInfo`, this class should not take any device resources, or
-     * should at least release them when destroyed. Unlike `PVInfo`, many
+     * Unlike `PVInfo`, this class should not take any device resources, or, if
+     * unavoidable (e.g. because it needs to access the device for name
+     * resolution), must release resources when destroyed; unlike `PVInfo`, many
      * instances of `Parsed` can be created per PV, then destroyed even before
-     * the IOC is initialized.
+     * the IOC is fully initialized.
      */
     class Parsed {
       public:
@@ -134,7 +130,7 @@ class PVInfo {
  */
 template <typename T> class Array {
   public:
-    //! Construct an `Array` reference to `value`, setting it's size to
+    //! Construct an `Array` reference to `value`, setting its size to
     //! `maxSize`.
     Array(T *value, size_t maxSize)
         : m_data(value), m_size(maxSize), m_maxSize(maxSize) {
