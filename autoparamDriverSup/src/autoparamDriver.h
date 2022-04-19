@@ -56,18 +56,23 @@ class DriverOpts {
 
     /*! Enable/disable asyn autoconnect functionality.
      *
-     * Note: in practice, asyn does not call `connect()` and `disconnect()` if
-     * the driver is used solely by EPICS records. If that's the only intended
-     * use of the driver, this option makes no difference.
-     *
-     * When enabled, the driver's `connect()` and `disconnect()` functions are
-     * called automatically when the driver is set up and subsequently if it
-     * gets disconnected.
-     *
      * Please refer to [asyn
      * documentation](https://epics.anl.gov/modules/soft/asyn/R4-38/asynDriver.html)
-     * for more information. If overriding `asynPortDriver::connect()`, be aware
-     * that it can be called before your driver is completely initialized.
+     * for more information. In short, if you do not override
+     * `asynPortDriver::connect()` or `asynPortDriver::disconnect()`, enabling
+     * autoconnect simply means that the asyn port will always appear connected,
+     * which may be all you need.
+     *
+     * **Important:** if overriding `asynPortDriver::connect()`, you need to
+     * know what you are doing. Be aware that autoconnect tries to connect
+     * *before your driver is completely initialized*. This means that your code
+     * *will not be called* when autoconnect is enabled. If you need to override
+     * `asynPortDriver::connect()`, you may be better off disabling the
+     * autoconnect option here and instead use the `asynManager` and
+     * `asynCommonSyncIO` interfaces to connect (and/or enable autoconnect) from
+     * your driver's constructor, which is executed later when virtual functions
+     * have already been set up. See also `setInitHook()` for a way to connect
+     * to the device even later, after all the records are initialized.
      *
      * Default: enabled
      */
