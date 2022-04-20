@@ -17,7 +17,8 @@ static char const *driverName = "Autoparam::Driver";
 
 static std::map<Driver *, DriverOpts::InitHook> allInitHooks;
 
-DeviceVariable::DeviceVariable(char const *reason, std::string const &function, DeviceAddress *addr)
+DeviceVariable::DeviceVariable(char const *reason, std::string const &function,
+                               DeviceAddress *addr)
     : m_reasonString(reason), m_function(function), m_address(addr) {}
 
 DeviceVariable::DeviceVariable(DeviceVariable *other) {
@@ -170,8 +171,8 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
         createParam(baseVar.asString().c_str(), baseVar.m_asynParamType,
                     &baseVar.m_asynParamIndex);
 
-        // Let the derived driver construct a subclass of DeviceVariable based on ours.
-        // Takes ownership of stuff in our `baseVar`.
+        // Let the derived driver construct a subclass of DeviceVariable based
+        // on ours. Takes ownership of stuff in our `baseVar`.
         DeviceVariable *var = createDeviceVariable(&baseVar);
         if (var == NULL) {
             asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
@@ -229,7 +230,7 @@ std::vector<DeviceVariable *> Driver::getAllVariables() const {
 
 template <typename IntType>
 void Driver::getInterruptVarsForInterface(std::vector<DeviceVariable *> &dest,
-                                         int canInterrupt, void *ifacePvt) {
+                                          int canInterrupt, void *ifacePvt) {
     ELLLIST *clients;
     pasynManager->interruptStart(ifacePvt, &clients);
     ELLNODE *node = ellFirst(clients);
@@ -251,8 +252,7 @@ std::vector<DeviceVariable *> Driver::getInterruptVariables() {
     getInterruptVarsForInterface<asynOctetInterrupt>(
         vars, ifcs->octetCanInterrupt, ifcs->octetInterruptPvt);
     getInterruptVarsForInterface<asynUInt32DigitalInterrupt>(
-        vars, ifcs->uInt32DigitalCanInterrupt,
-        ifcs->uInt32DigitalInterruptPvt);
+        vars, ifcs->uInt32DigitalCanInterrupt, ifcs->uInt32DigitalInterruptPvt);
     getInterruptVarsForInterface<asynInt32Interrupt>(
         vars, ifcs->int32CanInterrupt, ifcs->int32InterruptPvt);
     getInterruptVarsForInterface<asynInt64Interrupt>(
@@ -598,11 +598,10 @@ asynStatus Driver::doCallbacksArray(DeviceVariable const &var, Array<T> &value,
     return doCallbacksArrayDispatch(var.asynIndex(), value);
 }
 
-template asynStatus Driver::doCallbacksArray<epicsInt8>(DeviceVariable const &var,
-                                                        Array<epicsInt8> &value,
-                                                        asynStatus status,
-                                                        int alarmStatus,
-                                                        int alarmSeverity);
+template asynStatus
+Driver::doCallbacksArray<epicsInt8>(DeviceVariable const &var,
+                                    Array<epicsInt8> &value, asynStatus status,
+                                    int alarmStatus, int alarmSeverity);
 template asynStatus Driver::doCallbacksArray<epicsInt16>(
     DeviceVariable const &var, Array<epicsInt16> &value, asynStatus status,
     int alarmStatus, int alarmSeverity);
@@ -620,8 +619,9 @@ template asynStatus Driver::doCallbacksArray<epicsFloat64>(
     int alarmStatus, int alarmSeverity);
 
 template <typename T>
-asynStatus Driver::setParam(DeviceVariable const &var, T value, asynStatus status,
-                            int alarmStatus, int alarmSeverity) {
+asynStatus Driver::setParam(DeviceVariable const &var, T value,
+                            asynStatus status, int alarmStatus,
+                            int alarmSeverity) {
     setParamStatus(var.asynIndex(), status);
     setParamAlarmStatus(var.asynIndex(), alarmStatus);
     setParamAlarmSeverity(var.asynIndex(), alarmSeverity);
@@ -652,16 +652,15 @@ template asynStatus Driver::setParam<epicsFloat64>(DeviceVariable const &var,
                                                    asynStatus status,
                                                    int alarmStatus,
                                                    int alarmSeverity);
-template asynStatus Driver::setParam<Octet>(DeviceVariable const &var, Octet value,
-                                            asynStatus status, int alarmStatus,
-                                            int alarmSeverity);
+template asynStatus Driver::setParam<Octet>(DeviceVariable const &var,
+                                            Octet value, asynStatus status,
+                                            int alarmStatus, int alarmSeverity);
 
 template <>
 asynStatus Driver::setParam<epicsUInt32>(DeviceVariable const &var,
                                          epicsUInt32 value, asynStatus status,
                                          int alarmStatus, int alarmSeverity) {
-    return setParam(var, value, 0xffffffff, status, alarmStatus,
-                    alarmSeverity);
+    return setParam(var, value, 0xffffffff, status, alarmStatus, alarmSeverity);
 }
 
 template <typename T>
@@ -868,8 +867,7 @@ asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
     Array<T> arrayRef(value, maxSize);
     typename Handlers<Array<T> >::ReadHandler handler =
         getHandlerMap<Array<T> >().at(var->function()).readHandler;
-    typename Handlers<Array<T> >::ReadResult result =
-        handler(*var, arrayRef);
+    typename Handlers<Array<T> >::ReadResult result = handler(*var, arrayRef);
     handleResultStatus(pasynUser, result);
     *size = arrayRef.size();
     if (shouldProcessInterrupts(result)) {
@@ -884,8 +882,7 @@ asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
     Array<T> arrayRef(value, size);
     typename Handlers<Array<T> >::WriteHandler handler =
         getHandlerMap<Array<T> >().at(var->function()).writeHandler;
-    typename Handlers<Array<T> >::WriteResult result =
-        handler(*var, arrayRef);
+    typename Handlers<Array<T> >::WriteResult result = handler(*var, arrayRef);
     handleResultStatus(pasynUser, result);
     if (shouldProcessInterrupts(result)) {
         return doCallbacksArrayDispatch(var->asynIndex(), arrayRef);

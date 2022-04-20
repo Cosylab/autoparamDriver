@@ -102,10 +102,10 @@ class DeviceVariable {
     /*! Returns the type of the underlying asyn parameter.
      *
      * Apart from complementing `asynIndex()`, it allows the driver (or the
-     * constructor of the derived class of `DeviceVariable`) to act differently based on
-     * the type. While the derived driver can also determine this information
-     * from `function()` (it knows which type each function handler is
-     * registered for), using `asynType()` is faster and more convenient.
+     * constructor of the derived class of `DeviceVariable`) to act differently
+     * based on the type. While the derived driver can also determine this
+     * information from `function()` (it knows which type each function handler
+     * is registered for), using `asynType()` is faster and more convenient.
      */
     asynParamType asynType() const { return m_asynParamType; }
 
@@ -120,10 +120,11 @@ class DeviceVariable {
     friend class Driver;
 
     // Only the `Driver` has access to the reason string, so this constructor is
-    // private. It also doesn't completely initialize `DeviceVariable`. That job is up
-    // to `Driver::drvUserCreate()`. DeviceVariable takes ownership of the provided
-    // DeviceAddress object.
-    DeviceVariable(char const *reason, std::string const &function, DeviceAddress *addr);
+    // private. It also doesn't completely initialize `DeviceVariable`. That job
+    // is up to `Driver::drvUserCreate()`. DeviceVariable takes ownership of the
+    // provided DeviceAddress object.
+    DeviceVariable(char const *reason, std::string const &function,
+                   DeviceAddress *addr);
 
     std::string m_reasonString;
     std::string m_function;
@@ -372,14 +373,14 @@ template <typename T> struct AsynType;
  * and when it switches away; the `cancel` argument reflects that, being `false`
  * in the former case and `true` in the latter. The purpose of the registrar
  * function is to set up or tear down a subscription for events (or interrupts)
- * relevant to the given `deviceVariable`.
+ * relevant to the given `var`.
  *
  * To be more precise: a device variable can be referred to by several EPICS
  * records, any number of which can be set to `I/O Intr` scanning. This function
  * is called with `cancel = false` when the number of `I/O Intr` records
  * increases to 1, and with `cancel = true` when the number decreases to 0.
  */
-typedef asynStatus (*InterruptRegistrar)(DeviceVariable &deviceVariable, bool cancel);
+typedef asynStatus (*InterruptRegistrar)(DeviceVariable &var, bool cancel);
 
 /*! Handler signatures for type `T`.
  *
@@ -399,9 +400,9 @@ template <typename T> struct Handlers<T, false> {
     //! %Result type for scalar reads.
     typedef Result<T> ReadResult;
     //! Writes `value` to the device.
-    typedef WriteResult (*WriteHandler)(DeviceVariable &deviceVariable, T value);
+    typedef WriteResult (*WriteHandler)(DeviceVariable &var, T value);
     //! Reads a value from the device, returning it inside `ReadResult`.
-    typedef ReadResult (*ReadHandler)(DeviceVariable &deviceVariable);
+    typedef ReadResult (*ReadHandler)(DeviceVariable &var);
 
     static const asynParamType type = AsynType<T>::value;
     WriteHandler writeHandler;
@@ -417,14 +418,15 @@ template <typename T> struct Handlers<Array<T>, true> {
     //! %Result type for array reads.
     typedef ArrayResult ReadResult;
     //! Writes `value` to the device.
-    typedef WriteResult (*WriteHandler)(DeviceVariable &deviceVariable, Array<T> const &value);
+    typedef WriteResult (*WriteHandler)(DeviceVariable &var,
+                                        Array<T> const &value);
     /*! Reads an array from the device, storing data in `value`.
      *
      * Unlike a scalar read handler, the value is *not* returned as a
      * `ReadResult`, but written directly to the given buffer, up to the amount
      * returned by `value.maxSize()`.
      */
-    typedef ReadResult (*ReadHandler)(DeviceVariable &deviceVariable, Array<T> &value);
+    typedef ReadResult (*ReadHandler)(DeviceVariable &var, Array<T> &value);
 
     static const asynParamType type = AsynType<Array<T> >::value;
 
@@ -500,11 +502,11 @@ template <> struct Handlers<epicsUInt32, false> {
     //! %Result type for scalar reads.
     typedef Result<epicsUInt32> ReadResult;
     //! Writes `value` to the device, honoring the given `mask`.
-    typedef WriteResult (*WriteHandler)(DeviceVariable &deviceVariable, epicsUInt32 value,
+    typedef WriteResult (*WriteHandler)(DeviceVariable &var, epicsUInt32 value,
                                         epicsUInt32 mask);
     //! Reads a value from the device, honoring `mask`, returning it inside
     //! `ReadResult`.
-    typedef ReadResult (*ReadHandler)(DeviceVariable &deviceVariable, epicsUInt32 mask);
+    typedef ReadResult (*ReadHandler)(DeviceVariable &var, epicsUInt32 mask);
 
     static const asynParamType type = AsynType<epicsUInt32>::value;
     WriteHandler writeHandler;
@@ -523,9 +525,10 @@ template <> struct Handlers<Octet, false> {
     //! %Result type for `Octet` reads (essentially `ArrayResult`).
     typedef Result<Octet> ReadResult;
     //! Writes `value` to the device.
-    typedef WriteResult (*WriteHandler)(DeviceVariable &deviceVariable, Octet const &value);
+    typedef WriteResult (*WriteHandler)(DeviceVariable &var,
+                                        Octet const &value);
     //! Reads a string from the device, storing data in `value`.
-    typedef ReadResult (*ReadHandler)(DeviceVariable &deviceVariable, Octet &value);
+    typedef ReadResult (*ReadHandler)(DeviceVariable &var, Octet &value);
 
     static const asynParamType type = AsynType<Octet>::value;
 
@@ -552,9 +555,9 @@ template <> struct Handlers<Octet, false> {
  */
 namespace Convenience {
 // using directives are not picked up by doxygen
+using Autoparam::Array;
 using Autoparam::DeviceAddress;
 using Autoparam::DeviceVariable;
-using Autoparam::Array;
 using Autoparam::Octet;
 using Autoparam::Result;
 typedef Autoparam::WriteResult WriteResult;

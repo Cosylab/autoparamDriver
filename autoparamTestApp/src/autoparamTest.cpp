@@ -57,9 +57,10 @@ class AutoparamTest : public Autoparam::Driver {
                     return;
                 }
 
-                std::vector<DeviceVariable *> intrs = self->getInterruptVariables();
+                std::vector<DeviceVariable *> intrs =
+                    self->getInterruptVariables();
                 for (std::vector<DeviceVariable *>::iterator i = intrs.begin(),
-                                                     end = intrs.end();
+                                                             end = intrs.end();
                      i != end; ++i) {
                     DeviceVariable &pv = **i;
                     if (pv.function() == "RANDOM") {
@@ -105,7 +106,7 @@ class AutoparamTest : public Autoparam::Driver {
 
   protected:
     DeviceAddress *parseDeviceAddress(std::string const &function,
-                                     std::string const &arguments) {
+                                      std::string const &arguments) {
         MyAddress *p = new MyAddress;
         p->function = function;
 
@@ -197,7 +198,8 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
-    static ArrayReadResult wfm8Read(DeviceVariable &baseVar, Array<epicsInt8> &value) {
+    static ArrayReadResult wfm8Read(DeviceVariable &baseVar,
+                                    Array<epicsInt8> &value) {
         ArrayReadResult result;
         MyVar &deviceVariable = static_cast<MyVar &>(baseVar);
         AutoparamTest *self = deviceVariable.driver;
@@ -240,8 +242,9 @@ class AutoparamTest : public Autoparam::Driver {
         OctetReadResult result;
         std::string argcat;
         MyVar &deviceVariable = static_cast<MyVar &>(baseVar);
-        for (ArgumentList::const_iterator i = deviceVariable.arguments().begin(),
-                                          end = deviceVariable.arguments().end();
+        for (ArgumentList::const_iterator
+                 i = deviceVariable.arguments().begin(),
+                 end = deviceVariable.arguments().end();
              i != end; ++i) {
             argcat += *i;
         }
@@ -249,7 +252,8 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
-    static WriteResult stringPrint(DeviceVariable &baseVar, Octet const &value) {
+    static WriteResult stringPrint(DeviceVariable &baseVar,
+                                   Octet const &value) {
         printf("Got string: '");
         for (size_t i = 0; i < value.size(); ++i) {
             putchar(value.data()[i]);

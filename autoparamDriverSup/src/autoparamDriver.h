@@ -139,8 +139,8 @@ class DriverOpts {
     /*! Set a function to run after IOC initialization is done.
      *
      * If the driver needs to do something (like open communication to device)
-     * *after* all the records (and consequently, `DeviceVariable`) are constructed,
-     * registering a hook function here is the way to go.
+     * *after* all the records (and consequently, `DeviceVariable`) are
+     * constructed, registering a hook function here is the way to go.
      *
      * The hook is run after the IOC is built, but before any record processing
      * occurs. Specifically, it is hooked to
@@ -232,8 +232,8 @@ class DriverOpts {
  *
  * Apart from read and write functions, methods of `asynPortDriver` such as
  * `asynPortDriver::connect()` can be overriden as needed. To facilitate that,
- * `Driver::deviceVariableFromUser()` is provided to obtain `DeviceVariable` from the `asynUser`
- * pointer that `asynPortDriver` methods are provided.
+ * `Driver::deviceVariableFromUser()` is provided to obtain `DeviceVariable`
+ * from the `asynUser` pointer that `asynPortDriver` methods are provided.
  */
 class Driver : public asynPortDriver {
   public:
@@ -257,14 +257,14 @@ class Driver : public asynPortDriver {
      * May return NULL on error.
      */
     virtual DeviceAddress *parseDeviceAddress(std::string const &function,
-                                             std::string const &arguments) = 0;
+                                              std::string const &arguments) = 0;
 
     /*! Convert the given `DeviceVariable` into an instance of a derived class.
      *
-     * `DeviceVariable` is meant to be subclassed. As records are initialized, `Driver`
-     * creates instances of the `DeviceVariable` base class, then passes them to this
-     * method to convert them to whichever subclass the implementation decides
-     * to return.
+     * `DeviceVariable` is meant to be subclassed. As records are initialized,
+     * `Driver` creates instances of the `DeviceVariable` base class, then
+     * passes them to this method to convert them to whichever subclass the
+     * implementation decides to return.
      *
      * The `baseVar` pointer is intended to be passed to the constructor of
      * `DeviceVariable` which will take ownership of it.
@@ -354,10 +354,11 @@ class Driver : public asynPortDriver {
 
     /*! Obtain a list of device variables bound by `I/O Intr` records.
      *
-     * The list of `DeviceVariable` pointers returned by this method is useful if you
-     * need to implement periodic polling for data and would like to know which
-     * data to poll. It is meant to be used together with `doCallbacksArray()`,
-     * `setParam()` and `asynPortDriver::callParamCallbacks()`.
+     * The list of `DeviceVariable` pointers returned by this method is useful
+     * if you need to implement periodic polling for data and would like to know
+     * which data to poll. It is meant to be used together with
+     * `doCallbacksArray()`, `setParam()` and
+     * `asynPortDriver::callParamCallbacks()`.
      *
      * This function is threadsafe, locking the driver is not necessary.
      */
@@ -368,8 +369,9 @@ class Driver : public asynPortDriver {
      * This facilitates overriding `asynPortDriver` methods if need be. Be
      * aware, though, that the `asynUser` structure is used in asyn to represent
      * any number of different things and the one you have may not correspond to
-     * any `DeviceVariable`. The argument to `asynPortDriver::connect()` is an example.
-     * Use of this method is subject to "know what you are doing" constraints.
+     * any `DeviceVariable`. The argument to `asynPortDriver::connect()` is an
+     * example. Use of this method is subject to "know what you are doing"
+     * constraints.
      */
     DeviceVariable *deviceVariableFromUser(asynUser *pasynUser);
 
@@ -447,7 +449,7 @@ class Driver : public asynPortDriver {
 
     template <typename IntType>
     void getInterruptVarsForInterface(std::vector<DeviceVariable *> &dest,
-                                     int canInterrupt, void *ifacePvt);
+                                      int canInterrupt, void *ifacePvt);
 
     template <typename T> bool hasReadHandler(int index);
     template <typename T> bool hasWriteHandler(int index);
