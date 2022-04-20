@@ -139,7 +139,7 @@ class DriverOpts {
     /*! Set a function to run after IOC initialization is done.
      *
      * If the driver needs to do something (like open communication to device)
-     * *after* all the records (and consequently, `PVInfo`) are constructed,
+     * *after* all the records (and consequently, `DeviceVariable`) are constructed,
      * registering a hook function here is the way to go.
      *
      * The hook is run after the IOC is built, but before any record processing
@@ -193,8 +193,8 @@ class DriverOpts {
  *
  * `Autoparam::Driver` works differently. The string a record uses to refer to a
  * parameter is split into a "function" and its "arguments" which, together,
- * define a "parameter". This is handled by the `PVInfo` class. No parameters
- * exist when the `Driver` is created; instead, instances of `PVInfo` are
+ * define a "parameter". This is handled by the `DeviceVariable` class. No parameters
+ * exist when the `Driver` is created; instead, instances of `DeviceVariable` are
  * created as EPICS database records are initialized.
  *
  * Drivers based on `Autoparam::Driver` do not need to override the read and
@@ -217,7 +217,7 @@ class DriverOpts {
  * To create a new driver based on `Autoparam::Driver`:
  *   1. Create a derived class.
  *   2. Implement the `parsePVArguments()` method.
- *   3. Implement the `createPVInfo()` method.
+ *   3. Implement the `createDeviceVariable()` method.
  *   4. Define static functions that will act as read and write handlers (see
  *      `Autoparam::Handlers` for signatures) and register them as handlers in
  *      the driver's constructor (c.f. `Driver::registerHandlers()`).
@@ -226,7 +226,7 @@ class DriverOpts {
  *
  * Apart from read and write functions, methods of `asynPortDriver` such as
  * `asynPortDriver::connect()` can be overriden as needed. To facilitate that,
- * `Driver::pvInfoFromUser()` is provided to obtain `PVInfo` from the `asynUser`
+ * `Driver::deviceVariableFromUser()` is provided to obtain `DeviceVariable` from the `asynUser`
  * pointer that `asynPortDriver` methods are provided.
  */
 class Driver : public asynPortDriver {
@@ -244,25 +244,25 @@ class Driver : public asynPortDriver {
   protected:
     /*! Parse the given `function` and `arguments`.
      *
-     * `PVInfo::Parsed` is meant to be subclassed. As records are initialized,
+     * `DeviceVariable::Parsed` is meant to be subclassed. As records are initialized,
      * `Driver` needs some information on the device PV referred to by
      * `function` and `arguments`, thus it calls this method.
      *
      * May return NULL on error.
      */
-    virtual PVInfo::Parsed *parsePVArguments(std::string const &function,
+    virtual DeviceVariable::Parsed *parsePVArguments(std::string const &function,
                                              std::string const &arguments) = 0;
 
-    /*! Convert the given `PVInfo` into an instance of a derived class.
+    /*! Convert the given `DeviceVariable` into an instance of a derived class.
      *
-     * `PVInfo` is meant to be subclassed. As records are initialized, `Driver`
-     * creates instances of the `PVInfo` base class, then passes them to this
+     * `DeviceVariable` is meant to be subclassed. As records are initialized, `Driver`
+     * creates instances of the `DeviceVariable` base class, then passes them to this
      * method to convert them to whichever subclass the implementation decides
      * to return.
      *
      * May return NULL on error.
      */
-    virtual PVInfo *createPVInfo(PVInfo *baseInfo) = 0;
+    virtual DeviceVariable *createDeviceVariable(DeviceVariable *baseVar) = 0;
 
     /*! Register handlers for the combination of `function` and type `T`.
      *
@@ -272,7 +272,7 @@ class Driver : public asynPortDriver {
      *         See `Autoparam::AsynType`.
      *
      * \param function The name of the "function" (in the sense of "device
-     *        function", see `PVInfo`).
+     *        function", see `DeviceVariable`).
      *
      * \param reader Handler function that is called when an input record
      *        referencing `function` with `DTYP` corresponding to `T` is
@@ -291,7 +291,7 @@ class Driver : public asynPortDriver {
                           typename Handlers<T>::WriteHandler writer,
                           InterruptRegistrar intrRegistrar);
 
-    /*! Propagate the array data to `I/O Intr` records bound to `pvInfo`.
+    /*! Propagate the array data to `I/O Intr` records bound to `deviceVariable`.
      *
      * Unless this function is called from a read or write handler, the driver
      * needs to be locked. See `asynPortDriver::lock()`.
@@ -300,12 +300,12 @@ class Driver : public asynPortDriver {
      * as on completion of a write handler. See `Autoparam::ResultBase`.
      */
     template <typename T>
-    asynStatus doCallbacksArray(PVInfo const &pvInfo, Array<T> &value,
+    asynStatus doCallbacksArray(DeviceVariable const &deviceVariable, Array<T> &value,
                                 asynStatus status = asynSuccess,
                                 int alarmStatus = epicsAlarmNone,
                                 int alarmSeverity = epicsSevNone);
 
-    /*! Set the value of the parameter represented by `pvInfo`.
+    /*! Set the value of the parameter represented by `deviceVariable`.
      *
      * Unless this function is called from a read or write handler, the driver
      * needs to be locked. See `asynPortDriver::lock()`.
@@ -319,18 +319,18 @@ class Driver : public asynPortDriver {
      * processing.
      */
     template <typename T>
-    asynStatus setParam(PVInfo const &pvInfo, T value,
+    asynStatus setParam(DeviceVariable const &deviceVariable, T value,
                         asynStatus status = asynSuccess,
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
-    /*! Set the value of the parameter represented by `pvInfo`.
+    /*! Set the value of the parameter represented by `deviceVariable`.
      *
      * This is an overload for digital IO, where `mask` specifies which bits of
      * `value` are of interest. While the default overload works with
      * `epicsUInt32`, it uses the mask value `0xFFFFFFFF`.
      */
-    asynStatus setParam(PVInfo const &pvInfo, epicsUInt32 value,
+    asynStatus setParam(DeviceVariable const &deviceVariable, epicsUInt32 value,
                         epicsUInt32 mask, asynStatus status = asynSuccess,
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
@@ -339,28 +339,28 @@ class Driver : public asynPortDriver {
      *
      * This function is threadsafe, locking the driver is not necessary.
      */
-    std::vector<PVInfo *> getAllPVs() const;
+    std::vector<DeviceVariable *> getAllPVs() const;
 
     /*! Obtain a list of PVs bound by `I/O Intr` records.
      *
-     * The list of `PVInfo` pointers returned by this method is useful if you
+     * The list of `DeviceVariable` pointers returned by this method is useful if you
      * need to implement periodic polling for data and would like to know which
      * data to poll. It is meant to be used together with `doCallbacksArray()`,
      * `setParam()` and `asynPortDriver::callParamCallbacks()`.
      *
      * This function is threadsafe, locking the driver is not necessary.
      */
-    std::vector<PVInfo *> getInterruptPVs();
+    std::vector<DeviceVariable *> getInterruptPVs();
 
-    /*! Obtain a `PVInfo` given an `asynUser`.
+    /*! Obtain a `DeviceVariable` given an `asynUser`.
      *
      * This facilitates overriding `asynPortDriver` methods if need be. Be
      * aware, though, that the `asynUser` structure is used in asyn to represent
      * any number of different things and the one you have may not correspond to
-     * any `PVInfo`. The argument to `asynPortDriver::connect()` is an example.
+     * any `DeviceVariable`. The argument to `asynPortDriver::connect()` is an example.
      * Use of this method is subject to "know what you are doing" constraints.
      */
-    PVInfo *pvInfoFromUser(asynUser *pasynUser);
+    DeviceVariable *deviceVariableFromUser(asynUser *pasynUser);
 
   public:
     // Beyond this point, the methods are public because they are part of the
@@ -435,7 +435,7 @@ class Driver : public asynPortDriver {
     void handleResultStatus(asynUser *pasynUser, ResultBase const &result);
 
     template <typename IntType>
-    void getInterruptPVsForInterface(std::vector<PVInfo *> &dest,
+    void getInterruptPVsForInterface(std::vector<DeviceVariable *> &dest,
                                      int canInterrupt, void *ifacePvt);
 
     template <typename T> bool hasReadHandler(int index);
@@ -492,7 +492,7 @@ class Driver : public asynPortDriver {
 
     DriverOpts opts;
 
-    typedef std::map<int, PVInfo *> ParamMap;
+    typedef std::map<int, DeviceVariable *> ParamMap;
     ParamMap m_params;
     std::map<std::string, asynParamType> m_functionTypes;
 
@@ -500,7 +500,7 @@ class Driver : public asynPortDriver {
     typedef void (*VoidFuncPtr)(void);
     std::map<asynParamType, std::pair<VoidFuncPtr, VoidFuncPtr> >
         m_originalIntrRegister;
-    std::map<PVInfo *, int> m_interruptRefcount;
+    std::map<DeviceVariable *, int> m_interruptRefcount;
 
     std::map<std::string, Handlers<epicsInt32> > m_Int32HandlerMap;
     std::map<std::string, Handlers<epicsInt64> > m_Int64HandlerMap;

@@ -18,9 +18,9 @@ class AutoparamTest;
 
 typedef std::vector<std::string> ArgumentList;
 
-class MyParsedInfo : public PVInfo::Parsed {
+class MyParsedInfo : public DeviceVariable::Parsed {
   public:
-    bool operator==(PVInfo::Parsed const &other) const {
+    bool operator==(DeviceVariable::Parsed const &other) const {
         MyParsedInfo const &o = static_cast<MyParsedInfo const &>(other);
         return function == o.function && arguments == o.arguments;
     }
@@ -29,10 +29,10 @@ class MyParsedInfo : public PVInfo::Parsed {
     ArgumentList arguments;
 };
 
-class MyInfo : public PVInfo {
+class MyVar : public DeviceVariable {
   public:
-    MyInfo(PVInfo *baseInfo, AutoparamTest *driver)
-        : PVInfo(baseInfo), driver(driver) {}
+    MyVar(DeviceVariable *baseVar, AutoparamTest *driver)
+        : DeviceVariable(baseVar), driver(driver) {}
 
     ArgumentList const &arguments() const {
         return static_cast<MyParsedInfo const &>(parsed()).arguments;
@@ -57,11 +57,11 @@ class AutoparamTest : public Autoparam::Driver {
                     return;
                 }
 
-                std::vector<PVInfo *> intrs = self->getInterruptPVs();
-                for (std::vector<PVInfo *>::iterator i = intrs.begin(),
+                std::vector<DeviceVariable *> intrs = self->getInterruptPVs();
+                for (std::vector<DeviceVariable *>::iterator i = intrs.begin(),
                                                      end = intrs.end();
                      i != end; ++i) {
-                    PVInfo &pv = **i;
+                    DeviceVariable &pv = **i;
                     if (pv.function() == "RANDOM") {
                         self->setParam(pv, (int32_t)rand_r(&self->randomSeed));
                     }
@@ -104,7 +104,7 @@ class AutoparamTest : public Autoparam::Driver {
     }
 
   protected:
-    PVInfo::Parsed *parsePVArguments(std::string const &function,
+    DeviceVariable::Parsed *parsePVArguments(std::string const &function,
                                      std::string const &arguments) {
         MyParsedInfo *p = new MyParsedInfo;
         p->function = function;
@@ -118,8 +118,8 @@ class AutoparamTest : public Autoparam::Driver {
         return p;
     }
 
-    PVInfo *createPVInfo(PVInfo *baseInfo) {
-        return new MyInfo(baseInfo, this);
+    DeviceVariable *createDeviceVariable(DeviceVariable *baseVar) {
+        return new MyVar(baseVar, this);
     }
 
   private:
@@ -128,38 +128,38 @@ class AutoparamTest : public Autoparam::Driver {
         printf("Running init hook for Autoparam::Driver 0x%p "
                "with the following PVs:\n",
                driver);
-        std::vector<PVInfo *> pvs = self->getAllPVs();
+        std::vector<DeviceVariable *> pvs = self->getAllPVs();
         for (size_t i = 0; i < pvs.size(); ++i) {
             printf("    0x%p: %s\n", pvs[i], pvs[i]->asString().c_str());
         }
     }
 
-    static asynStatus interruptReg(PVInfo &baseInfo, bool cancel) {
+    static asynStatus interruptReg(DeviceVariable &baseVar, bool cancel) {
         printf("Interrupt %s: %s\n", (cancel ? "cancelled" : "registered"),
-               baseInfo.asString().c_str());
+               baseVar.asString().c_str());
         return asynSuccess;
     }
 
-    static Int32ReadResult randomRead(PVInfo &baseInfo) {
+    static Int32ReadResult randomRead(DeviceVariable &baseVar) {
         Int32ReadResult result;
-        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
-        AutoparamTest *self = pvInfo.driver;
+        MyVar &deviceVariable = static_cast<MyVar &>(baseVar);
+        AutoparamTest *self = deviceVariable.driver;
         result.value = rand_r(&self->randomSeed);
         result.processInterrupts = true;
         return result;
     }
 
-    static WriteResult sumArgs(PVInfo &baseInfo, epicsInt32 value) {
+    static WriteResult sumArgs(DeviceVariable &baseVar, epicsInt32 value) {
         WriteResult result;
-        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
-        AutoparamTest *self = pvInfo.driver;
+        MyVar &deviceVariable = static_cast<MyVar &>(baseVar);
+        AutoparamTest *self = deviceVariable.driver;
 
-        if (pvInfo.arguments().front() == "set") {
+        if (deviceVariable.arguments().front() == "set") {
             self->currentSum = value;
         } else {
             typedef ArgumentList::const_iterator Iter;
-            for (Iter i = pvInfo.arguments().begin(),
-                      end = pvInfo.arguments().end();
+            for (Iter i = deviceVariable.arguments().begin(),
+                      end = deviceVariable.arguments().end();
                  i != end; ++i) {
                 std::istringstream istr(*i);
                 int val;
@@ -171,18 +171,18 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
-    static Int32ReadResult readSum(PVInfo &baseInfo) {
+    static Int32ReadResult readSum(DeviceVariable &baseVar) {
         Int32ReadResult result;
-        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
-        AutoparamTest *self = pvInfo.driver;
+        MyVar &deviceVariable = static_cast<MyVar &>(baseVar);
+        AutoparamTest *self = deviceVariable.driver;
         result.value = self->currentSum;
         return result;
     }
 
-    static Float64ReadResult erroredRead(PVInfo &baseInfo) {
+    static Float64ReadResult erroredRead(DeviceVariable &baseVar) {
         Float64ReadResult result;
-        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
-        std::string const &arg = pvInfo.arguments().front();
+        MyVar &deviceVariable = static_cast<MyVar &>(baseVar);
+        std::string const &arg = deviceVariable.arguments().front();
         if (arg == "error") {
             result.status = asynError;
         } else if (arg == "timeout") {
@@ -197,19 +197,19 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
-    static ArrayReadResult wfm8Read(PVInfo &baseInfo, Array<epicsInt8> &value) {
+    static ArrayReadResult wfm8Read(DeviceVariable &baseVar, Array<epicsInt8> &value) {
         ArrayReadResult result;
-        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
-        AutoparamTest *self = pvInfo.driver;
+        MyVar &deviceVariable = static_cast<MyVar &>(baseVar);
+        AutoparamTest *self = deviceVariable.driver;
         value.fillFrom(self->wfm8Data);
         return result;
     }
 
-    static WriteResult wfm8Write(PVInfo &baseInfo,
+    static WriteResult wfm8Write(DeviceVariable &baseVar,
                                  Array<epicsInt8> const &value) {
         WriteResult result;
-        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
-        AutoparamTest *self = pvInfo.driver;
+        MyVar &deviceVariable = static_cast<MyVar &>(baseVar);
+        AutoparamTest *self = deviceVariable.driver;
 
         // Enforce an arbitrary limit
         if (value.size() < 8) {
@@ -221,27 +221,27 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
-    static WriteResult bitsSet(PVInfo &baseInfo, epicsUInt32 value,
+    static WriteResult bitsSet(DeviceVariable &baseVar, epicsUInt32 value,
                                epicsUInt32 mask) {
         WriteResult result;
-        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
-        pvInfo.driver->shiftedRegister = (value & mask) << 3;
+        MyVar &deviceVariable = static_cast<MyVar &>(baseVar);
+        deviceVariable.driver->shiftedRegister = (value & mask) << 3;
         return result;
     }
 
-    static UInt32ReadResult bitsGet(PVInfo &baseInfo, epicsUInt32 mask) {
+    static UInt32ReadResult bitsGet(DeviceVariable &baseVar, epicsUInt32 mask) {
         UInt32ReadResult result;
-        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
-        result.value = pvInfo.driver->shiftedRegister & mask;
+        MyVar &deviceVariable = static_cast<MyVar &>(baseVar);
+        result.value = deviceVariable.driver->shiftedRegister & mask;
         return result;
     }
 
-    static OctetReadResult argEcho(PVInfo &baseInfo, Octet &value) {
+    static OctetReadResult argEcho(DeviceVariable &baseVar, Octet &value) {
         OctetReadResult result;
         std::string argcat;
-        MyInfo &pvInfo = static_cast<MyInfo &>(baseInfo);
-        for (ArgumentList::const_iterator i = pvInfo.arguments().begin(),
-                                          end = pvInfo.arguments().end();
+        MyVar &deviceVariable = static_cast<MyVar &>(baseVar);
+        for (ArgumentList::const_iterator i = deviceVariable.arguments().begin(),
+                                          end = deviceVariable.arguments().end();
              i != end; ++i) {
             argcat += *i;
         }
@@ -249,7 +249,7 @@ class AutoparamTest : public Autoparam::Driver {
         return result;
     }
 
-    static WriteResult stringPrint(PVInfo &baseInfo, Octet const &value) {
+    static WriteResult stringPrint(DeviceVariable &baseVar, Octet const &value) {
         printf("Got string: '");
         for (size_t i = 0; i < value.size(); ++i) {
             putchar(value.data()[i]);

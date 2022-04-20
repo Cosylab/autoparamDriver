@@ -21,16 +21,16 @@ namespace Autoparam {
  * This class is used as a handle referring to a device process variable (PV),
  * e.g. in read and write handlers or `Driver::setParam()`.
  *
- * `PVInfo` is meant to be subclassed for use by the derived driver. This
+ * `DeviceVariable` is meant to be subclassed for use by the derived driver. This
  * greatly increases its utility as it can hold any information related to a PV
  * that the derived driver might require. This is done via
- * `Driver::createPVInfo()`.
+ * `Driver::createDeviceVariable()`.
  *
- * `PVInfo` instances are created only once per device PV, but are shared
+ * `DeviceVariable` instances are created only once per device PV, but are shared
  * between records referring to the same device PV. They are destroyed when the
  * driver is destroyed.
  */
-class PVInfo {
+class DeviceVariable {
   public:
     /*! Represents parsed PV information.
      *
@@ -40,9 +40,9 @@ class PVInfo {
      * addresses and offsets. It is used by the base `Driver` to identify which
      * records refer to the same PV and what the data type of the variable is.
      *
-     * Unlike `PVInfo`, this class should not take any device resources, or, if
+     * Unlike `DeviceVariable`, this class should not take any device resources, or, if
      * unavoidable (e.g. because it needs to access the device for name
-     * resolution), must release resources when destroyed; unlike `PVInfo`, many
+     * resolution), must release resources when destroyed; unlike `DeviceVariable`, many
      * instances of `Parsed` can be created per PV, then destroyed even before
      * the IOC is fully initialized.
      */
@@ -54,27 +54,27 @@ class PVInfo {
         virtual bool operator==(Parsed const &other) const = 0;
     };
 
-    /*! Construct `PVInfo` from another. The other one is invalidated.
+    /*! Construct `DeviceVariable` from another. The other one is invalidated.
      *
      * Being the only public constructor, this is the only way the driver
-     * deriving from `Autoparam::Driver` can construct a PVInfo. The usage
+     * deriving from `Autoparam::Driver` can construct a DeviceVariable. The usage
      * pattern is the following:
      *
      * - The driver overrides `Autoparam::Driver::parsePVArguments()`. That
      *   method interprets the provided `function` and `arguments`, returning an
-     *   instance of `PVInfo::Parsed`.
+     *   instance of `DeviceVariable::Parsed`.
      *
-     * - The `Autoparam::Driver` base class creates an instance of `PVInfo`
+     * - The `Autoparam::Driver` base class creates an instance of `DeviceVariable`
      *   which contains the necessary data to refer to the underlying PV.
      *
-     * - The driver overrides `Autoparam::Driver::createPVInfo()`. In that
-     *   method, it uses the `PVInfo` copy constructor and `PVInfo::parsed()` to
-     *   instantiate a subclass of `PVInfo` that contains everything that the
+     * - The driver overrides `Autoparam::Driver::createDeviceVariable()`. In that
+     *   method, it uses the `DeviceVariable` copy constructor and `DeviceVariable::parsed()` to
+     *   instantiate a subclass of `DeviceVariable` that contains everything that the
      *   driver needs to access the underlying device PV.
      */
-    explicit PVInfo(PVInfo *other);
+    explicit DeviceVariable(DeviceVariable *other);
 
-    virtual ~PVInfo();
+    virtual ~DeviceVariable();
 
     //! Returns the "function" given in the record.
     std::string const &function() const { return m_function; }
@@ -92,7 +92,7 @@ class PVInfo {
     /*! Returns the type of the underlying asyn parameter.
      *
      * Apart from complementing `asynIndex()`, it allows the driver (or the
-     * constructor of the derived class of `PVInfo`) to act differently based on
+     * constructor of the derived class of `DeviceVariable`) to act differently based on
      * the type. While the derived driver can also determine this information
      * from `function()` (it knows which type each function handler is
      * registered for), using `asynType()` is faster and more convenient.
@@ -106,10 +106,10 @@ class PVInfo {
     friend class Driver;
 
     // Only the `Driver` has access to the reason string, so this constructor is
-    // private. It also doesn't completely initialize `PVInfo`. That job is up
-    // to `Driver::drvUserCreate()`. PVInfo takes ownership of the provided
+    // private. It also doesn't completely initialize `DeviceVariable`. That job is up
+    // to `Driver::drvUserCreate()`. DeviceVariable takes ownership of the provided
     // Parsed object.
-    PVInfo(char const *reason, std::string const &function, Parsed *parsed);
+    DeviceVariable(char const *reason, std::string const &function, Parsed *parsed);
 
     std::string m_reasonString;
     std::string m_function;
@@ -358,14 +358,14 @@ template <typename T> struct AsynType;
  * when it switches away; the `cancel` argument reflects that, being `false` in
  * the former case and `true` in the latter. The purpose of the registrar
  * function is to set up or tear down a subscription for events (or interrupts)
- * relevant to the given `pvInfo`.
+ * relevant to the given `deviceVariable`.
  *
  * To be more precise: a PV can be referred to by several EPICS records, any
  * number of which can be set to `I/O Intr` scanning. This function is called
  * with `cancel = false` when the number of `I/O Intr` records increases to 1,
  * and with `cancel = true` when the number decreases to 0.
  */
-typedef asynStatus (*InterruptRegistrar)(PVInfo &pvInfo, bool cancel);
+typedef asynStatus (*InterruptRegistrar)(DeviceVariable &deviceVariable, bool cancel);
 
 /*! Handler signatures for type `T`.
  *
@@ -385,9 +385,9 @@ template <typename T> struct Handlers<T, false> {
     //! %Result type for scalar reads.
     typedef Result<T> ReadResult;
     //! Writes `value` to the device.
-    typedef WriteResult (*WriteHandler)(PVInfo &pvInfo, T value);
+    typedef WriteResult (*WriteHandler)(DeviceVariable &deviceVariable, T value);
     //! Reads a value from the device, returning it inside `ReadResult`.
-    typedef ReadResult (*ReadHandler)(PVInfo &pvInfo);
+    typedef ReadResult (*ReadHandler)(DeviceVariable &deviceVariable);
 
     static const asynParamType type = AsynType<T>::value;
     WriteHandler writeHandler;
@@ -403,14 +403,14 @@ template <typename T> struct Handlers<Array<T>, true> {
     //! %Result type for array reads.
     typedef ArrayResult ReadResult;
     //! Writes `value` to the device.
-    typedef WriteResult (*WriteHandler)(PVInfo &pvInfo, Array<T> const &value);
+    typedef WriteResult (*WriteHandler)(DeviceVariable &deviceVariable, Array<T> const &value);
     /*! Reads an array from the device, storing data in `value`.
      *
      * Unlike a scalar read handler, the value is *not* returned as a
      * `ReadResult`, but written directly to the given buffer, up to the amount
      * returned by `value.maxSize()`.
      */
-    typedef ReadResult (*ReadHandler)(PVInfo &pvInfo, Array<T> &value);
+    typedef ReadResult (*ReadHandler)(DeviceVariable &deviceVariable, Array<T> &value);
 
     static const asynParamType type = AsynType<Array<T> >::value;
 
@@ -486,11 +486,11 @@ template <> struct Handlers<epicsUInt32, false> {
     //! %Result type for scalar reads.
     typedef Result<epicsUInt32> ReadResult;
     //! Writes `value` to the device, honoring the given `mask`.
-    typedef WriteResult (*WriteHandler)(PVInfo &pvInfo, epicsUInt32 value,
+    typedef WriteResult (*WriteHandler)(DeviceVariable &deviceVariable, epicsUInt32 value,
                                         epicsUInt32 mask);
     //! Reads a value from the device, honoring `mask`, returning it inside
     //! `ReadResult`.
-    typedef ReadResult (*ReadHandler)(PVInfo &pvInfo, epicsUInt32 mask);
+    typedef ReadResult (*ReadHandler)(DeviceVariable &deviceVariable, epicsUInt32 mask);
 
     static const asynParamType type = AsynType<epicsUInt32>::value;
     WriteHandler writeHandler;
@@ -509,9 +509,9 @@ template <> struct Handlers<Octet, false> {
     //! %Result type for `Octet` reads (essentially `ArrayResult`).
     typedef Result<Octet> ReadResult;
     //! Writes `value` to the device.
-    typedef WriteResult (*WriteHandler)(PVInfo &pvInfo, Octet const &value);
+    typedef WriteResult (*WriteHandler)(DeviceVariable &deviceVariable, Octet const &value);
     //! Reads a string from the device, storing data in `value`.
-    typedef ReadResult (*ReadHandler)(PVInfo &pvInfo, Octet &value);
+    typedef ReadResult (*ReadHandler)(DeviceVariable &deviceVariable, Octet &value);
 
     static const asynParamType type = AsynType<Octet>::value;
 
@@ -530,7 +530,7 @@ template <> struct Handlers<Octet, false> {
  *
  * This makes the symbols declared herein easily accessible. Apart from the
  * typdefs shown below, this namespace exposes also:
- *   - `Autoparam::PVInfo`
+ *   - `Autoparam::DeviceVariable`
  *   - `Autoparam::Array`
  *   - `Autoparam::Octet`
  *   - `Autoparam::Result`
@@ -539,7 +539,7 @@ namespace Convenience {
 // using directives are not picked up by doxygen
 using Autoparam::Array;
 using Autoparam::Octet;
-using Autoparam::PVInfo;
+using Autoparam::DeviceVariable;
 using Autoparam::Result;
 typedef Autoparam::WriteResult WriteResult;
 typedef Autoparam::ArrayResult ArrayReadResult;
