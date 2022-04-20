@@ -16,61 +16,68 @@
 
 namespace Autoparam {
 
-/*! Represents parsed PV information.
+/*! Represents parsed device address information.
  *
- * The derived driver needs to subclass this and return it from the
- * overridden `Autoparam::Driver::parsePVArguments()`. It is intended for
- * the derived driver to store parsed PV arguments here, e.g. numeric
- * addresses and offsets. It is used by the base `Driver` to identify which
- * records refer to the same PV and what the data type of the variable is.
+ * The derived driver needs to subclass this and return it from the overridden
+ * `Autoparam::Driver::parseDeviceAddress()`. It is intended for the derived
+ * driver to store parsed function arguments here, e.g. numeric addresses and
+ * offsets. It is used by the base `Driver` to identify which records refer to
+ * the same device variable.
  *
- * Unlike `DeviceVariable`, this class should not take any device resources, or, if
- * unavoidable (e.g. because it needs to access the device for name
- * resolution), must release resources when destroyed; unlike `DeviceVariable`, many
- * instances of `DeviceAddress` can be created per PV, then destroyed even before
- * the IOC is fully initialized.
+ * Unlike `DeviceVariable`, this class should not take any device resources, or,
+ * if unavoidable (e.g. because it needs to access the device for name
+ * resolution), must release resources when destroyed; because several records
+ * can refer to the same underlying variable, many instances of `DeviceAddress`
+ * can be created per `DeviceVariable`, then destroyed even before the IOC is
+ * fully initialized.
+ *
+ * A `DeviceAddress` must be equality-comparable to other addresses. Two
+ * addresses shall compare equal when they refer to the same device variable.
  */
 class DeviceAddress {
   public:
     virtual ~DeviceAddress() {}
 
-    //! Compare to another PV. Must be overridden.
+    //! Compare to another address. Must be overridden.
     virtual bool operator==(DeviceAddress const &other) const = 0;
 };
 
-/*! Represents a process variable and is a handle for asyn parameters.
+/*! Represents a device variable and is a handle for asyn parameters.
  *
- * This class is used as a handle referring to a device process variable (PV),
- * e.g. in read and write handlers or `Driver::setParam()`.
+ * This class is used as a handle referring to a device device variable, e.g. in
+ * read and write handlers or `Driver::setParam()`.
  *
- * `DeviceVariable` is meant to be subclassed for use by the derived driver. This
- * greatly increases its utility as it can hold any information related to a PV
- * that the derived driver might require. This is done via
+ * `DeviceVariable` is meant to be subclassed for use by the derived driver.
+ * This greatly increases its utility as it can hold any information related to
+ * a device variable that the derived driver might require. This is done via
  * `Driver::createDeviceVariable()`.
  *
- * `DeviceVariable` instances are created only once per device PV, but are shared
- * between records referring to the same device PV. They are destroyed when the
- * driver is destroyed.
+ * `DeviceVariable` instances are created only once per device variable, but are
+ * shared between records referring to the same device variable. They are
+ * destroyed when the driver is destroyed.
  */
 class DeviceVariable {
   public:
-    /*! Construct `DeviceVariable` from another. The other one is invalidated.
+    /*! Construct `DeviceVariable` from another; the other one is invalidated.
      *
      * Being the only public constructor, this is the only way the driver
-     * deriving from `Autoparam::Driver` can construct a DeviceVariable. The usage
-     * pattern is the following:
+     * deriving from `Autoparam::Driver` can construct a `DeviceVariable`. The
+     * usage pattern is the following:
      *
-     * - The driver overrides `Autoparam::Driver::parsePVArguments()`. That
+     * - The driver overrides `Autoparam::Driver::parseDeviceAddress()`. That
      *   method interprets the provided `function` and `arguments`, returning an
      *   instance of `DeviceAddress`.
      *
-     * - The `Autoparam::Driver` base class creates an instance of `DeviceVariable`
-     *   which contains the necessary data to refer to the underlying PV.
+     * - The `Autoparam::Driver` base class creates an instance of
+     *   `DeviceVariable` which contains the provided `DeviceAddress` instance
+     *   and some internal data.
      *
-     * - The driver overrides `Autoparam::Driver::createDeviceVariable()`. In that
-     *   method, it uses the `DeviceVariable` copy constructor and `DeviceVariable::parsed()` to
-     *   instantiate a subclass of `DeviceVariable` that contains everything that the
-     *   driver needs to access the underlying device PV.
+     * - The driver overrides `Autoparam::Driver::createDeviceVariable()`. In
+     *   that method, it uses the provided instance of the `DeviceVariable` base
+     *   class and the previously created `DeviceAddress` (now available as
+     *   `DeviceVariable::address()`) to instantiate a subclass of
+     *   `DeviceVariable` that contains everything that the driver needs to
+     *   access the underlying device variable.
      */
     explicit DeviceVariable(DeviceVariable *other);
 
@@ -79,7 +86,10 @@ class DeviceVariable {
     //! Returns the "function" given in the record.
     std::string const &function() const { return m_function; }
 
-    //! Returns the "function+arguments" string representation.
+    /*! Returns the "function+arguments" string representation.
+     *
+     * The resulting string is used for display only, e.g. in error messages.
+     */
     std::string const &asString() const { return m_reasonString; };
 
     /*! Returns the index of the underlying asyn parameter.
@@ -99,7 +109,11 @@ class DeviceVariable {
      */
     asynParamType asynType() const { return m_asynParamType; }
 
-    //! Returns the pre-parsed representation of the PV.
+    /*! Returns the pre-parsed representation of the device address.
+     *
+     * This is the same instance of `DeviceAddress` that has been previously
+     * created by `Driver::parseDeviceAddress()`.
+     */
     DeviceAddress const &address() const { return *m_address; }
 
   private:
@@ -352,18 +366,18 @@ template <typename T> struct AsynType { static const asynParamType value; };
 template <typename T> struct AsynType;
 #endif
 
-/*! Called when a PV switches to or from `I/O Intr` scanning.
+/*! Called when a device variable switches to or from `I/O Intr` scanning.
  *
- * The registrar function is called both when a PV switches to `I/O Intr` and
- * when it switches away; the `cancel` argument reflects that, being `false` in
- * the former case and `true` in the latter. The purpose of the registrar
+ * The registrar function is called both when a variable switches to `I/O Intr`
+ * and when it switches away; the `cancel` argument reflects that, being `false`
+ * in the former case and `true` in the latter. The purpose of the registrar
  * function is to set up or tear down a subscription for events (or interrupts)
  * relevant to the given `deviceVariable`.
  *
- * To be more precise: a PV can be referred to by several EPICS records, any
- * number of which can be set to `I/O Intr` scanning. This function is called
- * with `cancel = false` when the number of `I/O Intr` records increases to 1,
- * and with `cancel = true` when the number decreases to 0.
+ * To be more precise: a device variable can be referred to by several EPICS
+ * records, any number of which can be set to `I/O Intr` scanning. This function
+ * is called with `cancel = false` when the number of `I/O Intr` records
+ * increases to 1, and with `cancel = true` when the number decreases to 0.
  */
 typedef asynStatus (*InterruptRegistrar)(DeviceVariable &deviceVariable, bool cancel);
 
@@ -530,6 +544,7 @@ template <> struct Handlers<Octet, false> {
  *
  * This makes the symbols declared herein easily accessible. Apart from the
  * typdefs shown below, this namespace exposes also:
+ *   - `Autoparam::DeviceAddress`
  *   - `Autoparam::DeviceVariable`
  *   - `Autoparam::Array`
  *   - `Autoparam::Octet`

@@ -191,11 +191,13 @@ class DriverOpts {
  * each associated with a string that can subsequently be used to reference a
  * parameter from records in the EPICS database.
  *
- * `Autoparam::Driver` works differently. The string a record uses to refer to a
+ * `Autoparam::Driver` works differently. No parameters exist when the `Driver`
+ * is constructed; instead, instances of `DeviceVariable` are created as EPICS
+ * database records are initialized. The string a record uses to refer to a
  * parameter is split into a "function" and its "arguments" which, together,
- * define a "parameter". This is handled by the `DeviceVariable` class. No parameters
- * exist when the `Driver` is created; instead, instances of `DeviceVariable` are
- * created as EPICS database records are initialized.
+ * define a "parameter". This is handled by the `DeviceAddress` and
+ * `DeviceVariable` classes, and needs to be implemented by the class deriving
+ * from `Driver`.
  *
  * Drivers based on `Autoparam::Driver` do not need to override the read and
  * write methods. Instead, they register read and write handlers for "functions"
@@ -211,17 +213,21 @@ class DriverOpts {
  * - The driver can process `I/O Intr` records at any time (e.g. from a
  *   background thread or in response to hardware interrupts) by
  *   - (scalars) setting the value using `Driver::setParam()`, then calling
- *     `Driver::callParamCallbacks()`;
+ *     `asynPortDriver::callParamCallbacks()`;
  *   - (arrays) calling `Driver::doCallbacksArray()`.
  *
  * To create a new driver based on `Autoparam::Driver`:
- *   1. Create a derived class.
- *   2. Implement the `parsePVArguments()` method.
- *   3. Implement the `createDeviceVariable()` method.
- *   4. Define static functions that will act as read and write handlers (see
- *      `Autoparam::Handlers` for signatures) and register them as handlers in
- *      the driver's constructor (c.f. `Driver::registerHandlers()`).
- *   5. Create one or more iocshell commands to instatiate and configure the
+ *   1. Create a derived class of `DeviceAddress`.
+ *   2. Create a derived class of `DeviceVariable`.
+ *   3. Create a derived class of `Driver`.
+ *     - Implement the `parseDeviceAddress()` method to instantiate the derived
+ *       `DeviceAddress`.
+ *     - Implement the `createDeviceVariable()` method to instantiate the
+ *       derived `DeviceVariable`.
+ *     - Define static functions that will act as read and write handlers (see
+ *       `Autoparam::Handlers` for signatures) and register them as handlers in
+ *       the driver's constructor (c.f. `Driver::registerHandlers()`).
+ *   4. Create one or more iocshell commands to instatiate and configure the
  *      driver.
  *
  * Apart from read and write functions, methods of `asynPortDriver` such as
@@ -245,7 +251,7 @@ class Driver : public asynPortDriver {
     /*! Parse the given `function` and `arguments`.
      *
      * `DeviceAddress` is meant to be subclassed. As records are initialized,
-     * `Driver` needs some information on the device PV referred to by
+     * `Driver` needs some information on the device variable referred to by
      * `function` and `arguments`, thus it calls this method.
      *
      * May return NULL on error.
@@ -260,6 +266,9 @@ class Driver : public asynPortDriver {
      * method to convert them to whichever subclass the implementation decides
      * to return.
      *
+     * The `baseVar` pointer is intended to be passed to the constructor of
+     * `DeviceVariable` which will take ownership of it.
+     *
      * May return NULL on error.
      */
     virtual DeviceVariable *createDeviceVariable(DeviceVariable *baseVar) = 0;
@@ -269,7 +278,9 @@ class Driver : public asynPortDriver {
      * Note that the driver is implicitly locked when when handlers are called.
      *
      * \tparam T A type corresponding to one of asyn interfaces/parameter types.
-     *         See `Autoparam::AsynType`.
+     *         See `Autoparam::AsynType`. It determines which EPICS device
+     *         support provided by asyn (determined by record's DTYP field) the
+     *         `function` can be used with.
      *
      * \param function The name of the "function" (in the sense of "device
      *        function", see `DeviceVariable`).
@@ -291,7 +302,7 @@ class Driver : public asynPortDriver {
                           typename Handlers<T>::WriteHandler writer,
                           InterruptRegistrar intrRegistrar);
 
-    /*! Propagate the array data to `I/O Intr` records bound to `deviceVariable`.
+    /*! Propagate the array data to `I/O Intr` records bound to `var`.
      *
      * Unless this function is called from a read or write handler, the driver
      * needs to be locked. See `asynPortDriver::lock()`.
@@ -300,12 +311,12 @@ class Driver : public asynPortDriver {
      * as on completion of a write handler. See `Autoparam::ResultBase`.
      */
     template <typename T>
-    asynStatus doCallbacksArray(DeviceVariable const &deviceVariable, Array<T> &value,
+    asynStatus doCallbacksArray(DeviceVariable const &var, Array<T> &value,
                                 asynStatus status = asynSuccess,
                                 int alarmStatus = epicsAlarmNone,
                                 int alarmSeverity = epicsSevNone);
 
-    /*! Set the value of the parameter represented by `deviceVariable`.
+    /*! Set the value of the parameter represented by `var`.
      *
      * Unless this function is called from a read or write handler, the driver
      * needs to be locked. See `asynPortDriver::lock()`.
@@ -319,29 +330,29 @@ class Driver : public asynPortDriver {
      * processing.
      */
     template <typename T>
-    asynStatus setParam(DeviceVariable const &deviceVariable, T value,
+    asynStatus setParam(DeviceVariable const &var, T value,
                         asynStatus status = asynSuccess,
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
-    /*! Set the value of the parameter represented by `deviceVariable`.
+    /*! Set the value of the parameter represented by `var`.
      *
      * This is an overload for digital IO, where `mask` specifies which bits of
      * `value` are of interest. While the default overload works with
      * `epicsUInt32`, it uses the mask value `0xFFFFFFFF`.
      */
-    asynStatus setParam(DeviceVariable const &deviceVariable, epicsUInt32 value,
+    asynStatus setParam(DeviceVariable const &var, epicsUInt32 value,
                         epicsUInt32 mask, asynStatus status = asynSuccess,
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
-    /*! Obtain a list of all PVs.
+    /*! Obtain a list of all device variables.
      *
      * This function is threadsafe, locking the driver is not necessary.
      */
-    std::vector<DeviceVariable *> getAllPVs() const;
+    std::vector<DeviceVariable *> getAllVariables() const;
 
-    /*! Obtain a list of PVs bound by `I/O Intr` records.
+    /*! Obtain a list of device variables bound by `I/O Intr` records.
      *
      * The list of `DeviceVariable` pointers returned by this method is useful if you
      * need to implement periodic polling for data and would like to know which
@@ -350,7 +361,7 @@ class Driver : public asynPortDriver {
      *
      * This function is threadsafe, locking the driver is not necessary.
      */
-    std::vector<DeviceVariable *> getInterruptPVs();
+    std::vector<DeviceVariable *> getInterruptVariables();
 
     /*! Obtain a `DeviceVariable` given an `asynUser`.
      *
@@ -435,7 +446,7 @@ class Driver : public asynPortDriver {
     void handleResultStatus(asynUser *pasynUser, ResultBase const &result);
 
     template <typename IntType>
-    void getInterruptPVsForInterface(std::vector<DeviceVariable *> &dest,
+    void getInterruptVarsForInterface(std::vector<DeviceVariable *> &dest,
                                      int canInterrupt, void *ifacePvt);
 
     template <typename T> bool hasReadHandler(int index);

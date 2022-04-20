@@ -143,7 +143,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
         return asynError;
     }
 
-    // Let's check if we already have the PV.
+    // Let's check if we already have the variable.
     ParamMap::iterator varIter =
         std::find_if(m_params.begin(), m_params.end(), cmpDeviceAddress(addr));
     if (varIter != m_params.end()) {
@@ -152,7 +152,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
                   driverName, portName, reason);
         pasynUser->reason = varIter->second->asynIndex();
     } else {
-        // No PV found, let's create a new one. It takes ownership of `addr`.
+        // No var found, let's create a new one. It takes ownership of `addr`.
         DeviceVariable baseVar = DeviceVariable(reason, function, addr);
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
                   "%s: port=%s creating a new parameter for '%s'\n", driverName,
@@ -172,17 +172,17 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
 
         // Let the derived driver construct a subclass of DeviceVariable based on ours.
         // Takes ownership of stuff in our `baseVar`.
-        DeviceVariable *deviceVariable = createDeviceVariable(&baseVar);
-        if (deviceVariable == NULL) {
+        DeviceVariable *var = createDeviceVariable(&baseVar);
+        if (var == NULL) {
             asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                       "%s: port=%s could not create DeviceVariable for '%s'\n",
                       driverName, portName, baseVar.asString().c_str());
             return asynError;
         }
 
-        m_params[deviceVariable->asynIndex()] = deviceVariable;
-        m_interruptRefcount[deviceVariable] = 0;
-        pasynUser->reason = deviceVariable->asynIndex();
+        m_params[var->asynIndex()] = var;
+        m_interruptRefcount[var] = 0;
+        pasynUser->reason = var->asynIndex();
     }
 
     return asynSuccess;
@@ -217,7 +217,7 @@ DeviceVariable *Driver::deviceVariableFromUser(asynUser *pasynUser) {
 // This function is documented as threadsafe, which it is, based on the fact
 // that m_params is not supposed to change at runtime. I wish more functions
 // could be made const-correct ...
-std::vector<DeviceVariable *> Driver::getAllPVs() const {
+std::vector<DeviceVariable *> Driver::getAllVariables() const {
     std::vector<DeviceVariable *> pvs;
     pvs.reserve(m_params.size());
     for (ParamMap::const_iterator i = m_params.begin(), end = m_params.end();
@@ -228,7 +228,7 @@ std::vector<DeviceVariable *> Driver::getAllPVs() const {
 }
 
 template <typename IntType>
-void Driver::getInterruptPVsForInterface(std::vector<DeviceVariable *> &dest,
+void Driver::getInterruptVarsForInterface(std::vector<DeviceVariable *> &dest,
                                          int canInterrupt, void *ifacePvt) {
     ELLLIST *clients;
     pasynManager->interruptStart(ifacePvt, &clients);
@@ -244,32 +244,32 @@ void Driver::getInterruptPVsForInterface(std::vector<DeviceVariable *> &dest,
     pasynManager->interruptEnd(ifacePvt);
 }
 
-std::vector<DeviceVariable *> Driver::getInterruptPVs() {
+std::vector<DeviceVariable *> Driver::getInterruptVariables() {
     std::vector<DeviceVariable *> vars;
 
     asynStandardInterfaces *ifcs = getAsynStdInterfaces();
-    getInterruptPVsForInterface<asynOctetInterrupt>(
+    getInterruptVarsForInterface<asynOctetInterrupt>(
         vars, ifcs->octetCanInterrupt, ifcs->octetInterruptPvt);
-    getInterruptPVsForInterface<asynUInt32DigitalInterrupt>(
+    getInterruptVarsForInterface<asynUInt32DigitalInterrupt>(
         vars, ifcs->uInt32DigitalCanInterrupt,
         ifcs->uInt32DigitalInterruptPvt);
-    getInterruptPVsForInterface<asynInt32Interrupt>(
+    getInterruptVarsForInterface<asynInt32Interrupt>(
         vars, ifcs->int32CanInterrupt, ifcs->int32InterruptPvt);
-    getInterruptPVsForInterface<asynInt64Interrupt>(
+    getInterruptVarsForInterface<asynInt64Interrupt>(
         vars, ifcs->int64CanInterrupt, ifcs->int64InterruptPvt);
-    getInterruptPVsForInterface<asynFloat64Interrupt>(
+    getInterruptVarsForInterface<asynFloat64Interrupt>(
         vars, ifcs->float64CanInterrupt, ifcs->float64InterruptPvt);
-    getInterruptPVsForInterface<asynInt8ArrayInterrupt>(
+    getInterruptVarsForInterface<asynInt8ArrayInterrupt>(
         vars, ifcs->int8ArrayCanInterrupt, ifcs->int8ArrayInterruptPvt);
-    getInterruptPVsForInterface<asynInt16ArrayInterrupt>(
+    getInterruptVarsForInterface<asynInt16ArrayInterrupt>(
         vars, ifcs->int16ArrayCanInterrupt, ifcs->int16ArrayInterruptPvt);
-    getInterruptPVsForInterface<asynInt32ArrayInterrupt>(
+    getInterruptVarsForInterface<asynInt32ArrayInterrupt>(
         vars, ifcs->int32ArrayCanInterrupt, ifcs->int32ArrayInterruptPvt);
-    getInterruptPVsForInterface<asynInt64ArrayInterrupt>(
+    getInterruptVarsForInterface<asynInt64ArrayInterrupt>(
         vars, ifcs->int64ArrayCanInterrupt, ifcs->int64ArrayInterruptPvt);
-    getInterruptPVsForInterface<asynFloat32ArrayInterrupt>(
+    getInterruptVarsForInterface<asynFloat32ArrayInterrupt>(
         vars, ifcs->float32ArrayCanInterrupt, ifcs->float32ArrayInterruptPvt);
-    getInterruptPVsForInterface<asynFloat64ArrayInterrupt>(
+    getInterruptVarsForInterface<asynFloat64ArrayInterrupt>(
         vars, ifcs->float64ArrayCanInterrupt, ifcs->float64ArrayInterruptPvt);
 
     // The list contains all records, so we need to remove duplicates.
@@ -589,78 +589,78 @@ template void Driver::registerHandlers<Array<epicsFloat64> >(
     InterruptRegistrar intrRegistrar);
 
 template <typename T>
-asynStatus Driver::doCallbacksArray(DeviceVariable const &deviceVariable, Array<T> &value,
+asynStatus Driver::doCallbacksArray(DeviceVariable const &var, Array<T> &value,
                                     asynStatus status, int alarmStatus,
                                     int alarmSeverity) {
-    setParamStatus(deviceVariable.asynIndex(), status);
-    setParamAlarmStatus(deviceVariable.asynIndex(), alarmStatus);
-    setParamAlarmSeverity(deviceVariable.asynIndex(), alarmSeverity);
-    return doCallbacksArrayDispatch(deviceVariable.asynIndex(), value);
+    setParamStatus(var.asynIndex(), status);
+    setParamAlarmStatus(var.asynIndex(), alarmStatus);
+    setParamAlarmSeverity(var.asynIndex(), alarmSeverity);
+    return doCallbacksArrayDispatch(var.asynIndex(), value);
 }
 
-template asynStatus Driver::doCallbacksArray<epicsInt8>(DeviceVariable const &deviceVariable,
+template asynStatus Driver::doCallbacksArray<epicsInt8>(DeviceVariable const &var,
                                                         Array<epicsInt8> &value,
                                                         asynStatus status,
                                                         int alarmStatus,
                                                         int alarmSeverity);
 template asynStatus Driver::doCallbacksArray<epicsInt16>(
-    DeviceVariable const &deviceVariable, Array<epicsInt16> &value, asynStatus status,
+    DeviceVariable const &var, Array<epicsInt16> &value, asynStatus status,
     int alarmStatus, int alarmSeverity);
 template asynStatus Driver::doCallbacksArray<epicsInt32>(
-    DeviceVariable const &deviceVariable, Array<epicsInt32> &value, asynStatus status,
+    DeviceVariable const &var, Array<epicsInt32> &value, asynStatus status,
     int alarmStatus, int alarmSeverity);
 template asynStatus Driver::doCallbacksArray<epicsInt64>(
-    DeviceVariable const &deviceVariable, Array<epicsInt64> &value, asynStatus status,
+    DeviceVariable const &var, Array<epicsInt64> &value, asynStatus status,
     int alarmStatus, int alarmSeverity);
 template asynStatus Driver::doCallbacksArray<epicsFloat32>(
-    DeviceVariable const &deviceVariable, Array<epicsFloat32> &value, asynStatus status,
+    DeviceVariable const &var, Array<epicsFloat32> &value, asynStatus status,
     int alarmStatus, int alarmSeverity);
 template asynStatus Driver::doCallbacksArray<epicsFloat64>(
-    DeviceVariable const &deviceVariable, Array<epicsFloat64> &value, asynStatus status,
+    DeviceVariable const &var, Array<epicsFloat64> &value, asynStatus status,
     int alarmStatus, int alarmSeverity);
 
 template <typename T>
-asynStatus Driver::setParam(DeviceVariable const &deviceVariable, T value, asynStatus status,
+asynStatus Driver::setParam(DeviceVariable const &var, T value, asynStatus status,
                             int alarmStatus, int alarmSeverity) {
-    setParamStatus(deviceVariable.asynIndex(), status);
-    setParamAlarmStatus(deviceVariable.asynIndex(), alarmStatus);
-    setParamAlarmSeverity(deviceVariable.asynIndex(), alarmSeverity);
-    return setParamDispatch(deviceVariable.asynIndex(), value);
+    setParamStatus(var.asynIndex(), status);
+    setParamAlarmStatus(var.asynIndex(), alarmStatus);
+    setParamAlarmSeverity(var.asynIndex(), alarmSeverity);
+    return setParamDispatch(var.asynIndex(), value);
 }
 
-asynStatus Driver::setParam(DeviceVariable const &deviceVariable, epicsUInt32 value,
+asynStatus Driver::setParam(DeviceVariable const &var, epicsUInt32 value,
                             epicsUInt32 mask, asynStatus status,
                             int alarmStatus, int alarmSeverity) {
-    setParamStatus(deviceVariable.asynIndex(), status);
-    setParamAlarmStatus(deviceVariable.asynIndex(), alarmStatus);
-    setParamAlarmSeverity(deviceVariable.asynIndex(), alarmSeverity);
-    return setUIntDigitalParam(deviceVariable.asynIndex(), value, mask);
+    setParamStatus(var.asynIndex(), status);
+    setParamAlarmStatus(var.asynIndex(), alarmStatus);
+    setParamAlarmSeverity(var.asynIndex(), alarmSeverity);
+    return setUIntDigitalParam(var.asynIndex(), value, mask);
 }
 
-template asynStatus Driver::setParam<epicsInt32>(DeviceVariable const &deviceVariable,
+template asynStatus Driver::setParam<epicsInt32>(DeviceVariable const &var,
                                                  epicsInt32 value,
                                                  asynStatus status,
                                                  int alarmStatus,
                                                  int alarmSeverity);
-template asynStatus Driver::setParam<epicsInt64>(DeviceVariable const &deviceVariable,
+template asynStatus Driver::setParam<epicsInt64>(DeviceVariable const &var,
                                                  epicsInt64 value,
                                                  asynStatus status,
                                                  int alarmStatus,
                                                  int alarmSeverity);
-template asynStatus Driver::setParam<epicsFloat64>(DeviceVariable const &deviceVariable,
+template asynStatus Driver::setParam<epicsFloat64>(DeviceVariable const &var,
                                                    epicsFloat64 value,
                                                    asynStatus status,
                                                    int alarmStatus,
                                                    int alarmSeverity);
-template asynStatus Driver::setParam<Octet>(DeviceVariable const &deviceVariable, Octet value,
+template asynStatus Driver::setParam<Octet>(DeviceVariable const &var, Octet value,
                                             asynStatus status, int alarmStatus,
                                             int alarmSeverity);
 
 template <>
-asynStatus Driver::setParam<epicsUInt32>(DeviceVariable const &deviceVariable,
+asynStatus Driver::setParam<epicsUInt32>(DeviceVariable const &var,
                                          epicsUInt32 value, asynStatus status,
                                          int alarmStatus, int alarmSeverity) {
-    return setParam(deviceVariable, value, 0xffffffff, status, alarmStatus,
+    return setParam(var, value, 0xffffffff, status, alarmStatus,
                     alarmSeverity);
 }
 
@@ -669,7 +669,7 @@ asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
                                      void *callback, void *userPvt,
                                      void **registrarPvt) {
     Driver *self = static_cast<Driver *>(drvPvt);
-    DeviceVariable *deviceVariable = self->deviceVariableFromUser(pasynUser);
+    DeviceVariable *var = self->deviceVariableFromUser(pasynUser);
 
     // I hate doing type erasure like this, but there aren't sane options ...
     typedef asynStatus (*RegisterIntrFunc)(void *drvPvt, asynUser *pasynUser,
@@ -683,23 +683,23 @@ asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
         return status;
     }
 
-    self->m_interruptRefcount[deviceVariable] += 1;
+    self->m_interruptRefcount[var] += 1;
 
-    if (self->m_interruptRefcount[deviceVariable] == 1) {
+    if (self->m_interruptRefcount[var] == 1) {
         InterruptRegistrar registrar =
-            self->getHandlerMap<T>().at(deviceVariable->function()).intrRegistrar;
+            self->getHandlerMap<T>().at(var->function()).intrRegistrar;
         if (registrar != NULL) {
             asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
                       "%s: port=%s registering interrupt handler for '%s'\n",
-                      driverName, self->portName, deviceVariable->asString().c_str());
-            status = registrar(*deviceVariable, false);
+                      driverName, self->portName, var->asString().c_str());
+            status = registrar(*var, false);
             if (status != asynSuccess) {
                 asynPrint(
                     self->pasynUserSelf, ASYN_TRACE_ERROR,
                     "%s: port=%s error %d calling interrupt registrar for "
                     "'%s'\n",
                     driverName, self->portName, status,
-                    deviceVariable->asString().c_str());
+                    var->asString().c_str());
                 return status;
             }
         }
@@ -712,7 +712,7 @@ template <typename T>
 asynStatus Driver::cancelInterrupt(void *drvPvt, asynUser *pasynUser,
                                    void *registrarPvt) {
     Driver *self = static_cast<Driver *>(drvPvt);
-    DeviceVariable *deviceVariable = self->deviceVariableFromUser(pasynUser);
+    DeviceVariable *var = self->deviceVariableFromUser(pasynUser);
 
     // I hate doing type erasure like this, but there aren't sane options ...
     typedef asynStatus (*CancelIntrFunc)(void *drvPvt, asynUser *pasynUser,
@@ -724,32 +724,32 @@ asynStatus Driver::cancelInterrupt(void *drvPvt, asynUser *pasynUser,
         return status;
     }
 
-    self->m_interruptRefcount[deviceVariable] -= 1;
+    self->m_interruptRefcount[var] -= 1;
 
-    if (self->m_interruptRefcount[deviceVariable] < 0) {
+    if (self->m_interruptRefcount[var] < 0) {
         asynPrint(self->pasynUserSelf, ASYN_TRACE_ERROR,
                   "%s: port=%s logic error: interrupt refcount negative for"
                   "'%s'\n",
-                  driverName, self->portName, deviceVariable->asString().c_str());
-        self->m_interruptRefcount[deviceVariable] = 0;
+                  driverName, self->portName, var->asString().c_str());
+        self->m_interruptRefcount[var] = 0;
         return asynError;
     }
 
-    if (self->m_interruptRefcount[deviceVariable] == 0) {
+    if (self->m_interruptRefcount[var] == 0) {
         InterruptRegistrar registrar =
-            self->getHandlerMap<T>().at(deviceVariable->function()).intrRegistrar;
+            self->getHandlerMap<T>().at(var->function()).intrRegistrar;
         if (registrar != NULL) {
             asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
                       "%s: port=%s cancelling interrupt handler for '%s'\n",
-                      driverName, self->portName, deviceVariable->asString().c_str());
-            status = registrar(*deviceVariable, true);
+                      driverName, self->portName, var->asString().c_str());
+            status = registrar(*var, true);
             if (status != asynSuccess) {
                 asynPrint(
                     self->pasynUserSelf, ASYN_TRACE_ERROR,
                     "%s: port=%s error %d calling interrupt registrar for "
                     "'%s'\n",
                     driverName, self->portName, status,
-                    deviceVariable->asString().c_str());
+                    var->asString().c_str());
                 return status;
             }
         }
@@ -764,7 +764,7 @@ asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
                                             void **registrarPvt) {
     typedef epicsUInt32 T;
     Driver *self = static_cast<Driver *>(drvPvt);
-    DeviceVariable *deviceVariable = self->deviceVariableFromUser(pasynUser);
+    DeviceVariable *var = self->deviceVariableFromUser(pasynUser);
 
     // UInt32Digital has a signature different from other registrars.
     typedef asynStatus (*RegisterIntrFunc)(
@@ -778,23 +778,23 @@ asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
         return status;
     }
 
-    self->m_interruptRefcount[deviceVariable] += 1;
+    self->m_interruptRefcount[var] += 1;
 
-    if (self->m_interruptRefcount[deviceVariable] == 1) {
+    if (self->m_interruptRefcount[var] == 1) {
         InterruptRegistrar registrar =
-            self->getHandlerMap<T>().at(deviceVariable->function()).intrRegistrar;
+            self->getHandlerMap<T>().at(var->function()).intrRegistrar;
         if (registrar != NULL) {
             asynPrint(self->pasynUserSelf, ASYN_TRACE_FLOW,
                       "%s: port=%s registering interrupt handler for '%s'\n",
-                      driverName, self->portName, deviceVariable->asString().c_str());
-            status = registrar(*deviceVariable, false);
+                      driverName, self->portName, var->asString().c_str());
+            status = registrar(*var, false);
             if (status != asynSuccess) {
                 asynPrint(
                     self->pasynUserSelf, ASYN_TRACE_ERROR,
                     "%s: port=%s error %d calling interrupt registrar for "
                     "'%s'\n",
                     driverName, self->portName, status,
-                    deviceVariable->asString().c_str());
+                    var->asString().c_str());
                 return status;
             }
         }
@@ -805,10 +805,10 @@ asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
 
 template <typename T>
 asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
-    DeviceVariable *deviceVariable = deviceVariableFromUser(pasynUser);
+    DeviceVariable *var = deviceVariableFromUser(pasynUser);
     typename Handlers<T>::ReadHandler handler =
-        getReadHandler<T>(deviceVariable->function());
-    typename Handlers<T>::ReadResult result = handler(*deviceVariable);
+        getReadHandler<T>(var->function());
+    typename Handlers<T>::ReadResult result = handler(*var);
     handleResultStatus(pasynUser, result);
     *value = result.value;
     if (shouldProcessInterrupts(result)) {
@@ -820,10 +820,10 @@ asynStatus Driver::readScalar(asynUser *pasynUser, T *value) {
 
 asynStatus Driver::readScalar(asynUser *pasynUser, epicsUInt32 *value,
                               epicsUInt32 mask) {
-    DeviceVariable *deviceVariable = deviceVariableFromUser(pasynUser);
+    DeviceVariable *var = deviceVariableFromUser(pasynUser);
     Handlers<epicsUInt32>::ReadHandler handler =
-        getReadHandler<epicsUInt32>(deviceVariable->function());
-    Handlers<epicsUInt32>::ReadResult result = handler(*deviceVariable, mask);
+        getReadHandler<epicsUInt32>(var->function());
+    Handlers<epicsUInt32>::ReadResult result = handler(*var, mask);
     handleResultStatus(pasynUser, result);
     *value = result.value;
     if (shouldProcessInterrupts(result)) {
@@ -835,10 +835,10 @@ asynStatus Driver::readScalar(asynUser *pasynUser, epicsUInt32 *value,
 
 template <typename T>
 asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
-    DeviceVariable *deviceVariable = deviceVariableFromUser(pasynUser);
+    DeviceVariable *var = deviceVariableFromUser(pasynUser);
     typename Handlers<T>::WriteHandler handler =
-        getWriteHandler<T>(deviceVariable->function());
-    typename Handlers<T>::WriteResult result = handler(*deviceVariable, value);
+        getWriteHandler<T>(var->function());
+    typename Handlers<T>::WriteResult result = handler(*var, value);
     handleResultStatus(pasynUser, result);
     if (shouldProcessInterrupts(result)) {
         setParamDispatch(pasynUser->reason, value);
@@ -849,10 +849,10 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, T value) {
 
 asynStatus Driver::writeScalar(asynUser *pasynUser, epicsUInt32 value,
                                epicsUInt32 mask) {
-    DeviceVariable *deviceVariable = deviceVariableFromUser(pasynUser);
+    DeviceVariable *var = deviceVariableFromUser(pasynUser);
     Handlers<epicsUInt32>::WriteHandler handler =
-        getWriteHandler<epicsUInt32>(deviceVariable->function());
-    Handlers<epicsUInt32>::WriteResult result = handler(*deviceVariable, value, mask);
+        getWriteHandler<epicsUInt32>(var->function());
+    Handlers<epicsUInt32>::WriteResult result = handler(*var, value, mask);
     handleResultStatus(pasynUser, result);
     if (shouldProcessInterrupts(result)) {
         setUIntDigitalParam(pasynUser->reason, value, mask);
@@ -864,48 +864,48 @@ asynStatus Driver::writeScalar(asynUser *pasynUser, epicsUInt32 value,
 template <typename T>
 asynStatus Driver::readArray(asynUser *pasynUser, T *value, size_t maxSize,
                              size_t *size) {
-    DeviceVariable *deviceVariable = deviceVariableFromUser(pasynUser);
+    DeviceVariable *var = deviceVariableFromUser(pasynUser);
     Array<T> arrayRef(value, maxSize);
     typename Handlers<Array<T> >::ReadHandler handler =
-        getHandlerMap<Array<T> >().at(deviceVariable->function()).readHandler;
+        getHandlerMap<Array<T> >().at(var->function()).readHandler;
     typename Handlers<Array<T> >::ReadResult result =
-        handler(*deviceVariable, arrayRef);
+        handler(*var, arrayRef);
     handleResultStatus(pasynUser, result);
     *size = arrayRef.size();
     if (shouldProcessInterrupts(result)) {
-        return doCallbacksArrayDispatch(deviceVariable->asynIndex(), arrayRef);
+        return doCallbacksArrayDispatch(var->asynIndex(), arrayRef);
     }
     return result.status;
 }
 
 template <typename T>
 asynStatus Driver::writeArray(asynUser *pasynUser, T *value, size_t size) {
-    DeviceVariable *deviceVariable = deviceVariableFromUser(pasynUser);
+    DeviceVariable *var = deviceVariableFromUser(pasynUser);
     Array<T> arrayRef(value, size);
     typename Handlers<Array<T> >::WriteHandler handler =
-        getHandlerMap<Array<T> >().at(deviceVariable->function()).writeHandler;
+        getHandlerMap<Array<T> >().at(var->function()).writeHandler;
     typename Handlers<Array<T> >::WriteResult result =
-        handler(*deviceVariable, arrayRef);
+        handler(*var, arrayRef);
     handleResultStatus(pasynUser, result);
     if (shouldProcessInterrupts(result)) {
-        return doCallbacksArrayDispatch(deviceVariable->asynIndex(), arrayRef);
+        return doCallbacksArrayDispatch(var->asynIndex(), arrayRef);
     }
     return result.status;
 }
 
 asynStatus Driver::readOctetData(asynUser *pasynUser, char *value,
                                  size_t maxSize, size_t *nRead) {
-    DeviceVariable *deviceVariable = deviceVariableFromUser(pasynUser);
+    DeviceVariable *var = deviceVariableFromUser(pasynUser);
     Octet arrayRef(value, maxSize);
     Handlers<Octet>::ReadHandler handler =
-        getHandlerMap<Octet>().at(deviceVariable->function()).readHandler;
-    Handlers<Octet>::ReadResult result = handler(*deviceVariable, arrayRef);
+        getHandlerMap<Octet>().at(var->function()).readHandler;
+    Handlers<Octet>::ReadResult result = handler(*var, arrayRef);
     handleResultStatus(pasynUser, result);
     *nRead = arrayRef.size();
     // The handler should have ensured termination, but we can't be sure.
     arrayRef.terminate();
     if (shouldProcessInterrupts(result)) {
-        setParamDispatch(deviceVariable->asynIndex(), arrayRef);
+        setParamDispatch(var->asynIndex(), arrayRef);
         callParamCallbacks();
     }
     return result.status;
@@ -913,14 +913,14 @@ asynStatus Driver::readOctetData(asynUser *pasynUser, char *value,
 
 asynStatus Driver::writeOctetData(asynUser *pasynUser, char const *value,
                                   size_t size) {
-    DeviceVariable *deviceVariable = deviceVariableFromUser(pasynUser);
+    DeviceVariable *var = deviceVariableFromUser(pasynUser);
     Octet const arrayRef(const_cast<char *>(value), size);
     Handlers<Octet>::WriteHandler handler =
-        getHandlerMap<Octet>().at(deviceVariable->function()).writeHandler;
-    Handlers<Octet>::WriteResult result = handler(*deviceVariable, arrayRef);
+        getHandlerMap<Octet>().at(var->function()).writeHandler;
+    Handlers<Octet>::WriteResult result = handler(*var, arrayRef);
     handleResultStatus(pasynUser, result);
     if (shouldProcessInterrupts(result)) {
-        setParamDispatch(deviceVariable->asynIndex(), arrayRef);
+        setParamDispatch(var->asynIndex(), arrayRef);
         callParamCallbacks();
     }
     return result.status;

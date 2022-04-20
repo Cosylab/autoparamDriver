@@ -57,7 +57,7 @@ class AutoparamTest : public Autoparam::Driver {
                     return;
                 }
 
-                std::vector<DeviceVariable *> intrs = self->getInterruptPVs();
+                std::vector<DeviceVariable *> intrs = self->getInterruptVariables();
                 for (std::vector<DeviceVariable *>::iterator i = intrs.begin(),
                                                      end = intrs.end();
                      i != end; ++i) {
@@ -128,7 +128,7 @@ class AutoparamTest : public Autoparam::Driver {
         printf("Running init hook for Autoparam::Driver 0x%p "
                "with the following PVs:\n",
                driver);
-        std::vector<DeviceVariable *> pvs = self->getAllPVs();
+        std::vector<DeviceVariable *> pvs = self->getAllVariables();
         for (size_t i = 0; i < pvs.size(); ++i) {
             printf("    0x%p: %s\n", pvs[i], pvs[i]->asString().c_str());
         }

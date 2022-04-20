@@ -37,7 +37,8 @@ The driver
 PV-specific information
 -----------------------
 
-.. doxygenclass:: Autoparam::PVInfo
+.. doxygenclass:: Autoparam::DeviceAddress
+.. doxygenclass:: Autoparam::DeviceVariable
    :undoc-members:
 
 References to array data
