@@ -135,7 +135,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
     }
 
     // Let the derived driver parse the arguments.
-    DeviceAddress *addr = parsePVArguments(function, arguments);
+    DeviceAddress *addr = parseDeviceAddress(function, arguments);
     if (addr == NULL) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                   "%s: port=%s could not parse '%s'\n", driverName, portName,

@@ -104,7 +104,7 @@ class AutoparamTest : public Autoparam::Driver {
     }
 
   protected:
-    DeviceAddress *parsePVArguments(std::string const &function,
+    DeviceAddress *parseDeviceAddress(std::string const &function,
                                      std::string const &arguments) {
         MyAddress *p = new MyAddress;
         p->function = function;

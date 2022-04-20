@@ -250,7 +250,7 @@ class Driver : public asynPortDriver {
      *
      * May return NULL on error.
      */
-    virtual DeviceAddress *parsePVArguments(std::string const &function,
+    virtual DeviceAddress *parseDeviceAddress(std::string const &function,
                                              std::string const &arguments) = 0;
 
     /*! Convert the given `DeviceVariable` into an instance of a derived class.
