@@ -16,6 +16,28 @@
 
 namespace Autoparam {
 
+/*! Represents parsed PV information.
+ *
+ * The derived driver needs to subclass this and return it from the
+ * overridden `Autoparam::Driver::parsePVArguments()`. It is intended for
+ * the derived driver to store parsed PV arguments here, e.g. numeric
+ * addresses and offsets. It is used by the base `Driver` to identify which
+ * records refer to the same PV and what the data type of the variable is.
+ *
+ * Unlike `DeviceVariable`, this class should not take any device resources, or, if
+ * unavoidable (e.g. because it needs to access the device for name
+ * resolution), must release resources when destroyed; unlike `DeviceVariable`, many
+ * instances of `DeviceAddress` can be created per PV, then destroyed even before
+ * the IOC is fully initialized.
+ */
+class DeviceAddress {
+  public:
+    virtual ~DeviceAddress() {}
+
+    //! Compare to another PV. Must be overridden.
+    virtual bool operator==(DeviceAddress const &other) const = 0;
+};
+
 /*! Represents a process variable and is a handle for asyn parameters.
  *
  * This class is used as a handle referring to a device process variable (PV),
@@ -32,28 +54,6 @@ namespace Autoparam {
  */
 class DeviceVariable {
   public:
-    /*! Represents parsed PV information.
-     *
-     * The derived driver needs to subclass this and return it from the
-     * overridden `Autoparam::Driver::parsePVArguments()`. It is intended for
-     * the derived driver to store parsed PV arguments here, e.g. numeric
-     * addresses and offsets. It is used by the base `Driver` to identify which
-     * records refer to the same PV and what the data type of the variable is.
-     *
-     * Unlike `DeviceVariable`, this class should not take any device resources, or, if
-     * unavoidable (e.g. because it needs to access the device for name
-     * resolution), must release resources when destroyed; unlike `DeviceVariable`, many
-     * instances of `Parsed` can be created per PV, then destroyed even before
-     * the IOC is fully initialized.
-     */
-    class Parsed {
-      public:
-        virtual ~Parsed() {}
-
-        //! Compare to another PV. Must be overridden.
-        virtual bool operator==(Parsed const &other) const = 0;
-    };
-
     /*! Construct `DeviceVariable` from another. The other one is invalidated.
      *
      * Being the only public constructor, this is the only way the driver
@@ -62,7 +62,7 @@ class DeviceVariable {
      *
      * - The driver overrides `Autoparam::Driver::parsePVArguments()`. That
      *   method interprets the provided `function` and `arguments`, returning an
-     *   instance of `DeviceVariable::Parsed`.
+     *   instance of `DeviceAddress`.
      *
      * - The `Autoparam::Driver` base class creates an instance of `DeviceVariable`
      *   which contains the necessary data to refer to the underlying PV.
@@ -100,7 +100,7 @@ class DeviceVariable {
     asynParamType asynType() const { return m_asynParamType; }
 
     //! Returns the pre-parsed representation of the PV.
-    Parsed const &parsed() const { return *m_parsed; }
+    DeviceAddress const &address() const { return *m_address; }
 
   private:
     friend class Driver;
@@ -108,14 +108,14 @@ class DeviceVariable {
     // Only the `Driver` has access to the reason string, so this constructor is
     // private. It also doesn't completely initialize `DeviceVariable`. That job is up
     // to `Driver::drvUserCreate()`. DeviceVariable takes ownership of the provided
-    // Parsed object.
-    DeviceVariable(char const *reason, std::string const &function, Parsed *parsed);
+    // DeviceAddress object.
+    DeviceVariable(char const *reason, std::string const &function, DeviceAddress *addr);
 
     std::string m_reasonString;
     std::string m_function;
     asynParamType m_asynParamType;
     int m_asynParamIndex;
-    Parsed *m_parsed;
+    DeviceAddress *m_address;
 };
 
 /*! A non-owning reference to a data buffer.
@@ -537,9 +537,10 @@ template <> struct Handlers<Octet, false> {
  */
 namespace Convenience {
 // using directives are not picked up by doxygen
+using Autoparam::DeviceAddress;
+using Autoparam::DeviceVariable;
 using Autoparam::Array;
 using Autoparam::Octet;
-using Autoparam::DeviceVariable;
 using Autoparam::Result;
 typedef Autoparam::WriteResult WriteResult;
 typedef Autoparam::ArrayResult ArrayReadResult;

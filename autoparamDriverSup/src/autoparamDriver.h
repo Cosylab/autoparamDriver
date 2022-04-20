@@ -244,13 +244,13 @@ class Driver : public asynPortDriver {
   protected:
     /*! Parse the given `function` and `arguments`.
      *
-     * `DeviceVariable::Parsed` is meant to be subclassed. As records are initialized,
+     * `DeviceAddress` is meant to be subclassed. As records are initialized,
      * `Driver` needs some information on the device PV referred to by
      * `function` and `arguments`, thus it calls this method.
      *
      * May return NULL on error.
      */
-    virtual DeviceVariable::Parsed *parsePVArguments(std::string const &function,
+    virtual DeviceAddress *parsePVArguments(std::string const &function,
                                              std::string const &arguments) = 0;
 
     /*! Convert the given `DeviceVariable` into an instance of a derived class.

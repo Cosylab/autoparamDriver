@@ -18,10 +18,10 @@ class AutoparamTest;
 
 typedef std::vector<std::string> ArgumentList;
 
-class MyParsedInfo : public DeviceVariable::Parsed {
+class MyAddress : public DeviceAddress {
   public:
-    bool operator==(DeviceVariable::Parsed const &other) const {
-        MyParsedInfo const &o = static_cast<MyParsedInfo const &>(other);
+    bool operator==(DeviceAddress const &other) const {
+        MyAddress const &o = static_cast<MyAddress const &>(other);
         return function == o.function && arguments == o.arguments;
     }
 
@@ -35,7 +35,7 @@ class MyVar : public DeviceVariable {
         : DeviceVariable(baseVar), driver(driver) {}
 
     ArgumentList const &arguments() const {
-        return static_cast<MyParsedInfo const &>(parsed()).arguments;
+        return static_cast<MyAddress const &>(address()).arguments;
     }
 
     AutoparamTest *driver;
@@ -104,9 +104,9 @@ class AutoparamTest : public Autoparam::Driver {
     }
 
   protected:
-    DeviceVariable::Parsed *parsePVArguments(std::string const &function,
+    DeviceAddress *parsePVArguments(std::string const &function,
                                      std::string const &arguments) {
-        MyParsedInfo *p = new MyParsedInfo;
+        MyAddress *p = new MyAddress;
         p->function = function;
 
         std::istringstream is(arguments);

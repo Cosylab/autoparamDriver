@@ -17,21 +17,21 @@ static char const *driverName = "Autoparam::Driver";
 
 static std::map<Driver *, DriverOpts::InitHook> allInitHooks;
 
-DeviceVariable::DeviceVariable(char const *reason, std::string const &function, Parsed *parsed)
-    : m_reasonString(reason), m_function(function), m_parsed(parsed) {}
+DeviceVariable::DeviceVariable(char const *reason, std::string const &function, DeviceAddress *addr)
+    : m_reasonString(reason), m_function(function), m_address(addr) {}
 
 DeviceVariable::DeviceVariable(DeviceVariable *other) {
     m_function = other->m_function;
     m_reasonString = other->m_reasonString;
     m_asynParamType = other->m_asynParamType;
     m_asynParamIndex = other->m_asynParamIndex;
-    m_parsed = other->m_parsed;
-    other->m_parsed = NULL;
+    m_address = other->m_address;
+    other->m_address = NULL;
 }
 
 DeviceVariable::~DeviceVariable() {
-    if (m_parsed) {
-        delete m_parsed;
+    if (m_address) {
+        delete m_address;
     }
 }
 
@@ -98,13 +98,13 @@ Driver::~Driver() {
 
 namespace {
 
-struct cmpParsed {
-    DeviceVariable::Parsed *parsed;
+struct cmpDeviceAddress {
+    DeviceAddress *addr;
 
-    cmpParsed(DeviceVariable::Parsed *p) : parsed(p) {}
+    cmpDeviceAddress(DeviceAddress *p) : addr(p) {}
 
     bool operator()(std::map<int, DeviceVariable *>::value_type const &x) {
-        return x.second->parsed() == *parsed;
+        return x.second->address() == *addr;
     }
 };
 
@@ -135,8 +135,8 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
     }
 
     // Let the derived driver parse the arguments.
-    DeviceVariable::Parsed *parsed = parsePVArguments(function, arguments);
-    if (parsed == NULL) {
+    DeviceAddress *addr = parsePVArguments(function, arguments);
+    if (addr == NULL) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                   "%s: port=%s could not parse '%s'\n", driverName, portName,
                   reason);
@@ -145,15 +145,15 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
 
     // Let's check if we already have the PV.
     ParamMap::iterator varIter =
-        std::find_if(m_params.begin(), m_params.end(), cmpParsed(parsed));
+        std::find_if(m_params.begin(), m_params.end(), cmpDeviceAddress(addr));
     if (varIter != m_params.end()) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
                   "%s: port=%s reusing an existing parameter for '%s'\n",
                   driverName, portName, reason);
         pasynUser->reason = varIter->second->asynIndex();
     } else {
-        // No PV found, let's create a new one. It takes ownership of `parsed`.
-        DeviceVariable baseVar = DeviceVariable(reason, function, parsed);
+        // No PV found, let's create a new one. It takes ownership of `addr`.
+        DeviceVariable baseVar = DeviceVariable(reason, function, addr);
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
                   "%s: port=%s creating a new parameter for '%s'\n", driverName,
                   portName, baseVar.asString().c_str());
