@@ -4,6 +4,7 @@
 
 O.*/
 .ccls-cache
+.cache
 .reuse
 compile_commands.json
 envPaths
