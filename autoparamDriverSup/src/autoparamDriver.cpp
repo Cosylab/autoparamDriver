@@ -152,6 +152,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
                   "%s: port=%s reusing an existing parameter for '%s'\n",
                   driverName, portName, reason);
         pasynUser->reason = varIter->second->asynIndex();
+        delete addr;
     } else {
         // No var found, let's create a new one. It takes ownership of `addr`.
         DeviceVariable baseVar = DeviceVariable(reason, function, addr);
