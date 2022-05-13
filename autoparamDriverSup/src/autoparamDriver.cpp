@@ -232,6 +232,7 @@ std::vector<DeviceVariable *> Driver::getAllVariables() const {
 template <typename IntType>
 void Driver::getInterruptVarsForInterface(std::vector<DeviceVariable *> &dest,
                                           int canInterrupt, void *ifacePvt) {
+    (void)canInterrupt;
     ELLLIST *clients;
     pasynManager->interruptStart(ifacePvt, &clients);
     ELLNODE *node = ellFirst(clients);
