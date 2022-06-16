@@ -14,6 +14,11 @@ learn what ``autoparamDriver`` can do for you.
 
 Online documentation: **TODO add link when available on readthedocs**
 
+**Note:** When learning how to use ``autoparamDriver``, please *do not* try to
+ learn from the ``autoparamTestApp`` included with the driver. As its name says,
+ it is used for testing and is not a good resource. Please refer to the
+ *Tutorial* section of the documentation instead.
+
 Installation
 ------------
 
@@ -21,7 +26,7 @@ Familiarity with installation of EPICS modules is assumed.
 
 Dependencies:
 
-* `EPICS base <https://epics-controls.org/>`_, tested with version 7.0.5
+** `EPICS base <https://epics-controls.org/>`_, tested with version 7.0.5
 * `asyn <https://epics.anl.gov/modules/soft/asyn/>`_, tested with version R4-41
 
 Dependencies for building documentation:
