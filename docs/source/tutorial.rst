@@ -282,10 +282,11 @@ records that refer to the same underlying variable. We could also provide a
 constructor, but because this is a simple class where everything is public, this
 can be delegated to the factory function which we need to implement anyway::
 
-  DeviceAddress *TutorialDriverparseDeviceAddress(std::string const &function,
-                                                  std::string const &arguments) {
+  DeviceAddress *TutorialDriver::parseDeviceAddress(std::string const &function,
+                                                    std::string const &arguments) {
       TutorialAddress *addr = new TutorialAddress;
       std::istringstream is(arguments);
+      is >> std::setbase(0);
 
       if (function == "WORD") {
           addr->type = TutorialAddress::Word;
