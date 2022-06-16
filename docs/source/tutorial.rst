@@ -13,6 +13,9 @@ data. We will then write a driver to integrate it into EPICS. While all of this
 could be presented as a finished example application, it is more instructive to
 show each step separately and explain the reasoning behind it.
 
+Note that the tutorial uses the C++03 standard. You are free (and encouraged!)
+to code in a later version of the standard.
+
 Creating an app
 ---------------
 
@@ -215,8 +218,8 @@ input and output links. So let's get to it.
 Parsing arguments and creating device variables
 -----------------------------------------------
 
-Because you have read (**TODO** insert ref), you already understand the concepts
-of *device address* and *device variable*. Let's take a look at how to implement
+Because you have read :ref:`concepts`, you already understand the concepts of
+*device address* and *device variable*. Let's take a look at how to implement
 them for our mock device.
 
 Based on our considerations on what the ``INP`` field of a record might look
@@ -230,9 +233,10 @@ like, we see that our driver needs three distinct functions:
   by the ``Autoparam::Array<epicsInt8>`` type.
 * ``INTR`` takes one argument, the interrupt line which identifies the source of
   interrupts. The API we are using can only notify us when an interrupt happens.
-  As we are working on a generic driver, the best we can do is change some value
-  that will cause a record to process. To do this, let's bind this function to
-  the ``epicsInt32`` type to relay a counter to the EPICS layer.
+  As we are working on a generic driver, we don't know what the interrupt means,
+  so the best we can do is change some value that will cause a record to
+  process. To do this, let's bind this function to the ``epicsInt32`` type to
+  relay a counter to the EPICS layer.
 
 We will see how to implement these device functions in the next section. Before
 we can do that, we need some kind of handle that we can use to refer to data on
@@ -268,7 +272,7 @@ sufficient::
       }
   };
 
-Notice that we imported the :cpp:namespace:`Autoparam::Convenience` namespace,
+Notice that we imported the :cpp:any:`Autoparam::Convenience` namespace,
 which provides several often-needed symbols, such as ``DeviceAddress`` or
 ``Array``.
 
@@ -364,3 +368,65 @@ and the constructor is extended with the following calls::
   registerHandlers<epicsInt32>("WORD", wordReader, wordWriter, NULL);
   registerHandlers<Array<epicsInt8>>("BYTES", bytesReader, bytesWriter, NULL);
   registerHandlers<epicsInt32>("INTR", intrReader, intrWriter, intrRegistrar);
+
+The signatures that read and write handlers must have are documented in
+:cpp:struct:`Autoparam::Handlers`.
+
+Words of wisdom
+^^^^^^^^^^^^^^^
+
+Getting words into and out of our device is very simple, thanks to the
+straightforward device API. The read handler can be implemented as::
+
+  Result<epicsInt32> TutorialDriver::wordReader(DeviceVariable &variable) {
+      Result<epicsInt32> result;
+      TutorialAddress const &addr =
+          static_cast<TutorialAddress const &>(variable.address());
+      uint16_t value;
+      DeviceStatus status = readWord(addr.address, &value);
+
+      if (status != DeviceSuccess) {
+          result.status = asynError;
+          return result;
+      }
+
+      result.value = static_cast<epicsInt32>(value);
+      return result;
+  }
+
+This handler is called whenever a record that is using ``asynInt32`` as its DTYP
+and whose INP field uses the "WORD" function is processed. ``autoparamDriver``
+handles this dispatching for us, so there is no need to check ``addr.type``,
+except for debug purposes. The ``result`` object contains both the value and
+status of the operation. In case of error, we only set the ``status`` field of
+the result; this instructs ``asyn`` to assign to the record a status appropriate
+to the operation. As we are dealing with a read, the record will be put into
+READ alarm. Other ``asynStatus`` values are handled similarly. If we had reason
+to, we could use the ``alarmStatus`` and ``alarmSeverity`` fields of
+:cpp:struct:`Autoparam::ResultBase` to override the record status and severity
+manually.
+
+Writing works similarly::
+
+  WriteResult TutorialDriver::wordWriter(DeviceVariable &variable, epicsInt32 value) {
+      WriteResult result;
+      TutorialAddress const &addr =
+          static_cast<TutorialAddress const &>(variable.address());
+
+      if (value > 0xffff || value < 0) {
+          result.status = asynOverflow;
+          return result;
+      }
+
+      DeviceStatus status = writeWord(addr.address, static_cast<uint16_t>(value));
+
+      if (status != DeviceSuccess) {
+          result.status = asynError;
+          return result;
+      }
+
+      return result;
+  }
+
+Our interface towards EPICS records uses ``epicsInt32`` whereas the device needs
+``uint16_t``, which is why we need to check whether the value we were given is within range.

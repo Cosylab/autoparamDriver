@@ -62,6 +62,8 @@ until a record requesting it is initialized.
     ``setIntegerParam()``, ``setDoubleParam()`` etc.
 
 
+.. _concepts:
+
 Concepts and terminology
 ------------------------
 
