@@ -430,3 +430,91 @@ Writing works similarly::
 
 Our interface towards EPICS records uses ``epicsInt32`` whereas the device needs
 ``uint16_t``, which is why we need to check whether the value we were given is within range.
+
+Byte only what you can chew
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Arrays are handled similarly to scalars, with the difference that an array is
+passed as a wrapper object which acts as a reference to an actual array. This
+avoids unnecessary copies of possibly large amounts of data. Apart from that,
+the read handler should look familiar::
+
+  ArrayReadResult TutorialDriver::bytesReader(DeviceVariable &variable,
+                                              Array<epicsInt8> &value) {
+      ArrayReadResult result;
+      TutorialAddress const &addr =
+          static_cast<TutorialAddress const &>(variable.address());
+
+      if (addr.size > value.maxSize()) {
+          result.status = asynOverflow;
+          return result;
+      }
+
+      char *data = reinterpret_cast<char *>(value.data());
+      DeviceStatus status = readBytes(addr.address, data, addr.size);
+
+      if (status != DeviceSuccess) {
+          result.status = asynError;
+          return result;
+      }
+
+      value.setSize(addr.size);
+      return result;
+  }
+
+An important point here is the size of the array. The
+:cpp:class:`Autoparam::Array` wrapper gives both the current size and maximum
+size of the underlying array. These values correspond to the NORD and NELM
+fields of the underlying waveform record, respectively. In other words, a read
+handler needs to check that the size to be read is not larger than the maximum
+size the destination can hold. After a successful read, the current size of the
+destination array needs to be set to the number of elements read.
+
+Similarly, when writing to the device, the current size of the given array needs
+to be checked against the size of the array on device::
+
+  WriteResult TutorialDriver::bytesWriter(DeviceVariable &variable,
+                                          Array<epicsInt8> const &value) {
+      WriteResult result;
+      TutorialAddress const &addr =
+          static_cast<TutorialAddress const &>(variable.address());
+
+
+      if (value.size() > addr.size) {
+          result.status = asynOverflow;
+          return result;
+      }
+
+      char const *data = reinterpret_cast<char const *>(value.data());
+      DeviceStatus status = writeBytes(addr.address, data, value.size());
+
+      if (status != DeviceSuccess) {
+          result.status = asynError;
+          return result;
+      }
+
+      return result;
+  }
+
+In the case of the tutorial device, the size of the device array is given as
+part of the address, for both reads and writes. To check the behavior, we can
+use a database such as the following::
+
+  record(waveform, "$(PREFIX):arrin") {
+      field(SCAN, "1 second")
+      field(DTYP, "asynInt8ArrayIn")
+      field(INP, "@asyn($(PORT)) BYTES 0x2234 8")
+      field(FTVL, "CHAR")
+      field(NELM, "10")
+  }
+
+  record(waveform, "$(PREFIX):arrin_fail") {
+      field(SCAN, "1 second")
+      field(DTYP, "asynInt8ArrayIn")
+      field(INP, "@asyn($(PORT)) BYTES 0x3234 18")
+      field(FTVL, "CHAR")
+      field(NELM, "10")
+  }
+
+The first record should work while the second should fail with status of
+HWLIMIT.
