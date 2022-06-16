@@ -80,18 +80,20 @@ simple::
 
   typedef void (*InterruptCallback) (void *userData);
 
-  DeviceStatus initDevice();
-  DeviceStatus deinitDevice();
+  DeviceStatus initDevice(int deviceNum);
+  DeviceStatus deinitDevice(int deviceNum);
 
-  DeviceStatus readWord(uint16_t address, uint16_t *value);
-  DeviceStatus writeWord(uint16_t address, uint16_t value);
+  DeviceStatus readWord(int deviceNum, uint16_t address, uint16_t *value);
+  DeviceStatus writeWord(int deviceNum, uint16_t address, uint16_t value);
 
-  DeviceStatus readBytes(uint16_t address, char *dest, uint16_t size);
-  DeviceStatus writeBytes(uint16_t address, char const *data, uint16_t size);
+  DeviceStatus readBytes(int deviceNum, uint16_t address, char *dest, uint16_t size);
+  DeviceStatus writeBytes(int deviceNum, uint16_t address, char const *data, uint16_t size);
 
-  DeviceStatus enableInterruptCallback(uint8_t line, InterruptCallback callback, void *userData);
-  DeviceStatus disableInterruptCallback(uint8_t line);
-  DeviceStatus triggerSoftwareInterrupt(uint8_t line);
+  DeviceStatus enableInterruptCallback(int deviceNum, uint8_t line,
+                                       InterruptCallback callback,
+                                       void *userData);
+  DeviceStatus disableInterruptCallback(int deviceNum, uint8_t line);
+  DeviceStatus triggerSoftwareInterrupt(int deviceNum, uint8_t line);
 
 Implementing these functions is left as an exercise for the reader. Adding empty
 stubs to ``tutorialDevice.cpp`` that simply return success should be enough for
@@ -138,8 +140,11 @@ Let us begin by defining our class in ``tutorialDriver.cpp``::
 
   class TutorialDriver : public Autoparam::Driver {
     public:
-      TutorialDriver(char const *portName);
+      TutorialDriver(char const *portName, int deviceNum);
       ~TutorialDriver();
+
+    private:
+      int deviceNum;
   };
 
 Our device requires that the constructor calls ``initDevice()``. But that's not
@@ -166,11 +171,12 @@ time to take a look at :cpp:class:`Autoparam::DriverOpts` and pick what we need.
 
 After these considerations, the constructor looks like this::
 
-  TutorialDriver::TutorialDriver(char const *portName)
+  TutorialDriver::TutorialDriver(char const *portName, int deviceNum)
       : Autoparam::Driver(
             portName,
-            Autoparam::DriverOpts().setAutoDestruct().setAutoInterrupts(false)) {
-      if (initDevice() == DeviceError) {
+            Autoparam::DriverOpts().setAutoDestruct().setAutoInterrupts(false)),
+        deviceNum(deviceNum) {
+      if (initDevice(deviceNum) == DeviceError) {
           asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
                     "Error initializing device!");
       }
@@ -183,7 +189,7 @@ in the driver. In this tutorial, we won't bother.
 To clean up after ourselves, we need a destructor::
 
   TutorialDriver::~TutorialDriver() {
-      if (deinitDevice() == DeviceError) {
+      if (deinitDevice(deviceNum) == DeviceError) {
           asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
                     "Error releasing device!");
       }
@@ -192,12 +198,17 @@ To clean up after ourselves, we need a destructor::
 To actually create an instance of the driver, we also need an iocsh command,
 which requires a bit of boilerplate::
 
-  static int const num_args = 1;
-  static iocshArg const arg1 = {"port name", iocshArgString};
-  static iocshArg const *const args[num_args] = {&arg1};
-  static iocshFuncDef command = {"drvTutorialConfigure", num_args, args};
+  static int const num_args = 2;
+  static iocshArg const arg1 = {"port_name", iocshArgString};
+  static iocshArg const arg2 = {"device_num", iocshArgInt};
+  static iocshArg const *const args[num_args] = {&arg1, &arg2};
+  static char const *const usage = "Instantiate a port driver for the tutorial device.\n";
 
-  static void call(iocshArgBuf const *args) { new TutorialDriver(args[0].sval); }
+  static iocshFuncDef command = {"drvTutorialConfigure", num_args, args, usage};
+
+  static void call(iocshArgBuf const *args) {
+      new TutorialDriver(args[0].sval, args[1].ival);
+  }
 
   extern "C" {
 
@@ -351,7 +362,7 @@ declaration of our class now looks like this::
 
   class TutorialDriver : public Autoparam::Driver {
     public:
-      TutorialDriver(char const *portName);
+      TutorialDriver(char const *portName, int deviceNum);
       ~TutorialDriver();
 
     protected:
@@ -362,6 +373,9 @@ declaration of our class now looks like this::
       static Result<epicsInt32> intrReader(DeviceVariable &variable);
       static WriteResult intrWriter(DeviceVariable &variable, epicsInt32 value);
       static asynStatus intrRegistrar(DeviceVariable &variable, bool cancel);
+
+    private:
+      int deviceNum;
   };
 
 and the constructor is extended with the following calls::
@@ -383,8 +397,9 @@ straightforward device API. The read handler can be implemented as::
       Result<epicsInt32> result;
       TutorialAddress const &addr =
           static_cast<TutorialAddress const &>(variable.address());
+      TutorialDriver *driver = static_cast<TutorialVariable &>(variable).driver;
       uint16_t value;
-      DeviceStatus status = readWord(addr.address, &value);
+      DeviceStatus status = readWord(driver->deviceNum, addr.address, &value);
 
       if (status != DeviceSuccess) {
           result.status = asynError;
@@ -407,19 +422,37 @@ to, we could use the ``alarmStatus`` and ``alarmSeverity`` fields of
 :cpp:struct:`Autoparam::ResultBase` to override the record status and severity
 manually.
 
+Notice how we cast the address and the variable references: we use
+``static_cast`` instead of ``dynamic_cast`` because we know that the handler was
+given the objects of the derived types we had instantiated in
+``parseDeviceAddress()`` and ``createDeviceVariable()``. This allows us to get
+to the fields of ``TutorialAddress`` and ``TutorialVariable``. It also makes it
+clear why putting a pointer to the driver into ``TutorialVariable`` was a good
+idea: that is how we get the device number that the driver uses to talk to the
+device.
+
+This is a general pattern when working with ``autoparamDriver``: handlers have
+to be static functions instead of member functions because of restrictions of
+C++2003, yet it is a good idea to declare them inside the driver class so that
+they can access private members of the driver. They can obtain the pointer to
+the driver via the ``DeviceVariable`` they are given. This approximates a member
+function. Python fans can even name the driver pointer ``self`` 😉
+
 Writing works similarly::
 
   WriteResult TutorialDriver::wordWriter(DeviceVariable &variable, epicsInt32 value) {
       WriteResult result;
       TutorialAddress const &addr =
           static_cast<TutorialAddress const &>(variable.address());
+      TutorialDriver *driver = static_cast<TutorialVariable &>(variable).driver;
 
       if (value > 0xffff || value < 0) {
           result.status = asynOverflow;
           return result;
       }
 
-      DeviceStatus status = writeWord(addr.address, static_cast<uint16_t>(value));
+      DeviceStatus status = writeWord(driver->deviceNum, addr.address,
+                                      static_cast<uint16_t>(value));
 
       if (status != DeviceSuccess) {
           result.status = asynError;
@@ -445,6 +478,7 @@ the read handler should look familiar::
       ArrayReadResult result;
       TutorialAddress const &addr =
           static_cast<TutorialAddress const &>(variable.address());
+      TutorialDriver *driver = static_cast<TutorialVariable &>(variable).driver;
 
       if (addr.size > value.maxSize()) {
           result.status = asynOverflow;
@@ -452,7 +486,7 @@ the read handler should look familiar::
       }
 
       char *data = reinterpret_cast<char *>(value.data());
-      DeviceStatus status = readBytes(addr.address, data, addr.size);
+      DeviceStatus status = readBytes(driver->deviceNum, addr.address, data, addr.size);
 
       if (status != DeviceSuccess) {
           result.status = asynError;
@@ -479,7 +513,7 @@ to be checked against the size of the array on device::
       WriteResult result;
       TutorialAddress const &addr =
           static_cast<TutorialAddress const &>(variable.address());
-
+      TutorialDriver *driver = static_cast<TutorialVariable &>(variable).driver;
 
       if (value.size() > addr.size) {
           result.status = asynOverflow;
@@ -487,7 +521,8 @@ to be checked against the size of the array on device::
       }
 
       char const *data = reinterpret_cast<char const *>(value.data());
-      DeviceStatus status = writeBytes(addr.address, data, value.size());
+      DeviceStatus status = writeBytes(driver->deviceNum, addr.address,
+                                       data, value.size());
 
       if (status != DeviceSuccess) {
           result.status = asynError;
