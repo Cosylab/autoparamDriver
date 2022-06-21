@@ -49,8 +49,9 @@ char const *getAsynTypeName(asynParamType type) {
     return typeNames[type];
 }
 
-static void destroyDriver(void *driver) {
+void Driver::destroyDriver(void *driver) {
     Driver *drv = static_cast<Driver *>(driver);
+    pasynManager->enable(drv->pasynUserSelf, 0);
     delete drv;
 }
 

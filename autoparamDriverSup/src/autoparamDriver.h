@@ -88,6 +88,11 @@ class DriverOpts {
      * convenient because the `Driver` can be allocated using `new` from an
      * iocshell command, then let be.
      *
+     * Note: the exit hook will disable the asyn port before destroying the
+     * driver. The reason is that records can still be processed after the
+     * driver is destroyed. Disabling the port prevents the driver being called,
+     * though asyn may print warnings.
+     *
      * Default: disabled
      */
     DriverOpts &setAutoDestruct(bool enable = true) {
@@ -443,6 +448,8 @@ class Driver : public asynPortDriver {
                           size_t *nActual);
 
   private:
+    static void destroyDriver(void *driver);
+
     bool hasParam(int index);
 
     void handleResultStatus(asynUser *pasynUser, ResultBase const &result);
