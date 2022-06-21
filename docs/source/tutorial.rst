@@ -226,6 +226,8 @@ The code won't build yet because our ``TutorialDriver`` is still an abstract
 class: we have not yet implemented the functions that deal with parsing records'
 input and output links. So let's get to it.
 
+.. _parsing:
+
 Parsing arguments and creating device variables
 -----------------------------------------------
 
@@ -242,12 +244,14 @@ like, we see that our driver needs three distinct functions:
 * ``BYTES`` takes two argument, an address and a length. The value is a byte
   array, so this function should be bound to the ``asynInt8Array``, represented
   by the ``Autoparam::Array<epicsInt8>`` type.
-* ``INTR`` takes one argument, the interrupt line which identifies the source of
-  interrupts. The API we are using can only notify us when an interrupt happens.
-  As we are working on a generic driver, we don't know what the interrupt means,
-  so the best we can do is change some value that will cause a record to
-  process. To do this, let's bind this function to the ``epicsInt32`` type to
-  relay a counter to the EPICS layer.
+* ``INTR``, in principle, takes one argument: the interrupt line which
+  identifies the source of interrupts. The API we are using can only notify us
+  when an interrupt happens and cannot pass a value. As we are working on a
+  generic driver, we don't know what the interrupt means. We need to provide a
+  way for the database designer to act meaningfully. To do this, let's bind this
+  function to the ``epicsInt32`` type and have it take an additional parameter.
+  This allows the database to specify both the interrupt line and some register
+  address to read a value from.
 
 We will see how to implement these device functions in the next section. Before
 we can do that, we need some kind of handle that we can use to refer to data on
@@ -268,17 +272,17 @@ sufficient::
 
       Type type;
       epicsUInt16 address;
-      epicsUInt16 size;
+      epicsUInt16 sizeOrIntrLine;
 
       bool operator==(DeviceAddress const& other) const {
           TutorialAddress const &o = static_cast<TutorialAddress const &>(other);
           if (type != o.type) return false;
           switch (type) {
               case Word:
-              case Intr:
                   return address == o.address;
+              case Intr:
               case Bytes:
-                  return address == o.address && size == o.size;
+                  return address == o.address && sizeOrIntrLine == o.sizeOrIntrLine;
           }
       }
   };
@@ -303,11 +307,12 @@ can be delegated to the factory function which we need to implement anyway::
           addr->type = TutorialAddress::Word;
           is >> addr->address;
       } else if (function == "BYTES") {
-          addr->type = TutorialAddress::Word;
+          addr->type = TutorialAddress::Bytes;
           is >> addr->address;
-          is >> addr->size;
+          is >> addr->sizeOrIntrLine;
       } else if (function == "INTR") {
-          addr->type = TutorialAddress::Word;
+          addr->type = TutorialAddress::Intr;
+          is >> addr->sizeOrIntrLine;
           is >> addr->address;
       } else {
           delete addr;
@@ -316,6 +321,10 @@ can be delegated to the factory function which we need to implement anyway::
 
       return addr;
   }
+
+Notice that the "WORD" function only takes an address, the "BYTES" function
+takes and address and size, and the "INTR" function takes first the interrupt
+line, then the address to read a value from.
 
 This function is called with the string given in an ``INP`` or ``OUT`` field.
 Parsing the provided arguments is very simple in our case. Even so, this
@@ -353,6 +362,8 @@ forget to implement the function that creates our variable handles::
 With the two factory functions implemented, our driver is not an abstract class
 anymore, and the program compiles.
 
+.. _devfuncs:
+
 Implementing device functions
 -----------------------------
 
@@ -368,11 +379,14 @@ declaration of our class now looks like this::
     protected:
       static Result<epicsInt32> wordReader(DeviceVariable &variable);
       static WriteResult wordWriter(DeviceVariable &variable, epicsInt32 value);
+
       static ArrayReadResult bytesReader(DeviceVariable &variable, Array<epicsInt8> &value);
       static WriteResult bytesWriter(DeviceVariable &variable, Array<epicsInt8> const &value);
-      static Result<epicsInt32> intrReader(DeviceVariable &variable);
-      static WriteResult intrWriter(DeviceVariable &variable, epicsInt32 value);
+
+      static Result<epicsInt32> errReader(DeviceVariable &variable);
+      static WriteResult errWriter(DeviceVariable &variable, epicsInt32 value);
       static asynStatus intrRegistrar(DeviceVariable &variable, bool cancel);
+      static void intrCallback(void* userData);
 
     private:
       int deviceNum;
@@ -385,7 +399,7 @@ and the constructor is extended with the following calls::
   registerHandlers<epicsInt32>("INTR", intrReader, intrWriter, intrRegistrar);
 
 The signatures that read and write handlers must have are documented in
-:cpp:struct:`Autoparam::Handlers`.
+:cpp:struct:`Autoparam::Handlers`. Let's take a look at how to implement them.
 
 Words of wisdom
 ^^^^^^^^^^^^^^^
@@ -463,7 +477,23 @@ Writing works similarly::
   }
 
 Our interface towards EPICS records uses ``epicsInt32`` whereas the device needs
-``uint16_t``, which is why we need to check whether the value we were given is within range.
+``uint16_t``, which is why we need to check whether the value we were given is
+within range.
+
+Check that reading and writing register values works with your implementation of
+the device API (which is not covered here) with these records::
+
+  record(longin, "$(PREFIX):wordin") {
+      field(SCAN, "1 second")
+      field(DTYP, "asynInt32")
+      field(INP, "@asyn($(PORT)) WORD 0x1234")
+  }
+
+  record(longout, "$(PREFIX):wordout") {
+      field(DTYP, "asynInt32")
+      field(OUT, "@asyn($(PORT)) WORD 0x1234")
+  }
+
 
 Byte only what you can chew
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -480,20 +510,21 @@ the read handler should look familiar::
           static_cast<TutorialAddress const &>(variable.address());
       TutorialDriver *driver = static_cast<TutorialVariable &>(variable).driver;
 
-      if (addr.size > value.maxSize()) {
+      if (addr.sizeOrIntrLine > value.maxSize()) {
           result.status = asynOverflow;
           return result;
       }
 
       char *data = reinterpret_cast<char *>(value.data());
-      DeviceStatus status = readBytes(driver->deviceNum, addr.address, data, addr.size);
+      DeviceStatus status = readBytes(driver->deviceNum, addr.address, data,
+                                      addr.sizeOrIntrLine);
 
       if (status != DeviceSuccess) {
           result.status = asynError;
           return result;
       }
 
-      value.setSize(addr.size);
+      value.setSize(addr.sizeOrIntrLine);
       return result;
   }
 
@@ -515,7 +546,7 @@ to be checked against the size of the array on device::
           static_cast<TutorialAddress const &>(variable.address());
       TutorialDriver *driver = static_cast<TutorialVariable &>(variable).driver;
 
-      if (value.size() > addr.size) {
+      if (value.size() > addr.sizeOrIntrLine) {
           result.status = asynOverflow;
           return result;
       }
@@ -554,3 +585,105 @@ use a database such as the following::
 
 The first record should work while the second should fail with status of
 HWLIMIT.
+
+Please, do disturb
+^^^^^^^^^^^^^^^^^^
+
+As discussed in :ref:`parsing`, the "INTR" function takes an interrupt line and
+an address to read from. This handles the simple case when the user of our
+driver only needs to read a value in response to a hardware interrupt.
+
+Remember how we called ``registerHandlers()`` in :ref:`devfuncs`? For "WORD"
+and "BYTES", the last argument was ``NULL``, but for "INTR", we passed the
+``intrRegistrar`` function. Here it is::
+
+  asynStatus TutorialDriver::intrRegistrar(DeviceVariable &variable, bool cancel) {
+      TutorialAddress const &addr =
+          static_cast<TutorialAddress const &>(variable.address());
+      TutorialDriver *driver = static_cast<TutorialVariable &>(variable).driver;
+
+      DeviceStatus status;
+      if (!cancel) {
+          status = enableInterruptCallback(driver->deviceNum, addr.sizeOrIntrLine,
+                                           intrCallback, &variable);
+      } else {
+          status = disableInterruptCallback(driver->deviceNum, addr.sizeOrIntrLine);
+      }
+
+      return status == DeviceSuccess ? asynSuccess : asynError;
+  }
+
+Any number of records can refer to the given ``variable`` whose SCAN fields can
+switch to and from "I/O Intr" at any time. When the first record goes "I/O Intr", this function is called with ``cancel = false``. When there are again no
+records in "I/O Intr", it is called with ``cancel = true``.
+
+Our device API allows us to specify a callback function that is called with an
+arbitrary argument when an interrupt happens. In this function, we perform a
+read and then notify all records that are interested in interrupts for this
+variable, like so::
+
+  void TutorialDriver::intrCallback(void *userData) {
+      TutorialVariable *variable = static_cast<TutorialVariable *>(userData);
+      TutorialAddress const &addr =
+          static_cast<TutorialAddress const &>(variable->address());
+      TutorialDriver *driver = variable->driver;
+
+      driver->lock();
+      epicsUInt16 value;
+      DeviceStatus status = readWord(driver->deviceNum, addr.address, &value);
+      asynStatus astatus = status == DeviceSuccess ? asynSuccess : asynError;
+      driver->setParam(*variable, epicsInt32(value), astatus);
+      driver->callParamCallbacks();
+      driver->unlock();
+  }
+
+Note first that we need to lock the driver whenever we talk to the device or use
+the driver itself. We don't need to do it in handler functions because EPICS and
+asyn already hold the lock when the handlers are called. This is not the case
+with our callback which can be called by the device API at any time.
+
+Notice how we used the :cpp:func:`Autoparam::Driver::setParam` function to set a
+value of a parameter, then called ``callParamCallbacks()``. ``setParam()``
+writes our value into a value cache maintained by asyn. The
+``callParamCallbacks()`` function then goes through all the values provided and
+processes only the records bound to parameters that have changed. This is
+convenient because we don't need to check for changes ourselves, the asyn
+machinery takes care of this for us. If we obtain values for several device
+variables in one operation, we can call ``setParam()`` for all of them, then
+call ``callParamCallbacks()`` only once. Note that this is only available for
+scalars: arrays can be big and need to be handled one-by-one; see
+:cpp:func:`Autoparam::Driver::doCallbacksArray()`.
+
+It may or may not make sense to allow normal reads and writes to variables of
+the "INTR" type. Suppose we want to forbid reads and writes. One is tempted to
+pass ``NULL`` to the :cpp:func:`Autoparam::Driver::registerHandlers()` function.
+This works, but doesn't forbid reading and/or writing. Instead, it installs
+*default handlers*. These handlers use the same value cache as ``setParam()``
+and thus allow you to have "soft" values that are not backed by the device. This
+functionality is inherited from the underlying ``asynPortDriver``. If you wish
+to forbid reads and writes, simply create handlers that always return
+``asynError``::
+
+  Result<epicsInt32> TutorialDriver::errReader(DeviceVariable &variable) {
+      Result<epicsInt32> result;
+      result.status = asynError;
+      return result;
+  }
+
+  WriteResult TutorialDriver::errWriter(DeviceVariable &variable, epicsInt32 value) {
+      WriteResult result;
+      result.status = asynError;
+      return result;
+  }
+
+To test the interrupt functionality, a record like this can be used to read
+register 0x1234 in response to interrupts on line 3::
+
+  record(longin, "$(PREFIX):intrtest") {
+      field(SCAN, "Passive")
+      field(DTYP, "asynInt32")
+      field(INP, "@asyn($(PORT)) INTR 3 0x1234")
+  }
+
+Implementing the device API for interrupts and the iocsh command to trigger a
+software interrupt is left as an exercise for the reader.
