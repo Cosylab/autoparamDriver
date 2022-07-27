@@ -203,6 +203,10 @@ template <typename T> class IsArray {
  * This class is called `Octet` instead of `String` to match the asyn
  * nomenclature. It is an `Array` of `char` and provides convenience function to
  * ensure null-termination required by C strings.
+ *
+ * **Note:** Octets sometimes behave like arrays (i.e. in read and write
+ * handlers) and sometimes like scalars (i.e. when handling interrupts; see
+ * `Autoparam::Driver::doCallbacksArray()` and `Autoparam::Driver::setParam()`).
  */
 class Octet : public Array<char> {
   public:
@@ -496,6 +500,12 @@ template <> struct AsynType<Array<epicsFloat64> > {
  * bit-level) IO. As such, its handlers are passed an additional parameter
  * `mask`. This mask tells the handler which bits the caller is interested in.
  * It's up to the handler to properly mask the value.
+ *
+ * **Note:** You shouldn't use `epicsUInt32` support for "normal" integer IO,
+ * even for unsigned integers. It is meant **only** for digital IO, which is why
+ * the names of the asyn interface and device support explicitly say "Digital".
+ * Use `epicsInt32` for normal unsigned integers. If you need to handle unsigned
+ * integers which are larger than 31 bits, use `epicsInt64`.
  */
 template <> struct Handlers<epicsUInt32, false> {
     typedef Autoparam::WriteResult WriteResult;

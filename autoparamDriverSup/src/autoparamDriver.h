@@ -314,6 +314,10 @@ class Driver : public asynPortDriver {
      *
      * Status and alarms of the records are set according to the same principles
      * as on completion of a write handler. See `Autoparam::ResultBase`.
+     *
+     * **Note:** strings are not arrays, even though `Autoparam::Octet` derives
+     * from `Autoparam::Array`. Use `setParam()` and `callParamCallbacks()`
+     * instead of `doCallbacksArray()`.
      */
     template <typename T>
     asynStatus doCallbacksArray(DeviceVariable const &var, Array<T> &value,

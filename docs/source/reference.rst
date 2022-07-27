@@ -34,15 +34,15 @@ The driver
 .. doxygenclass:: Autoparam::Driver
 .. doxygenclass:: Autoparam::DriverOpts
 
-PV-specific information
------------------------
+Device variables and addresses
+------------------------------
 
 .. doxygenclass:: Autoparam::DeviceAddress
 .. doxygenclass:: Autoparam::DeviceVariable
    :undoc-members:
 
-References to array data
-------------------------
+References to array and string data
+-----------------------------------
 
 .. doxygenclass:: Autoparam::Array
    :undoc-members:
