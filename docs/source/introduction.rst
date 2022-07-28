@@ -106,11 +106,11 @@ to obtain a so-called "reason string". A record thus looks like::
       field(INP, "@asyn($(PORT_NAME)) this is a reason string")
   }
 
-Here, the macro ``$(PORT_NAME)`` refers to an instance of a driver derived from
-:cpp:class:`Autoparam::Driver`. When the record is initialized, the driver will
-be given the entire reason string. It is split on the first space and the first
-word (in the above example, "this") is called a **function** while the rest are
-called **arguments**.
+Here, the macro ``$(PORT_NAME)`` names an asyn port with a driver subclassed
+from :cpp:class:`Autoparam::Driver`. When the record is initialized, the driver
+will be given the entire reason string. It is split on the first space and the
+first word (in the above example, "this") is called a **function** while the
+rest are called **arguments**.
 
 The combination of a function and its arguments is called a **device address**.
 Any record referring to the same combination of function and arguments will have
@@ -119,7 +119,7 @@ records are being initialized, the following happens:
 
 * :cpp:class:`Autoparam::Driver` calls
   :cpp:func:`Autoparam::Driver::parseDeviceAddress()`, which is implemented
-  by the derived driver, to parse the reason string and return an
+  by the subclassed driver, to parse the reason string and return an
   :cpp:class:`Autoparam::DeviceAddress`.
 * :cpp:class:`Autoparam::Driver` checks whether any of the records that were
   already initialized refer to the same address, reusing the underlying
@@ -151,12 +151,12 @@ The :cpp:class:`Autoparam::DeviceVariable` class as used by the
 :cpp:class:`Autoparam::Driver` base class does not do much: apart from being
 used as a handle, it provides access to the function and the
 :cpp:class:`Autoparam::DeviceAddress`, and that's it. However,
-``DeviceVariable`` is polymorphic and it is expected that the driver deriving
-from :cpp:class:`Autoparam::Driver` will deal with subclasses of
-``DeviceVariable``; see :cpp:func:`Autoparam::Driver::createDeviceVariable()`.
-The subclass (or subclasses, there can be several) can contain anything the
-driver needs to work with the variable, like data type conversion, hardware
-interrupt subscription, etc.
+``DeviceVariable`` is polymorphic and it is expected that the driver subclassing
+:cpp:class:`Autoparam::Driver` will deal with subclasses of ``DeviceVariable``;
+see :cpp:func:`Autoparam::Driver::createDeviceVariable()`. The subclass (or
+subclasses, there can be several) can contain anything the driver needs to work
+with the variable, like data type conversion, hardware interrupt subscription,
+etc.
 
 Similarly, :cpp:class:`Autoparam::DeviceAddress` is a polymorphic class. The
 only requirement is that it is equality-comparable to other addresses and that

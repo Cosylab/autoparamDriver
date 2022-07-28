@@ -201,8 +201,8 @@ class DriverOpts {
  * database records are initialized. The string a record uses to refer to a
  * parameter is split into a "function" and its "arguments" which, together,
  * define a "parameter". This is handled by the `DeviceAddress` and
- * `DeviceVariable` classes, and needs to be implemented by the class deriving
- * from `Driver`.
+ * `DeviceVariable` classes, and needs to be implemented by the class
+ * subclassing `Driver`.
  *
  * Drivers based on `Autoparam::Driver` do not need to override the read and
  * write methods. Instead, they register read and write handlers for "functions"
@@ -222,17 +222,17 @@ class DriverOpts {
  *   - (arrays) calling `Driver::doCallbacksArray()`.
  *
  * To create a new driver based on `Autoparam::Driver`:
- *   1. Create a derived class of `DeviceAddress`.
- *   2. Create a derived class of `DeviceVariable`.
- *   3. Create a derived class of `Driver`.
- *     - Implement the `parseDeviceAddress()` method to instantiate the derived
- *       `DeviceAddress`.
+ *   1. Define a subclass of `DeviceAddress`.
+ *   2. Define a subclass of `DeviceVariable`.
+ *   3. Define a subclass of `Driver`.
+ *     - Implement the `parseDeviceAddress()` method to instantiate the
+ *       `DeviceAddress` subclass.
  *     - Implement the `createDeviceVariable()` method to instantiate the
- *       derived `DeviceVariable`.
+ *       `DeviceVariable` subclass.
  *     - Define static functions that will act as read and write handlers (see
  *       `Autoparam::Handlers` for signatures) and register them as handlers in
  *       the driver's constructor (c.f. `Driver::registerHandlers()`).
- *   4. Create one or more iocshell commands to instatiate and configure the
+ *   4. Define one or more iocshell commands to instatiate and configure the
  *      driver.
  *
  * Apart from read and write functions, methods of `asynPortDriver` such as
@@ -264,7 +264,7 @@ class Driver : public asynPortDriver {
     virtual DeviceAddress *parseDeviceAddress(std::string const &function,
                                               std::string const &arguments) = 0;
 
-    /*! Convert the given `DeviceVariable` into an instance of a derived class.
+    /*! Convert the given `DeviceVariable` into an instance of a subclass.
      *
      * `DeviceVariable` is meant to be subclassed. As records are initialized,
      * `Driver` creates instances of the `DeviceVariable` base class, then
@@ -385,8 +385,9 @@ class Driver : public asynPortDriver {
     DeviceVariable *deviceVariableFromUser(asynUser *pasynUser);
 
   public:
+
     // Beyond this point, the methods are public because they are part of the
-    // asyn interface, but derived classes shouldn't need to override them.
+    // asyn interface, but subclasses shouldn't need to override them.
 
     asynStatus drvUserCreate(asynUser *pasynUser, const char *reason,
                              const char **, size_t *);

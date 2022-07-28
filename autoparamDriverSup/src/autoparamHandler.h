@@ -18,11 +18,11 @@ namespace Autoparam {
 
 /*! Represents parsed device address information.
  *
- * The derived driver needs to subclass this and return it from the overridden
- * `Autoparam::Driver::parseDeviceAddress()`. It is intended for the derived
- * driver to store parsed function arguments here, e.g. numeric addresses and
- * offsets. It is used by the base `Driver` to identify which records refer to
- * the same device variable.
+ * The driver needs to subclass this and return it from the overridden
+ * `Autoparam::Driver::parseDeviceAddress()`. This class is intended for storing
+ * parsed function arguments, e.g. numeric addresses and offsets. It is used by
+ * the `Driver` base class to identify which records refer to the same device
+ * variable.
  *
  * Unlike `DeviceVariable`, this class should not take any device resources, or,
  * if unavoidable (e.g. because it needs to access the device for name
@@ -47,12 +47,12 @@ class DeviceAddress {
  * This class is used as a handle referring to a device device variable, e.g. in
  * read and write handlers or `Driver::setParam()`.
  *
- * `DeviceVariable` is meant to be subclassed for use by the derived driver.
+ * `DeviceVariable` is meant to be subclassed for use by the subclassed driver.
  * This greatly increases its utility as it can hold any information related to
- * a device variable that the derived driver might require. This is done via
- * `Driver::createDeviceVariable()`.
+ * a device variable that the subclassed driver might require. Instances are
+ * created by `Driver::createDeviceVariable()`.
  *
- * `DeviceVariable` instances are created only once per device variable, but are
+ * `DeviceVariable` instances are created only once per device variable, and are
  * shared between records referring to the same device variable. They are
  * destroyed when the driver is destroyed.
  */
@@ -61,7 +61,7 @@ class DeviceVariable {
     /*! Construct `DeviceVariable` from another; the other one is invalidated.
      *
      * Being the only public constructor, this is the only way the driver
-     * deriving from `Autoparam::Driver` can construct a `DeviceVariable`. The
+     * subclassing `Autoparam::Driver` can construct a `DeviceVariable`. The
      * usage pattern is the following:
      *
      * - The driver overrides `Autoparam::Driver::parseDeviceAddress()`. That
@@ -102,10 +102,10 @@ class DeviceVariable {
     /*! Returns the type of the underlying asyn parameter.
      *
      * Apart from complementing `asynIndex()`, it allows the driver (or the
-     * constructor of the derived class of `DeviceVariable`) to act differently
-     * based on the type. While the derived driver can also determine this
-     * information from `function()` (it knows which type each function handler
-     * is registered for), using `asynType()` is faster and more convenient.
+     * constructor of the `DeviceVariable` subclass) to act differently based on
+     * the type. While the subclassed driver can also determine this information
+     * from `function()` (it knows which type each function handler is
+     * registered for), using `asynType()` is faster and more convenient.
      */
     asynParamType asynType() const { return m_asynParamType; }
 

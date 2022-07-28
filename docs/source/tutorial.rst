@@ -256,10 +256,10 @@ we can do that, we need some kind of handle that we can use to refer to data on
 the device.
 
 :cpp:class:`Autoparam::Driver` requires two steps to create a handle from an
-``INP`` or an ``OUT`` field of a record. First, we need to derive a class from
+``INP`` or an ``OUT`` field of a record. First, we need to subclass
 :cpp:class:`Autoparam::DeviceAddress` and override
-:cpp:func:`Autoparam::Driver::parseDeviceAddress()` to instantiate it.
-Looking at the three functions we need to distinguish, the following should be
+:cpp:func:`Autoparam::Driver::parseDeviceAddress()` to instantiate it. Looking
+at the three functions we need to distinguish, the following should be
 sufficient::
 
   using namespace Autoparam::Convenience;

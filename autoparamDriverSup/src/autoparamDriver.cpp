@@ -136,7 +136,7 @@ asynStatus Driver::drvUserCreate(asynUser *pasynUser, const char *reason,
         arguments = os.str();
     }
 
-    // Let the derived driver parse the arguments.
+    // Let the driver subclass parse the arguments.
     DeviceAddress *addr = parseDeviceAddress(function, arguments);
     if (addr == NULL) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
