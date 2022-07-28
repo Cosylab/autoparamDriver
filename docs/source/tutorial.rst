@@ -5,8 +5,6 @@
 Tutorial
 ========
 
-**IN PROGRESS**
-
 To learn how to use ``autoparamDriver``, we will imagine a simple device and
 create a small library to talk to it; the library will, naturally, generate mock
 data. We will then write a driver to integrate it into EPICS. While all of this
@@ -687,3 +685,13 @@ register 0x1234 in response to interrupts on line 3::
 
 Implementing the device API for interrupts and the iocsh command to trigger a
 software interrupt is left as an exercise for the reader.
+
+
+Fin
+---
+
+Wrapping up, it has to be pointed out that there is a lot to know about
+implementing a driver. While this tutorial should get you started, you really
+need to consult the reference documentation for the classes and functions you
+are using. Also, don't forget to check the :doc:`miscellania` page as it
+contains useful information that is hard to squeeze elsewhere.

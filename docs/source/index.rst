@@ -44,6 +44,7 @@ refer to :doc:`design`.
    tutorial
    design
    reference
+   miscellania
    :maxdepth: 2
    :caption: Contents:
 
