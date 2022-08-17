@@ -297,14 +297,24 @@ void Driver::installAnInterruptRegistrar(void *piface) {
         reinterpret_cast<VoidFuncPtr>(iface->cancelInterruptUser);
     m_originalIntrRegister[AsynType<HType>::value] = std::make_pair(reg, canc);
     assignPtr(iface->cancelInterruptUser, Driver::cancelInterrupt<HType>);
-    if (AsynType<HType>::value == asynParamUInt32Digital) {
-        // UInt32Digital has a signature different from other registrars.
-        assignPtr(iface->registerInterruptUser,
-                  Driver::registerInterruptDigital);
-    } else {
-        assignPtr(iface->registerInterruptUser,
-                  Driver::registerInterrupt<HType>);
-    }
+    assignPtr(iface->registerInterruptUser, Driver::registerInterrupt<HType>);
+}
+
+// UInt32Digital has a signature different from other registrars, so we need to
+// do a different cast.
+template <>
+void Driver::installAnInterruptRegistrar<asynUInt32Digital, epicsUInt32>(
+    void *piface) {
+    // I hate doing type erasure like this, but there aren't sane options ...
+    asynUInt32Digital *iface = static_cast<asynUInt32Digital *>(piface);
+    VoidFuncPtr reg =
+        reinterpret_cast<VoidFuncPtr>(iface->registerInterruptUser);
+    VoidFuncPtr canc =
+        reinterpret_cast<VoidFuncPtr>(iface->cancelInterruptUser);
+    m_originalIntrRegister[AsynType<epicsUInt32>::value] =
+        std::make_pair(reg, canc);
+    assignPtr(iface->cancelInterruptUser, Driver::cancelInterrupt<epicsUInt32>);
+    assignPtr(iface->registerInterruptUser, Driver::registerInterruptDigital);
 }
 
 void Driver::installInterruptRegistrars() {

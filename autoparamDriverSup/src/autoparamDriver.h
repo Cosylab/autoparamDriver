@@ -385,7 +385,6 @@ class Driver : public asynPortDriver {
     DeviceVariable *deviceVariableFromUser(asynUser *pasynUser);
 
   public:
-
     // Beyond this point, the methods are public because they are part of the
     // asyn interface, but subclasses shouldn't need to override them.
 
