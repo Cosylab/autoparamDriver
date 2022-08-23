@@ -480,6 +480,9 @@ class Driver : public asynPortDriver {
     typename Handlers<T>::WriteHandler
     getWriteHandler(std::string const &function);
 
+    template <typename T>
+    bool checkHandlersVerbosely(std::string const &function);
+
     template <typename T> asynStatus readScalar(asynUser *pasynUser, T *value);
     asynStatus readScalar(asynUser *pasynUser, epicsUInt32 *value,
                           epicsUInt32 mask);

@@ -49,6 +49,14 @@ char const *getAsynTypeName(asynParamType type) {
     return typeNames[type];
 }
 
+static std::string getDtypName(asynParamType type) {
+    std::string dtyp(getAsynTypeName(type));
+    std::string const substr("Param");
+    size_t idx = dtyp.find(substr);
+    dtyp.erase(idx, substr.size());
+    return dtyp;
+}
+
 void Driver::destroyDriver(void *driver) {
     Driver *drv = static_cast<Driver *>(driver);
     pasynManager->enable(drv->pasynUserSelf, 0);
@@ -346,9 +354,6 @@ Driver::getReadHandler(std::string const &function) {
     typename Handlers<T>::ReadHandler handler;
     try {
         handler = getHandlerMap<T>().at(function).readHandler;
-        if (!handler) {
-            throw std::out_of_range("No handler registered");
-        }
     } catch (std::out_of_range const &) {
         handler = NULL;
     }
@@ -361,13 +366,33 @@ Driver::getWriteHandler(std::string const &function) {
     typename Handlers<T>::WriteHandler handler;
     try {
         handler = getHandlerMap<T>().at(function).writeHandler;
-        if (!handler) {
-            throw std::out_of_range("No handler registered");
-        }
     } catch (std::out_of_range const &) {
         handler = NULL;
     }
     return handler;
+}
+
+template <typename T>
+bool Driver::checkHandlersVerbosely(std::string const &function) {
+    try {
+        getHandlerMap<T>().at(function);
+    } catch (std::out_of_range &) {
+        std::stringstream msg;
+        msg << "record of DTYP " << getDtypName(AsynType<T>::value)
+            << " cannot handle function " << function << ". ";
+
+        try {
+            asynParamType type = m_functionTypes.at(function);
+            msg << "Perhaps you meant DTYP = " << getDtypName(type) << "?\n";
+        } catch (std::out_of_range &) {
+            msg << "No other DTYP can handle this either.\n";
+        }
+
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "%s: port=%s %s.",
+                  driverName, portName, msg.str().c_str());
+        return false;
+    }
+    return true;
 }
 
 bool Driver::hasParam(int index) {
@@ -698,6 +723,9 @@ asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
     self->m_interruptRefcount[var] += 1;
 
     if (self->m_interruptRefcount[var] == 1) {
+        if (!self->checkHandlersVerbosely<T>(var->function())) {
+            return asynError;
+        }
         InterruptRegistrar registrar =
             self->getHandlerMap<T>().at(var->function()).intrRegistrar;
         if (registrar != NULL) {
@@ -748,6 +776,9 @@ asynStatus Driver::cancelInterrupt(void *drvPvt, asynUser *pasynUser,
     }
 
     if (self->m_interruptRefcount[var] == 0) {
+        if (!self->checkHandlersVerbosely<T>(var->function())) {
+            return asynError;
+        }
         InterruptRegistrar registrar =
             self->getHandlerMap<T>().at(var->function()).intrRegistrar;
         if (registrar != NULL) {
@@ -793,6 +824,9 @@ asynStatus Driver::registerInterruptDigital(void *drvPvt, asynUser *pasynUser,
     self->m_interruptRefcount[var] += 1;
 
     if (self->m_interruptRefcount[var] == 1) {
+        if (!self->checkHandlersVerbosely<T>(var->function())) {
+            return asynError;
+        }
         InterruptRegistrar registrar =
             self->getHandlerMap<T>().at(var->function()).intrRegistrar;
         if (registrar != NULL) {
