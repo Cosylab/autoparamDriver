@@ -2,14 +2,16 @@
 ..
 .. SPDX-License-Identifier: MIT
 
+.. _miscellania:
+
 Topics of interest
 ==================
 
 Strings vs. arrays
 ------------------
 
-Strings in asyn have two faces. When reading and writing data, they behave like
-arrays. For that reason, ``autoparamDriver`` represents them with
+Strings in ``asyn`` have two faces. When reading and writing data, they behave
+like arrays. For that reason, ``autoparamDriver`` represents them with
 :cpp:class:`Autoparam::Octet`, which derives from
 :cpp:class:`Autoparam::Array\<char>`. However, unlike arrays, they are
 represented by ``asynPortDriver`` parameters. This means that they are
@@ -20,11 +22,11 @@ propagated to ``I/O Intr`` records using
 Digital IO and unsigned integers
 --------------------------------
 
-asyn only supports signed integers. It may be tempting to register handlers for
-``epicsUInt32`` to handle unsigned integers, but that is not the way to go: that
-type is mapped to the ``asynUInt32Digital`` interface, which serves a different
-purpose — I/O on specific bits of an integer register. For example, a ``bi``
-record like this::
+``asyn`` only supports signed integers. It may be tempting to register handlers
+for ``epicsUInt32`` to handle unsigned integers, but that is not the way to go:
+that type is mapped to the ``asynUInt32Digital`` interface, which serves a
+different purpose — I/O on specific bits of an integer register. For example, a
+``bi`` record like this::
 
   record(bi, "$(PREFIX):bits_b3") {
       field(DESC, "A single bit")
@@ -41,16 +43,17 @@ requested bit. For writes, the handler also receives a mask, and it must only
 modify the unmasked bits of the device register.
 
 If you are doing "normal" integer I/O, you can only use signed integers. If the
-device deals in 32-bit unsigned values where all 32-bits are used, you need to
+device deals in 32-bit unsigned values where all 32 bits are used, you need to
 use the ``epicsInt64`` type.
 
 Arrays are a bit different. While e.g. the ``longin`` record is unsuitable for
 unsigned 32-bit values larger than 2³¹-1, the ``waveform`` record supports
-integers of all sizes, both signed and unsigned. Again, asyn only supports
-signed types. But because no arithmetic is done, it is perfectly ok to push
+integers of all sizes, both signed and unsigned, by setting the FTVL field
+appropriately. Again, ``asyn`` only supports signed types. But because no
+arithmetic is done by ``asyn`` device support code, it is perfectly ok to push
 unsigned data via signed integers of the same size. They will end up in the
 ``waveform`` record unchanged. Just be careful when converting endianness from
-device order to host order.
+device order to host order, or if your driver code needs to do arithmetic.
 
 Connection management
 ---------------------
@@ -58,7 +61,7 @@ Connection management
 By default, :cpp:class:`Autoparam::DriverOpts` enables the autoconnect
 functionality. This is useful for the simplest case where your driver does no
 connection management, or simply does its best to always stay connected. In this
-case, the asyn port (which is the interface through which records and other
+case, the ``asyn`` port (which is the interface through which records and other
 users talk to your driver) will always appear connected.
 
 However, you may want to implement connection management to allow the port to

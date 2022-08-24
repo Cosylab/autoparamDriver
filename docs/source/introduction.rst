@@ -72,10 +72,10 @@ Concepts and terminology
 
 .. rubric:: See also
 
-* `General asynDriver documentation`_
+* `asynDriver EPICS support documentation`_
 * `asynPortDriver class reference`_
 
-.. _General asynDriver documentation: https://epics.anl.gov/modules/soft/asyn/R4-38/asynDriver.html#genericEpicsSupport
+.. _asynDriver EPICS support documentation: https://epics.anl.gov/modules/soft/asyn/R4-38/asynDriver.html#genericEpicsSupport
 .. _asynPortDriver class reference: https://epics.anl.gov/modules/soft/asyn/R4-38/asynDoxygenHTML/classasyn_port_driver.html
 
 
@@ -93,6 +93,8 @@ variables on the network.
 
 When mentioning a "variable", this documentation always refers to a *device
 variable*, never a process variable.
+
+.. _record-to-variable:
 
 How does a record refer to a device variable?
 `````````````````````````````````````````````
@@ -189,6 +191,43 @@ used. For scalars, the default read handler simply returns the value stored in
 the parameter associated with the device variable while the write handler stores
 the value provided by the record in that same parameter. For arrays, both
 handlers return an error since array parameters cannot store values themselves.
+
+``asyn`` interfaces: passing data between records and the driver
+````````````````````````````````````````````````````````````````
+
+Looking again at the short example record above (:ref:`record-to-variable`),
+notice that it uses the DTYP field to choose one of ``asyn`` EPICS device
+support modules. These are documented in the `asynDriver EPICS support
+documentation`_ and need to be well understood both by driver authors and
+database authors:
+
+* The driver author needs to choose an appropriate interface for each device
+  function. Each function can only be bound to one interface.
+
+* The database author needs to know which interface is used for a particular
+  function in order to fill in the DTYP field correctly. Records also change
+  behavior based on device support; for example, the ``ai`` record can use both
+  ``asynInt32`` and ``asynFloat64`` interfaces, but behaves differently with
+  regard to conversion.
+
+From the point of view of ``autoparamDriver``, there is a 1:1 mapping between
+the basic ``asyn`` interfaces (i.e. excluding the "averaging" and similar
+higher-level device support code) and the types of data that they are meant to
+convey between the records and the device. This mapping is documented in
+:cpp:struct:`Autoparam::AsynType`. Note, however, that the subclassed driver
+should not need to use this struct, or refer to the ``asyn`` interfaces (or
+parameter types) as such.
+
+Instead, the driver implements a mapping from one data type to another. As an
+example, consider a device that has a function for reading a 16-bit unsigned
+big-endian integer. One needs to choose the appropriate data type supported by
+the ``asyn``/EPICS side, which turns out to be ``epicsInt32``. Thus, the driver
+needs to register a handler (using
+:cpp:func:`Autoparam::Driver::registerHandlers()`) for ``epicsInt32`` that talks
+to the device in terms of ``epicsUInt16`` with endianness conversion.
+
+There are some subtleties regarding working with big 32-bit integers, digital
+I/O and strings that are discussed under :ref:`miscellania`.
 
 How does the driver process ``I/O Intr`` records?
 `````````````````````````````````````````````````
