@@ -630,6 +630,9 @@ template <typename T>
 asynStatus Driver::doCallbacksArray(DeviceVariable const &var, Array<T> &value,
                                     asynStatus status, int alarmStatus,
                                     int alarmSeverity) {
+    if (!checkHandlersVerbosely<Array<T> >(var.function())) {
+        return asynError;
+    }
     setParamStatus(var.asynIndex(), status);
     setParamAlarmStatus(var.asynIndex(), alarmStatus);
     setParamAlarmSeverity(var.asynIndex(), alarmSeverity);
@@ -660,6 +663,9 @@ template <typename T>
 asynStatus Driver::setParam(DeviceVariable const &var, T value,
                             asynStatus status, int alarmStatus,
                             int alarmSeverity) {
+    if (!checkHandlersVerbosely<T>(var.function())) {
+        return asynError;
+    }
     setParamStatus(var.asynIndex(), status);
     setParamAlarmStatus(var.asynIndex(), alarmStatus);
     setParamAlarmSeverity(var.asynIndex(), alarmSeverity);
@@ -669,6 +675,9 @@ asynStatus Driver::setParam(DeviceVariable const &var, T value,
 asynStatus Driver::setParam(DeviceVariable const &var, epicsUInt32 value,
                             epicsUInt32 mask, asynStatus status,
                             int alarmStatus, int alarmSeverity) {
+    if (!checkHandlersVerbosely<epicsUInt32>(var.function())) {
+        return asynError;
+    }
     setParamStatus(var.asynIndex(), status);
     setParamAlarmStatus(var.asynIndex(), alarmStatus);
     setParamAlarmSeverity(var.asynIndex(), alarmSeverity);
