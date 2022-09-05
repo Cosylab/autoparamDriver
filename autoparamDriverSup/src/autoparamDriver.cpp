@@ -981,7 +981,8 @@ asynStatus Driver::writeOctetData(asynUser *pasynUser, char const *value,
 
 asynStatus Driver::readInt32(asynUser *pasynUser, epicsInt32 *value) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
         bool handlersExist = checkHandlersVerbosely<epicsInt32>(function);
         if (!handlersExist) {
             return asynError;
@@ -996,7 +997,8 @@ asynStatus Driver::readInt32(asynUser *pasynUser, epicsInt32 *value) {
 
 asynStatus Driver::writeInt32(asynUser *pasynUser, epicsInt32 value) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
         bool handlersExist = checkHandlersVerbosely<epicsInt32>(function);
         if (!handlersExist) {
             return asynError;
@@ -1011,7 +1013,8 @@ asynStatus Driver::writeInt32(asynUser *pasynUser, epicsInt32 value) {
 
 asynStatus Driver::readInt64(asynUser *pasynUser, epicsInt64 *value) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
         bool handlersExist = checkHandlersVerbosely<epicsInt64>(function);
         if (!handlersExist) {
             return asynError;
@@ -1026,7 +1029,8 @@ asynStatus Driver::readInt64(asynUser *pasynUser, epicsInt64 *value) {
 
 asynStatus Driver::writeInt64(asynUser *pasynUser, epicsInt64 value) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
         bool handlersExist = checkHandlersVerbosely<epicsInt64>(function);
         if (!handlersExist) {
             return asynError;
@@ -1041,7 +1045,8 @@ asynStatus Driver::writeInt64(asynUser *pasynUser, epicsInt64 value) {
 
 asynStatus Driver::readFloat64(asynUser *pasynUser, epicsFloat64 *value) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
         bool handlersExist = checkHandlersVerbosely<epicsFloat64>(function);
         if (!handlersExist) {
             return asynError;
@@ -1056,7 +1061,8 @@ asynStatus Driver::readFloat64(asynUser *pasynUser, epicsFloat64 *value) {
 
 asynStatus Driver::writeFloat64(asynUser *pasynUser, epicsFloat64 value) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
         bool handlersExist = checkHandlersVerbosely<epicsFloat64>(function);
         if (!handlersExist) {
             return asynError;
@@ -1072,8 +1078,10 @@ asynStatus Driver::writeFloat64(asynUser *pasynUser, epicsFloat64 value) {
 asynStatus Driver::readInt8Array(asynUser *pasynUser, epicsInt8 *value,
                                  size_t maxSize, size_t *size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsInt8> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsInt8> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1088,8 +1096,10 @@ asynStatus Driver::readInt8Array(asynUser *pasynUser, epicsInt8 *value,
 asynStatus Driver::writeInt8Array(asynUser *pasynUser, epicsInt8 *value,
                                   size_t size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsInt8> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsInt8> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1104,8 +1114,10 @@ asynStatus Driver::writeInt8Array(asynUser *pasynUser, epicsInt8 *value,
 asynStatus Driver::readInt16Array(asynUser *pasynUser, epicsInt16 *value,
                                   size_t maxSize, size_t *size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsInt16> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsInt16> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1120,8 +1132,10 @@ asynStatus Driver::readInt16Array(asynUser *pasynUser, epicsInt16 *value,
 asynStatus Driver::writeInt16Array(asynUser *pasynUser, epicsInt16 *value,
                                    size_t size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsInt16> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsInt16> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1136,8 +1150,10 @@ asynStatus Driver::writeInt16Array(asynUser *pasynUser, epicsInt16 *value,
 asynStatus Driver::readInt32Array(asynUser *pasynUser, epicsInt32 *value,
                                   size_t maxSize, size_t *size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsInt32> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsInt32> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1152,8 +1168,10 @@ asynStatus Driver::readInt32Array(asynUser *pasynUser, epicsInt32 *value,
 asynStatus Driver::writeInt32Array(asynUser *pasynUser, epicsInt32 *value,
                                    size_t size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsInt32> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsInt32> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1168,8 +1186,10 @@ asynStatus Driver::writeInt32Array(asynUser *pasynUser, epicsInt32 *value,
 asynStatus Driver::readInt64Array(asynUser *pasynUser, epicsInt64 *value,
                                   size_t maxSize, size_t *size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsInt64> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsInt64> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1184,8 +1204,10 @@ asynStatus Driver::readInt64Array(asynUser *pasynUser, epicsInt64 *value,
 asynStatus Driver::writeInt64Array(asynUser *pasynUser, epicsInt64 *value,
                                    size_t size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsInt64> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsInt64> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1200,8 +1222,10 @@ asynStatus Driver::writeInt64Array(asynUser *pasynUser, epicsInt64 *value,
 asynStatus Driver::readFloat32Array(asynUser *pasynUser, epicsFloat32 *value,
                                     size_t maxSize, size_t *size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsFloat32> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsFloat32> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1216,8 +1240,10 @@ asynStatus Driver::readFloat32Array(asynUser *pasynUser, epicsFloat32 *value,
 asynStatus Driver::writeFloat32Array(asynUser *pasynUser, epicsFloat32 *value,
                                      size_t size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsFloat32> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsFloat32> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1232,8 +1258,10 @@ asynStatus Driver::writeFloat32Array(asynUser *pasynUser, epicsFloat32 *value,
 asynStatus Driver::readFloat64Array(asynUser *pasynUser, epicsFloat64 *value,
                                     size_t maxSize, size_t *size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsFloat64> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsFloat64> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1248,8 +1276,10 @@ asynStatus Driver::readFloat64Array(asynUser *pasynUser, epicsFloat64 *value,
 asynStatus Driver::writeFloat64Array(asynUser *pasynUser, epicsFloat64 *value,
                                      size_t size) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
-        bool handlersExist = checkHandlersVerbosely<Array<epicsFloat64> >(function);
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
+        bool handlersExist =
+            checkHandlersVerbosely<Array<epicsFloat64> >(function);
         if (!handlersExist) {
             return asynError;
         }
@@ -1264,7 +1294,8 @@ asynStatus Driver::writeFloat64Array(asynUser *pasynUser, epicsFloat64 *value,
 asynStatus Driver::readUInt32Digital(asynUser *pasynUser, epicsUInt32 *value,
                                      epicsUInt32 mask) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
         bool handlersExist = checkHandlersVerbosely<epicsUInt32>(function);
         if (!handlersExist) {
             return asynError;
@@ -1280,7 +1311,8 @@ asynStatus Driver::readUInt32Digital(asynUser *pasynUser, epicsUInt32 *value,
 asynStatus Driver::writeUInt32Digital(asynUser *pasynUser, epicsUInt32 value,
                                       epicsUInt32 mask) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
         bool handlersExist = checkHandlersVerbosely<epicsUInt32>(function);
         if (!handlersExist) {
             return asynError;
@@ -1296,7 +1328,8 @@ asynStatus Driver::writeUInt32Digital(asynUser *pasynUser, epicsUInt32 value,
 asynStatus Driver::readOctet(asynUser *pasynUser, char *value, size_t nChars,
                              size_t *nActual, int *eomReason) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
         bool handlersExist = checkHandlersVerbosely<Octet>(function);
         if (!handlersExist) {
             return asynError;
@@ -1308,13 +1341,15 @@ asynStatus Driver::readOctet(asynUser *pasynUser, char *value, size_t nChars,
         }
     }
 
-    return asynPortDriver::readOctet(pasynUser, value, nChars, nActual, eomReason);
+    return asynPortDriver::readOctet(pasynUser, value, nChars, nActual,
+                                     eomReason);
 }
 
 asynStatus Driver::writeOctet(asynUser *pasynUser, const char *value,
                               size_t nChars, size_t *nActual) {
     if (hasParam(pasynUser->reason)) {
-        std::string const &function = deviceVariableFromUser(pasynUser)->function();
+        std::string const &function =
+            deviceVariableFromUser(pasynUser)->function();
         bool handlersExist = checkHandlersVerbosely<Octet>(function);
         if (!handlersExist) {
             return asynError;
