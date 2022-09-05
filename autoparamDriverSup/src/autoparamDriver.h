@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include "autoparamHandler.h"
 #include <map>
 #include <stdexcept>
+
+#include "autoparamHandler.h"
 
 namespace Autoparam {
 
@@ -23,7 +24,7 @@ class Driver;
  *                        .setAutoInterrupts(false)
  *                        .setPriority(epicsThreadPriorityLow));
  */
-class DriverOpts {
+class epicsShareClass DriverOpts {
   public:
     //! A function that can be set to run after IOC init.
     typedef void (*InitHook)(Driver *);
@@ -240,7 +241,7 @@ class DriverOpts {
  * `Driver::deviceVariableFromUser()` is provided to obtain `DeviceVariable`
  * from the `asynUser` pointer that `asynPortDriver` methods are provided.
  */
-class Driver : public asynPortDriver {
+class epicsShareClass Driver : public asynPortDriver {
   public:
     /*! Constructs the `Driver` with the given options.
      *

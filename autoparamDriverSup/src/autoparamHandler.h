@@ -13,6 +13,7 @@
 #include <asynPortDriver.h>
 #include <alarm.h>
 #include <epicsTypes.h>
+#include <shareLib.h>
 
 namespace Autoparam {
 
@@ -34,7 +35,7 @@ namespace Autoparam {
  * A `DeviceAddress` must be equality-comparable to other addresses. Two
  * addresses shall compare equal when they refer to the same device variable.
  */
-class DeviceAddress {
+class epicsShareClass DeviceAddress {
   public:
     virtual ~DeviceAddress() {}
 
@@ -56,7 +57,7 @@ class DeviceAddress {
  * shared between records referring to the same device variable. They are
  * destroyed when the driver is destroyed.
  */
-class DeviceVariable {
+class epicsShareClass DeviceVariable {
   public:
     /*! Construct `DeviceVariable` from another; the other one is invalidated.
      *

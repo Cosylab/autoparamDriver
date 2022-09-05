@@ -2,14 +2,15 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "autoparamDriver.h"
+#include <algorithm>
+#include <sstream>
 
 #include <errlog.h>
 #include <epicsExit.h>
 #include <initHooks.h>
 
-#include <algorithm>
-#include <sstream>
+#define epicsExportSharedSymbols
+#include "autoparamDriver.h"
 
 namespace Autoparam {
 
