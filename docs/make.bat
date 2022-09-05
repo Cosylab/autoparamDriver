@@ -1,6 +1,6 @@
 REM SPDX-FileCopyrightText: 2022 Cosylab d.d. https://www.cosylab.com
 REM
-REM SPDX-License-Identifier: CC0-1.0
+REM SPDX-License-Identifier: MIT-0
 
 @ECHO OFF
 

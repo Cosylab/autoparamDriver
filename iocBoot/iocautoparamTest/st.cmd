@@ -2,7 +2,7 @@
 
 # SPDX-FileCopyrightText: 2022 Cosylab d.d. https://www.cosylab.com
 #
-# SPDX-License-Identifier: CC0-1.0
+# SPDX-License-Identifier: MIT-0
 
 #- You may have to change autoparamTest to something else
 #- everywhere it appears in this file
