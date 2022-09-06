@@ -15,6 +15,7 @@ USR_CXXFLAGS_Linux += --std=c++03 -fvisibility=hidden
 # build a support library
 
 LIBRARY_IOC += autoparamDriver
+SHRLIB_VERSION = 1
 
 # xxxRecord.h will be created from xxxRecord.dbd
 #DBDINC += xxxRecord
