@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2022 Cosylab d.d.
+#
+# SPDX-License-Identifier: MIT-0
+
+image: python:3.7-alpine
+
+before_script:
+  - pip install -U breathe sphinx sphinx_rtd_theme
+  - apk add doxygen
+  - apk add graphviz
+
+documentation:
+  when: manual
+  script:
+    - cd docs
+    - sphinx-build -b html source build
+  artifacts:
+    paths:
+      - docs/build
