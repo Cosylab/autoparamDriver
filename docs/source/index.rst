@@ -34,15 +34,11 @@ not considered a limitation: if you need a driver that doesn't rely on the
 ``DrvUser`` interface, ``autoparamDriver`` is not a good fit for your use case
 anyway.
 
-To further understand how ``autoparamDriver`` works from ``asyn`` point of view,
-refer to :doc:`design`.
-
 .. _asynDriver documentation: https://epics.anl.gov/modules/soft/asyn/R4-38/asynDriver.html#genericEpicsSupport
 
 .. toctree::
    introduction
    tutorial
-   design
    reference
    miscellania
    :maxdepth: 2

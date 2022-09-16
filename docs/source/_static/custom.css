@@ -1,12 +1,17 @@
-/* SPDX-FileCopyrightText: 2022 Cosylab d.d. https://www.cosylab.com */
-/* SPDX-License-Identifier: MIT-0 */
+/*
+ * SPDX-FileCopyrightText: 2022 Cosylab d.d.
+ *
+ * SPDX-License-Identifier: MIT-0
+ */
 
-@import 'agogo.css';
+.wy-nav-side {
+    background: #00002C
+}
 
-/* This is a copy of h4 from agogo */
-p.rubric {
-  font-family: "Georgia", "Times New Roman", serif;
-  font-weight: normal;
-  color: #3465a4;
-  margin-bottom: .8em;
+.wy-menu-vertical p.caption {
+    color: #FFFFFF
+}
+
+.wy-side-nav-search input[type="text"] {
+    border-color: #00002C;
 }

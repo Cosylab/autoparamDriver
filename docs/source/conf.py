@@ -23,7 +23,7 @@ import subprocess
 # -- Project information -----------------------------------------------------
 
 project = 'autoparamDriver'
-copyright = '2022, Cosylab d.d.'
+project_copyright = '2022, Cosylab d.d.'
 author = 'Cosylab d.d.'
 
 
@@ -47,16 +47,20 @@ exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = 'agogo'
-html_style = 'custom.css'
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+html_title = project + " Documentation"
+html_logo = "_static/Cosylab_Logo.png"
+html_favicon = "_static/Cosylab_Favicon.png"
+
+extensions += ['sphinx_rtd_theme']
+html_theme = 'sphinx_rtd_theme'
+html_css_files = [ 'custom.css' ]
+html_theme_options = {
+    'collapse_navigation': False,
+    'display_version': False,
+    'style_nav_header_background': '#00002C'
+}
 
 # -- Breathe setup -----------------------------------------------------------
 

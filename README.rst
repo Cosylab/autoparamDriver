@@ -32,7 +32,7 @@ Dependencies:
 Dependencies for building documentation:
 
 * `doxygen <https://www.doxygen.nl/index.html>`_
-* `sphinx <https://www.sphinx-doc.org>`_
+* `sphinx <https://www.sphinx-doc.org>`_ with ``sphinx_rtd_theme``
 * `breathe <https://breathe.readthedocs.io>`_
 
 To install:
@@ -60,7 +60,7 @@ To use from another module:
 
 To build documentation:
 
-* install ``doxygen``, ``sphinx`` and ``breathe``;
+* install ``doxygen``, ``breathe``, ``sphinx`` and ``sphinx_rtd_theme``;
 * run ``make docs``;
 * find the documentation at ``docs/build/html/index.html``.
 

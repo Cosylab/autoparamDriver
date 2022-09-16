@@ -11,6 +11,7 @@ SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
+SOURCE_DATE_EPOCH = 1662550710
 
 .PHONY: all docs clean distclean realclean help Makefile
 
