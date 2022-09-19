@@ -15,9 +15,9 @@ learn what ``autoparamDriver`` can do for you.
 Website and online documentation: https://epics.cosylab.com
 
 **Note:** When learning how to use ``autoparamDriver``, please *do not* try to
- learn from the ``autoparamTestApp`` included with the driver. As its name says,
- it is used for testing and is not a good resource. Please refer to the
- *Tutorial* section of the documentation instead.
+learn from the ``autoparamTestApp`` included with the driver. As its name says,
+it is used for testing and is not a good resource. Please refer to the
+*Tutorial* section of the documentation instead.
 
 Installation
 ------------
