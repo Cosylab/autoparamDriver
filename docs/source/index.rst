@@ -5,7 +5,9 @@
 Welcome to autoparamDriver's documentation!
 ===========================================
 
-``autoparamDriver`` is available at https://epics.cosylab.com
+Get ``autoparamDriver`` from its `code repository`_.
+
+.. _code repository: https://github.com/cosylab/autoparamDriver
 
 ``autoparamDriver`` is an EPICS module that facilitates writing a generic device
 driver based on ``asyn`` that does not know ahead of time which (or how many)

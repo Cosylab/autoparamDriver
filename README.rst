@@ -12,7 +12,12 @@ database. If you've ever used EPICS modules like ``modbus`` or ``s7plc``, you
 already know what this is about. In any case, check out the documentation to
 learn what ``autoparamDriver`` can do for you.
 
-Website and online documentation: https://epics.cosylab.com
+* `Code repository`_
+* `Online documentation`_
+
+.. _Code repository: https://github.com/cosylab/autoparamDriver
+.. _Online documentation: https://epics.cosylab.com/documentation/autoparamDriver
+
 
 **Note:** When learning how to use ``autoparamDriver``, please *do not* try to
 learn from the ``autoparamTestApp`` included with the driver. As its name says,
