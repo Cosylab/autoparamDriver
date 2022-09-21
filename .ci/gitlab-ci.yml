@@ -4,16 +4,38 @@
 
 image: python:3.7-alpine
 
-before_script:
-  - pip install -U breathe sphinx sphinx_rtd_theme
-  - apk add doxygen
-  - apk add graphviz
+stages:
+  - build
+  - deploy
 
-documentation:
+variables:
+    HTML_DIR: "/var/www/landing/documentation"
+    TARGET_DIR: "${HTML_DIR}/autoparamDriver"
+    DOCS_DIR: "docs"
+    BUILD_DIR: "${DOCS_DIR}/build"
+
+docs_build:
   when: manual
+  stage: build
   script:
-    - cd docs
+    - pip install -U breathe sphinx sphinx_rtd_theme
+    - apk add doxygen
+    - apk add graphviz
+    - cd ${DOCS_DIR}
     - sphinx-build -b html source build
   artifacts:
     paths:
-      - docs/build
+      - ${BUILD_DIR}
+
+docs_deploy:
+  when: manual
+  stage: deploy
+  tags:
+    - epics
+    - website
+  dependencies:
+    - docs_build
+  script:
+    - sudo rm -rf "${TARGET_DIR}"
+    - sudo mv "${BUILD_DIR}" "${TARGET_DIR}"
+    - sudo chown -R ${WWW_USER}:${WWW_USER} "${TARGET_DIR}"
