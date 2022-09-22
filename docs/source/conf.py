@@ -59,7 +59,8 @@ html_css_files = [ 'custom.css' ]
 html_theme_options = {
     'collapse_navigation': False,
     'display_version': False,
-    'style_nav_header_background': '#00002C'
+    'style_nav_header_background': '#00002C',
+    #'analytics_id'
 }
 
 # -- Breathe setup -----------------------------------------------------------

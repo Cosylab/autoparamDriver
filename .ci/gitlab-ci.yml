@@ -13,6 +13,7 @@ variables:
     TARGET_DIR: "${HTML_DIR}/autoparamDriver"
     DOCS_DIR: "docs"
     BUILD_DIR: "${DOCS_DIR}/build"
+    COLON: ':'
 
 docs_build:
   when: manual
@@ -22,6 +23,7 @@ docs_build:
     - apk add doxygen
     - apk add graphviz
     - cd ${DOCS_DIR}
+    - sed -i "s|#'analytics_id'.*|'analytics_id'${COLON} '${ANALYTICS_TOKEN}'|" source/conf.py
     - sphinx-build -b html source build
   artifacts:
     paths:
