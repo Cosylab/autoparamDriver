@@ -503,7 +503,7 @@ class epicsShareClass Driver : public asynPortDriver {
     template <typename T> std::map<std::string, Handlers<T> > &getHandlerMap();
 
     template <typename Iface, typename HType>
-    void installAnInterruptRegistrar(void *interface);
+    void installAnInterruptRegistrar(void *piface);
     void installInterruptRegistrars();
     template <typename T>
     static asynStatus registerInterrupt(void *drvPvt, asynUser *pasynUser,

@@ -25,7 +25,7 @@ DBD += autoparamDriver.dbd
 # specify all source files to be compiled and added to the library
 autoparamDriver_SRCS += autoparamDriver.cpp
 
-autoparamDriver_LIBS += $(EPICS_BASE_IOC_LIBS)
+autoparamDriver_LIBS += asyn $(EPICS_BASE_IOC_LIBS)
 
 # install these include files
 INC += autoparamDriver.h
