@@ -9,7 +9,7 @@ include $(TOP)/configure/CONFIG
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
 
-USR_CXXFLAGS += --std=c++03
+USR_CXXFLAGS_Linux += --std=c++03
 
 #=============================
 # Build the IOC application

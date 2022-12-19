@@ -7,8 +7,13 @@
 #include <ctime>
 #include <cstdlib>
 #include <iocsh.h>
-#include <epicsExport.h>
 #include <epicsThread.h>
+#include <epicsExport.h>
+
+#ifdef _MSC_VER
+// rand_r() does not exist on windows, could maybe use rand_s() ?
+#define rand_r(x) rand()
+#endif /* ifdef _MSC_VER */
 
 using namespace Autoparam::Convenience;
 
@@ -263,7 +268,7 @@ class AutoparamTest : public Autoparam::Driver {
         return WriteResult();
     }
 
-    uint randomSeed;
+    unsigned randomSeed;
     epicsInt32 currentSum;
     std::vector<epicsInt8> wfm8Data;
     epicsUInt32 shiftedRegister;
