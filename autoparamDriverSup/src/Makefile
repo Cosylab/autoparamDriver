@@ -17,6 +17,9 @@ USR_CXXFLAGS_Linux += --std=c++03 -fvisibility=hidden
 LIBRARY_IOC += autoparamDriver
 SHRLIB_VERSION = 1
 
+API_HEADER = autoparamDriverAPI.h
+autoparamDriver_API = autoparamDriver
+
 # xxxRecord.h will be created from xxxRecord.dbd
 #DBDINC += xxxRecord
 # install autoparamDriver.dbd into <top>/dbd

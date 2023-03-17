@@ -9,7 +9,6 @@
 #include <epicsExit.h>
 #include <initHooks.h>
 
-#include <epicsExport.h>
 #include "autoparamDriver.h"
 
 namespace Autoparam {
@@ -574,53 +573,53 @@ void Driver::registerHandlers(std::string const &function,
     m_functionTypes[function] = Handlers<T>::type;
 }
 
-template epicsShareFunc void
-Driver::registerHandlers<epicsInt32>(std::string const &function,
+template AUTOPARAMDRIVER_API void epicsStdCall
+Driver::registerHandlers<epicsInt32>(std::string epicsStdCall const &function,
                                      Handlers<epicsInt32>::ReadHandler reader,
                                      Handlers<epicsInt32>::WriteHandler writer,
                                      InterruptRegistrar intrRegistrar);
-template epicsShareFunc void
-Driver::registerHandlers<epicsInt64>(std::string const &function,
+template AUTOPARAMDRIVER_API void epicsStdCall
+Driver::registerHandlers<epicsInt64>(std::string epicsStdCall const &function,
                                      Handlers<epicsInt64>::ReadHandler reader,
                                      Handlers<epicsInt64>::WriteHandler writer,
                                      InterruptRegistrar intrRegistrar);
-template epicsShareFunc void Driver::registerHandlers<epicsFloat64>(
+template AUTOPARAMDRIVER_API void epicsStdCall Driver::registerHandlers<epicsFloat64>(
     std::string const &function, Handlers<epicsFloat64>::ReadHandler reader,
     Handlers<epicsFloat64>::WriteHandler writer,
     InterruptRegistrar intrRegistrar);
-template epicsShareFunc void Driver::registerHandlers<epicsUInt32>(
+template AUTOPARAMDRIVER_API void epicsStdCall Driver::registerHandlers<epicsUInt32>(
     std::string const &function, Handlers<epicsUInt32>::ReadHandler reader,
     Handlers<epicsUInt32>::WriteHandler writer,
     InterruptRegistrar intrRegistrar);
-template epicsShareFunc void Driver::registerHandlers<Octet>(
+template AUTOPARAMDRIVER_API void epicsStdCall Driver::registerHandlers<Octet>(
     std::string const &function, Handlers<Octet>::ReadHandler reader,
     Handlers<Octet>::WriteHandler writer, InterruptRegistrar intrRegistrar);
-template epicsShareFunc void Driver::registerHandlers<Array<epicsInt8> >(
+template AUTOPARAMDRIVER_API void epicsStdCall Driver::registerHandlers<Array<epicsInt8> >(
     std::string const &function,
     Handlers<Array<epicsInt8> >::ReadHandler reader,
     Handlers<Array<epicsInt8> >::WriteHandler writer,
     InterruptRegistrar intrRegistrar);
-template epicsShareFunc void Driver::registerHandlers<Array<epicsInt16> >(
+template AUTOPARAMDRIVER_API void epicsStdCall Driver::registerHandlers<Array<epicsInt16> >(
     std::string const &function,
     Handlers<Array<epicsInt16> >::ReadHandler reader,
     Handlers<Array<epicsInt16> >::WriteHandler writer,
     InterruptRegistrar intrRegistrar);
-template epicsShareFunc void Driver::registerHandlers<Array<epicsInt32> >(
+template AUTOPARAMDRIVER_API void epicsStdCall Driver::registerHandlers<Array<epicsInt32> >(
     std::string const &function,
     Handlers<Array<epicsInt32> >::ReadHandler reader,
     Handlers<Array<epicsInt32> >::WriteHandler writer,
     InterruptRegistrar intrRegistrar);
-template epicsShareFunc void Driver::registerHandlers<Array<epicsInt64> >(
+template AUTOPARAMDRIVER_API void epicsStdCall Driver::registerHandlers<Array<epicsInt64> >(
     std::string const &function,
     Handlers<Array<epicsInt64> >::ReadHandler reader,
     Handlers<Array<epicsInt64> >::WriteHandler writer,
     InterruptRegistrar intrRegistrar);
-template epicsShareFunc void Driver::registerHandlers<Array<epicsFloat32> >(
+template AUTOPARAMDRIVER_API void epicsStdCall Driver::registerHandlers<Array<epicsFloat32> >(
     std::string const &function,
     Handlers<Array<epicsFloat32> >::ReadHandler reader,
     Handlers<Array<epicsFloat32> >::WriteHandler writer,
     InterruptRegistrar intrRegistrar);
-template epicsShareFunc void Driver::registerHandlers<Array<epicsFloat64> >(
+template AUTOPARAMDRIVER_API void epicsStdCall Driver::registerHandlers<Array<epicsFloat64> >(
     std::string const &function,
     Handlers<Array<epicsFloat64> >::ReadHandler reader,
     Handlers<Array<epicsFloat64> >::WriteHandler writer,
@@ -639,23 +638,23 @@ asynStatus Driver::doCallbacksArray(DeviceVariable const &var, Array<T> &value,
     return doCallbacksArrayDispatch(var.asynIndex(), value);
 }
 
-template epicsShareFunc asynStatus
-Driver::doCallbacksArray<epicsInt8>(DeviceVariable const &var,
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall
+Driver::doCallbacksArray<epicsInt8>(DeviceVariable epicsStdCall const &var,
                                     Array<epicsInt8> &value, asynStatus status,
                                     int alarmStatus, int alarmSeverity);
-template epicsShareFunc asynStatus Driver::doCallbacksArray<epicsInt16>(
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall Driver::doCallbacksArray<epicsInt16>(
     DeviceVariable const &var, Array<epicsInt16> &value, asynStatus status,
     int alarmStatus, int alarmSeverity);
-template epicsShareFunc asynStatus Driver::doCallbacksArray<epicsInt32>(
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall Driver::doCallbacksArray<epicsInt32>(
     DeviceVariable const &var, Array<epicsInt32> &value, asynStatus status,
     int alarmStatus, int alarmSeverity);
-template epicsShareFunc asynStatus Driver::doCallbacksArray<epicsInt64>(
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall Driver::doCallbacksArray<epicsInt64>(
     DeviceVariable const &var, Array<epicsInt64> &value, asynStatus status,
     int alarmStatus, int alarmSeverity);
-template epicsShareFunc asynStatus Driver::doCallbacksArray<epicsFloat32>(
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall Driver::doCallbacksArray<epicsFloat32>(
     DeviceVariable const &var, Array<epicsFloat32> &value, asynStatus status,
     int alarmStatus, int alarmSeverity);
-template epicsShareFunc asynStatus Driver::doCallbacksArray<epicsFloat64>(
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall Driver::doCallbacksArray<epicsFloat64>(
     DeviceVariable const &var, Array<epicsFloat64> &value, asynStatus status,
     int alarmStatus, int alarmSeverity);
 
@@ -684,27 +683,26 @@ asynStatus Driver::setParam(DeviceVariable const &var, epicsUInt32 value,
     return setUIntDigitalParam(var.asynIndex(), value, mask);
 }
 
-template epicsShareFunc asynStatus Driver::setParam<epicsInt32>(DeviceVariable const &var,
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall Driver::setParam<epicsInt32>(DeviceVariable const &var,
                                                  epicsInt32 value,
                                                  asynStatus status,
                                                  int alarmStatus,
                                                  int alarmSeverity);
-template epicsShareFunc asynStatus Driver::setParam<epicsInt64>(DeviceVariable const &var,
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall Driver::setParam<epicsInt64>(DeviceVariable const &var,
                                                  epicsInt64 value,
                                                  asynStatus status,
                                                  int alarmStatus,
                                                  int alarmSeverity);
-template epicsShareFunc asynStatus Driver::setParam<epicsFloat64>(DeviceVariable const &var,
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall Driver::setParam<epicsFloat64>(DeviceVariable const &var,
                                                    epicsFloat64 value,
                                                    asynStatus status,
                                                    int alarmStatus,
                                                    int alarmSeverity);
-template epicsShareFunc asynStatus Driver::setParam<Octet>(DeviceVariable const &var,
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall Driver::setParam<Octet>(DeviceVariable const &var,
                                             Octet value, asynStatus status,
                                             int alarmStatus, int alarmSeverity);
 
-template <> epicsShareFunc
-asynStatus Driver::setParam<epicsUInt32>(DeviceVariable const &var,
+template <> AUTOPARAMDRIVER_API asynStatus epicsStdCall Driver::setParam<epicsUInt32>(DeviceVariable const &var,
                                          epicsUInt32 value, asynStatus status,
                                          int alarmStatus, int alarmSeverity) {
     return setParam(var, value, 0xffffffff, status, alarmStatus, alarmSeverity);

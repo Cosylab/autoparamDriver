@@ -24,7 +24,7 @@ class Driver;
  *                        .setAutoInterrupts(false)
  *                        .setPriority(epicsThreadPriorityLow));
  */
-class epicsShareClass DriverOpts {
+class AUTOPARAMDRIVER_API DriverOpts {
   public:
     //! A function that can be set to run after IOC init.
     typedef void (*InitHook)(Driver *);
@@ -241,7 +241,7 @@ class epicsShareClass DriverOpts {
  * `Driver::deviceVariableFromUser()` is provided to obtain `DeviceVariable`
  * from the `asynUser` pointer that `asynPortDriver` methods are provided.
  */
-class epicsShareClass Driver : public asynPortDriver {
+class AUTOPARAMDRIVER_API Driver : public asynPortDriver {
   public:
     /*! Constructs the `Driver` with the given options.
      *
