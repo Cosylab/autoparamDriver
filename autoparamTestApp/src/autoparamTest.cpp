@@ -11,7 +11,7 @@
 #include <epicsExport.h>
 
 #ifdef _MSC_VER
-// rand_r() does not exist on windows, could maybe use rand_s() ?
+// Windows doesn't have rand_r, instead it reseeds rand, so it's ok.
 #define rand_r(x) rand()
 #endif /* ifdef _MSC_VER */
 

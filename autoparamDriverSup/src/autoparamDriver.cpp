@@ -12,10 +12,6 @@
 #include <epicsExport.h>
 #include "autoparamDriver.h"
 
-#ifdef _MSC_VER
-#define __attribute__(x)
-#endif /* ifdef _MSC_VER */
-
 namespace Autoparam {
 
 static char const *driverName = "Autoparam::Driver";
@@ -82,9 +78,8 @@ static void runInitHooks(initHookState state) {
 }
 
 static void addInitHook(Driver *driver, DriverOpts::InitHook hook) {
-    static int const isRegistered __attribute__((unused)) =
-        initHookRegister(runInitHooks);
-
+    static int const isRegistered = initHookRegister(runInitHooks);
+    (void)isRegistered;
     allInitHooks[driver] = hook;
 }
 
