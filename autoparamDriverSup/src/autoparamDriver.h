@@ -503,7 +503,7 @@ class AUTOPARAMDRIVER_API Driver : public asynPortDriver {
     template <typename T> std::map<std::string, Handlers<T> > &getHandlerMap();
 
     template <typename Iface, typename HType>
-    void installAnInterruptRegistrar(void *piface);
+    void installAnInterruptRegistrar(void *&piface);
     void installInterruptRegistrars();
     template <typename T>
     static asynStatus registerInterrupt(void *drvPvt, asynUser *pasynUser,
@@ -528,6 +528,7 @@ class AUTOPARAMDRIVER_API Driver : public asynPortDriver {
     typedef void (*VoidFuncPtr)(void);
     std::map<asynParamType, std::pair<VoidFuncPtr, VoidFuncPtr> >
         m_originalIntrRegister;
+    std::vector<void*> m_hijackedInterfaces;
     std::map<DeviceVariable *, int> m_interruptRefcount;
 
     std::map<std::string, Handlers<epicsInt32> > m_Int32HandlerMap;

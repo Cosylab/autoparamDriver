@@ -103,6 +103,11 @@ Driver::~Driver() {
          i != end; ++i) {
         delete i->second;
     }
+
+    while (!m_hijackedInterfaces.empty()) {
+        free(m_hijackedInterfaces.back());
+        m_hijackedInterfaces.pop_back();
+    }
 }
 
 namespace {
@@ -295,9 +300,13 @@ static void assignPtr(Ptr *&ptr, Other *other) {
 }
 
 template <typename Iface, typename HType>
-void Driver::installAnInterruptRegistrar(void *piface) {
+void Driver::installAnInterruptRegistrar(void *&piface) {
     // I hate doing type erasure like this, but there aren't sane options ...
-    Iface *iface = static_cast<Iface *>(piface);
+    Iface *iface = static_cast<Iface *>(malloc(sizeof(Iface)));
+    *iface = *static_cast<Iface *>(piface);
+    piface = iface;
+    m_hijackedInterfaces.push_back(iface);
+
     VoidFuncPtr reg =
         reinterpret_cast<VoidFuncPtr>(iface->registerInterruptUser);
     VoidFuncPtr canc =
@@ -311,9 +320,14 @@ void Driver::installAnInterruptRegistrar(void *piface) {
 // do a different cast.
 template <>
 void Driver::installAnInterruptRegistrar<asynUInt32Digital, epicsUInt32>(
-    void *piface) {
+    void *&piface) {
     // I hate doing type erasure like this, but there aren't sane options ...
-    asynUInt32Digital *iface = static_cast<asynUInt32Digital *>(piface);
+    typedef asynUInt32Digital Iface;
+    Iface *iface = static_cast<Iface *>(malloc(sizeof(Iface)));
+    *iface = *static_cast<Iface *>(piface);
+    piface = iface;
+    m_hijackedInterfaces.push_back(iface);
+
     VoidFuncPtr reg =
         reinterpret_cast<VoidFuncPtr>(iface->registerInterruptUser);
     VoidFuncPtr canc =
