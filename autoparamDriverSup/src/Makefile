@@ -15,7 +15,7 @@ USR_CXXFLAGS_Linux += --std=c++03 -fvisibility=hidden
 # build a support library
 
 LIBRARY_IOC += autoparamDriver
-SHRLIB_VERSION = 1
+SHRLIB_VERSION = 2
 
 API_HEADER = autoparamDriverAPI.h
 autoparamDriver_API = autoparamDriver
