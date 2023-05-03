@@ -11,16 +11,27 @@ include $(TOP)/configure/CONFIG
 
 USR_CXXFLAGS_Linux += --std=c++03 -fvisibility=hidden
 
+ifndef BASE_7_0
+  $(error "Unsupported EPICS version, autoparamDriver needs EPICS 7")
+endif
+
 #==================================================
 # build a support library
 
 LIBRARY_IOC += autoparamDriver
 SHRLIB_VERSION = 2
 
+# Install the API header. If EPICS is older than 7.0.4, use a pre-built header.
+ifeq ($(if $(wildcard $(TOOLS)/makeAPIheader.pl),YES,NO),YES)
 API_HEADER = autoparamDriverAPI.h
 autoparamDriver_API = autoparamDriver
+else
+INC = autoparamDriverAPI.h
+$(COMMON_DIR)/autoparamDriverAPI.h: autoparamDriverAPI_prebuilt.h
+	$(CP) $< $@
+USR_CPPFLAGS += -DBUILDING_autoparamDriver_API
+endif
 
-# xxxRecord.h will be created from xxxRecord.dbd
 #DBDINC += xxxRecord
 # install autoparamDriver.dbd into <top>/dbd
 DBD += autoparamDriver.dbd
