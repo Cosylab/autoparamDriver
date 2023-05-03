@@ -588,12 +588,12 @@ void Driver::registerHandlers(std::string const &function,
 }
 
 template AUTOPARAMDRIVER_API void epicsStdCall
-Driver::registerHandlers<epicsInt32>(std::string epicsStdCall const &function,
+Driver::registerHandlers<epicsInt32>(std::string  const &function,
                                      Handlers<epicsInt32>::ReadHandler reader,
                                      Handlers<epicsInt32>::WriteHandler writer,
                                      InterruptRegistrar intrRegistrar);
 template AUTOPARAMDRIVER_API void epicsStdCall
-Driver::registerHandlers<epicsInt64>(std::string epicsStdCall const &function,
+Driver::registerHandlers<epicsInt64>(std::string  const &function,
                                      Handlers<epicsInt64>::ReadHandler reader,
                                      Handlers<epicsInt64>::WriteHandler writer,
                                      InterruptRegistrar intrRegistrar);
@@ -661,7 +661,7 @@ asynStatus Driver::doCallbacksArray(DeviceVariable const &var, Array<T> &value,
 }
 
 template AUTOPARAMDRIVER_API asynStatus epicsStdCall
-Driver::doCallbacksArray<epicsInt8>(DeviceVariable epicsStdCall const &var,
+Driver::doCallbacksArray<epicsInt8>(DeviceVariable const &var,
                                     Array<epicsInt8> &value, asynStatus status,
                                     int alarmStatus, int alarmSeverity);
 template AUTOPARAMDRIVER_API asynStatus epicsStdCall
