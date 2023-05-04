@@ -29,5 +29,6 @@
 #if !defined(epicsStdCall)
 #  define epicsStdCall
 #endif
+
 #endif /* INC_autoparamDriverAPI_H */
 
