@@ -2,16 +2,36 @@
 #
 # SPDX-License-Identifier: MIT-0
 
+# EPICS build/install dirs
 O.*/
-.ccls-cache
-.cache
-.reuse
-compile_commands.json
+/bin/
+/lib/
+/db/
+/dbd/
+/include/
+
+# Allows people to make changes to .local files without accidentally commiting them
+/configure/*.local
+
+# IOC generated files
+cdCommands
 envPaths
-bin/
-dbd/
-db/
-lib/
-include/
+dllPath.bat
+
+# Common editors
+*~ # emacs
+*.swp # vim
+/.vscode # VSCode
+
+# LSP and language-specific tools
+__pycache__/
+.ccls-cache/
+.cache/
+compile_commands.json
+
+# Licensing tools
+.reuse
+
+# Project-specific
 docs/build/*
 docs/doxygen/*
