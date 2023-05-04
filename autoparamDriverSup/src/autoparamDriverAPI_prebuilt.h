@@ -10,16 +10,17 @@
 #    define epicsStdCall __stdcall
 #  endif
 
-#if defined(BUILDING_autoparamDriver_API) && defined(EPICS_BUILD_DLL)
+#  if defined(BUILDING_autoparamDriver_API) && defined(EPICS_BUILD_DLL)
 /* Building library as dll */
-#define AUTOPARAMDRIVER_API __declspec(dllexport)
-#elif !defined(BUILDING_autoparamDriver_API) && defined(EPICS_CALL_DLL)
+#    define AUTOPARAMDRIVER_API __declspec(dllexport)
+#  elif !defined(BUILDING_autoparamDriver_API) && defined(EPICS_CALL_DLL)
 /* Calling library in dll form */
-#define AUTOPARAMDRIVER_API __declspec(dllimport)
-#endif
+#    define AUTOPARAMDRIVER_API __declspec(dllimport)
+#  endif
 
 #elif __GNUC__ >= 4
 #  define AUTOPARAMDRIVER_API __attribute__ ((visibility("default")))
+#endif
 
 #if !defined(AUTOPARAMDRIVER_API)
 #  define AUTOPARAMDRIVER_API
@@ -27,7 +28,6 @@
 
 #if !defined(epicsStdCall)
 #  define epicsStdCall
-#endif
 #endif
 #endif /* INC_autoparamDriverAPI_H */
 
