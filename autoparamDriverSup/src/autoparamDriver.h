@@ -24,7 +24,7 @@ class Driver;
  *                        .setAutoInterrupts(false)
  *                        .setPriority(epicsThreadPriorityLow));
  */
-class epicsShareClass DriverOpts {
+class AUTOPARAMDRIVER_API DriverOpts {
   public:
     //! A function that can be set to run after IOC init.
     typedef void (*InitHook)(Driver *);
@@ -241,7 +241,7 @@ class epicsShareClass DriverOpts {
  * `Driver::deviceVariableFromUser()` is provided to obtain `DeviceVariable`
  * from the `asynUser` pointer that `asynPortDriver` methods are provided.
  */
-class epicsShareClass Driver : public asynPortDriver {
+class AUTOPARAMDRIVER_API Driver : public asynPortDriver {
   public:
     /*! Constructs the `Driver` with the given options.
      *
@@ -503,7 +503,7 @@ class epicsShareClass Driver : public asynPortDriver {
     template <typename T> std::map<std::string, Handlers<T> > &getHandlerMap();
 
     template <typename Iface, typename HType>
-    void installAnInterruptRegistrar(void *interface);
+    void installAnInterruptRegistrar(void *&piface);
     void installInterruptRegistrars();
     template <typename T>
     static asynStatus registerInterrupt(void *drvPvt, asynUser *pasynUser,
@@ -528,6 +528,7 @@ class epicsShareClass Driver : public asynPortDriver {
     typedef void (*VoidFuncPtr)(void);
     std::map<asynParamType, std::pair<VoidFuncPtr, VoidFuncPtr> >
         m_originalIntrRegister;
+    std::vector<void*> m_hijackedInterfaces;
     std::map<DeviceVariable *, int> m_interruptRefcount;
 
     std::map<std::string, Handlers<epicsInt32> > m_Int32HandlerMap;
