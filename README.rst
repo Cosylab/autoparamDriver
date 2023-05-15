@@ -14,9 +14,11 @@ learn what ``autoparamDriver`` can do for you.
 
 * `Code repository`_
 * `Online documentation`_
+* `Release notes`_
 
 .. _Code repository: https://github.com/cosylab/autoparamDriver
 .. _Online documentation: https://epics.cosylab.com/documentation/autoparamDriver
+.. _Release notes: RELEASE_NOTES.rst
 
 
 **Note:** When learning how to use ``autoparamDriver``, please *do not* try to
