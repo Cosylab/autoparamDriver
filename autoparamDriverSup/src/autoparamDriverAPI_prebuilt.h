@@ -1,5 +1,10 @@
-/* This is a generated file, do not edit! */
-/* This file was pre-built for compatibility with EPICS older than 7.0.4 */
+/*
+SPDX-FileCopyrightText: 2022 Cosylab d.d. https://www.cosylab.com
+
+SPDX-License-Identifier: MIT-0
+
+This file was pre-built for compatibility with EPICS older than 7.0.4 
+*/
 
 #ifndef INC_autoparamDriverAPI_H
 #define INC_autoparamDriverAPI_H
