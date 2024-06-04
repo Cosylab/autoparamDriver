@@ -210,7 +210,8 @@ class AUTOPARAMDRIVER_API DriverOpts {
  * used by records. `Autoparam::Driver` will then call these handlers when
  * records are processed.
  *
- * To facilitate updating `I/O Intr` records, two mechanisms are provided:
+ * To facilitate updating `I/O Intr` records (and those output records that are
+ * marked with `asyn:READBACK`), two mechanisms are provided:
  *
  * - When a parameter is written to (or read from), the value can optionally be
  *   propagated to `I/O Intr` records bound to the same parameter. See
@@ -362,7 +363,8 @@ class AUTOPARAMDRIVER_API Driver : public asynPortDriver {
      */
     std::vector<DeviceVariable *> getAllVariables() const;
 
-    /*! Obtain a list of device variables bound by `I/O Intr` records.
+    /*! Obtain a list of device variables bound by `I/O Intr` and
+     *  `asyn:READBACK` records.
      *
      * The list of `DeviceVariable` pointers returned by this method is useful
      * if you need to implement periodic polling for data and would like to know
