@@ -357,6 +357,21 @@ class AUTOPARAMDRIVER_API Driver : public asynPortDriver {
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
+    template <typename T>
+    asynStatus getParam(DeviceVariable const &var, T &value, asynStatus &status,
+                        int &alarmStatus, int &alarmSeverity);
+
+    asynStatus getParam(DeviceVariable const &var, epicsUInt32 &value,
+                        epicsUInt32 mask, asynStatus &status,
+                        int &alarmStatus,
+                        int &alarmSeverity);
+
+    template <typename T>
+    asynStatus getParam(DeviceVariable const &var, T &value);
+
+    asynStatus getParam(DeviceVariable const &var, epicsUInt32 &value,
+                        epicsUInt32 mask);
+
     /*! Obtain a list of all device variables.
      *
      * This function is threadsafe, locking the driver is not necessary.
@@ -475,6 +490,7 @@ class AUTOPARAMDRIVER_API Driver : public asynPortDriver {
     template <typename T>
     asynStatus doCallbacksArrayDispatch(int index, Array<T> &value);
     template <typename T> asynStatus setParamDispatch(int index, T value);
+    template <typename T> asynStatus getParamDispatch(int index, T &value);
 
     template <typename T>
     typename Handlers<T>::ReadHandler

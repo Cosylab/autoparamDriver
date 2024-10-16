@@ -453,6 +453,26 @@ template <> asynStatus Driver::setParamDispatch<Octet>(int index, Octet value) {
 }
 
 template <>
+asynStatus Driver::getParamDispatch<epicsInt32>(int index, epicsInt32 &value) {
+    return getIntegerParam(index, &value);
+}
+
+template <>
+asynStatus Driver::getParamDispatch<epicsInt64>(int index, epicsInt64 &value) {
+    return getInteger64Param(index, &value);
+}
+
+template <>
+asynStatus Driver::getParamDispatch<epicsFloat64>(int index, epicsFloat64 &value) {
+    return getDoubleParam(index, &value);
+}
+
+template <>
+asynStatus Driver::getParamDispatch<Octet>(int index, Octet &value) {
+    return getStringParam(index, value.size(), value.data());
+}
+
+template <>
 asynStatus
 Driver::doCallbacksArrayDispatch<epicsInt8>(int index,
                                             Array<epicsInt8> &value) {
@@ -737,6 +757,79 @@ AUTOPARAMDRIVER_API asynStatus epicsStdCall Driver::setParam<epicsUInt32>(
     int alarmStatus, int alarmSeverity) {
     return setParam(var, value, 0xffffffff, status, alarmStatus, alarmSeverity);
 }
+
+template <typename T>
+asynStatus Driver::getParam(DeviceVariable const &var, T &value,
+                            asynStatus &status, int &alarmStatus,
+                            int &alarmSeverity) {
+  if (!checkHandlersVerbosely<T>(var.function())) {
+    return asynError;
+  }
+  getParamStatus(var.asynIndex(), &status);
+  getParamAlarmStatus(var.asynIndex(), &alarmStatus);
+  getParamAlarmSeverity(var.asynIndex(), &alarmSeverity);
+  return getParamDispatch(var.asynIndex(), value);
+}
+
+asynStatus Driver::getParam(DeviceVariable const &var, epicsUInt32 &value,
+                            epicsUInt32 mask, asynStatus &status,
+                            int &alarmStatus, int &alarmSeverity) {
+    if (!checkHandlersVerbosely<epicsUInt32>(var.function())) {
+        return asynError;
+    }
+    getParamStatus(var.asynIndex(), &status);
+    getParamAlarmStatus(var.asynIndex(), &alarmStatus);
+    getParamAlarmSeverity(var.asynIndex(), &alarmSeverity);
+    return getUIntDigitalParam(var.asynIndex(), &value, mask);
+}
+
+template <typename T>
+asynStatus Driver::getParam(DeviceVariable const &var, T &value) {
+  if (!checkHandlersVerbosely<T>(var.function())) {
+    return asynError;
+  }
+  return getParamDispatch(var.asynIndex(), value);
+}
+
+asynStatus Driver::getParam(DeviceVariable const &var, epicsUInt32 &value,
+                            epicsUInt32 mask) {
+    if (!checkHandlersVerbosely<epicsUInt32>(var.function())) {
+        return asynError;
+    }
+    return getUIntDigitalParam(var.asynIndex(), &value, mask);
+}
+
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall
+Driver::getParam<epicsInt32>(DeviceVariable const &var, epicsInt32 &value,
+                             asynStatus &status, int &alarmStatus,
+                             int &alarmSeverity);
+
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall
+Driver::getParam<epicsInt64>(DeviceVariable const &var, epicsInt64 &value,
+                             asynStatus &status, int &alarmStatus,
+                             int &alarmSeverity);
+
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall
+Driver::getParam<epicsFloat64>(DeviceVariable const &var, epicsFloat64 &value,
+                             asynStatus &status, int &alarmStatus,
+                             int &alarmSeverity);
+
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall
+Driver::getParam<Octet>(DeviceVariable const &var, Octet &value,
+                             asynStatus &status, int &alarmStatus,
+                             int &alarmSeverity);
+
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall
+Driver::getParam<epicsInt32>(DeviceVariable const &var, epicsInt32 &value);
+
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall
+Driver::getParam<epicsInt64>(DeviceVariable const &var, epicsInt64 &value);
+
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall
+Driver::getParam<epicsFloat64>(DeviceVariable const &var, epicsFloat64 &value);
+
+template AUTOPARAMDRIVER_API asynStatus epicsStdCall
+Driver::getParam<Octet>(DeviceVariable const &var, Octet &value);
 
 template <typename T>
 asynStatus Driver::registerInterrupt(void *drvPvt, asynUser *pasynUser,
