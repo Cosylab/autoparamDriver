@@ -357,18 +357,45 @@ class AUTOPARAMDRIVER_API Driver : public asynPortDriver {
                         int alarmStatus = epicsAlarmNone,
                         int alarmSeverity = epicsSevNone);
 
+    /*! Get the value of the parameter represented by `var`.
+     *
+     * Unless this function is called from a read or write handler, the driver
+     * needs to be locked. See `asynPortDriver::lock()`.
+     *
+     */
     template <typename T>
     asynStatus getParam(DeviceVariable const &var, T &value, asynStatus &status,
                         int &alarmStatus, int &alarmSeverity);
 
+    /*! Get the value of the parameter represented by `var`.
+     *
+     * This is an overload for digital IO, where `mask` specifies which bits of
+     * `value` are of interest. While the default overload works with
+     * `epicsUInt32`, it uses the mask value `0xFFFFFFFF`.
+     */
     asynStatus getParam(DeviceVariable const &var, epicsUInt32 &value,
                         epicsUInt32 mask, asynStatus &status,
                         int &alarmStatus,
                         int &alarmSeverity);
 
+    /*! Get the value of the parameter represented by `var`.
+     *
+     * Unless this function is called from a read or write handler, the driver
+     * needs to be locked. See `asynPortDriver::lock()`.
+     *
+     * Does not retrieve status fields.
+     */
     template <typename T>
     asynStatus getParam(DeviceVariable const &var, T &value);
 
+    /*! Get the value of the parameter represented by `var`.
+     *
+     * This is an overload for digital IO, where `mask` specifies which bits of
+     * `value` are of interest. While the default overload works with
+     * `epicsUInt32`, it uses the mask value `0xFFFFFFFF`.
+     *
+     * Does not retrieve status fields.
+     */
     asynStatus getParam(DeviceVariable const &var, epicsUInt32 &value,
                         epicsUInt32 mask);
 
