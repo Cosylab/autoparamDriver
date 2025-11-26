@@ -208,8 +208,10 @@ template <typename T> class IsArray {
  * ensure null-termination required by C strings.
  *
  * **Note:** Octets sometimes behave like arrays (i.e. in read and write
- * handlers) and sometimes like scalars (i.e. when handling interrupts; see
- * `Autoparam::Driver::doCallbacksArray()` and `Autoparam::Driver::setParam()`).
+ * handlers) and sometimes like scalars (i.e. when handling interrupts). This
+ * means that you *cannot* use `Autoparam::Driver::doCallbacksArray()` and need
+ * to use `Autoparam::Driver::setParam()` and
+ * `asynPortDriver::callParamCallbacks()` instead.
  */
 class Octet : public Array<char> {
   public:
