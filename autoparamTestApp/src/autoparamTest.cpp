@@ -102,11 +102,27 @@ class AutoparamTest : public Autoparam::Driver {
         thread.start();
     }
 
-    ~AutoparamTest() {
+    void shutdownPortDriver() {
+        printf("AutoparamTest::shutdownPortDriver() called for port %s - "
+               "stopping thread\n",
+               portName);
+#ifndef ASYN_DESTRUCTIBLE
+        printf(
+            "AutoparamTest::shutdownPortDriver() legacy asyn fallback used\n");
+#endif
         lock();
         quitThread = true;
         unlock();
         thread.exitWait();
+        printf("AutoparamTest::shutdownPortDriver() - thread stopped, calling "
+               "base class\n");
+        Driver::shutdownPortDriver();
+        printf("AutoparamTest::shutdownPortDriver() - completed\n");
+    }
+
+    ~AutoparamTest() {
+        printf("AutoparamTest::~AutoparamTest() called for port %s\n",
+               portName);
     }
 
   protected:

@@ -252,9 +252,38 @@ class AUTOPARAMDRIVER_API Driver : public asynPortDriver {
      */
     explicit Driver(const char *portName, DriverOpts const &params);
 
+    /*! Destructor.
+     *
+     * The destructor cleans up internal resources. However, if your derived
+     * class needs to call virtual functions during cleanup, or if it needs to
+     * stop background threads, this work **must** be done in an overridden
+     * `shutdownPortDriver()`.
+     */
     virtual ~Driver();
 
   protected:
+    /*! Shutdown hook for cleanup that requires the driver object to be intact.
+     *
+     * This method is called before the destructor when using the
+     * `setAutoDestruct()` option. Override this method if your derived class
+     * needs to:
+     *
+     * - Call virtual functions during cleanup
+     * - Stop background threads (requires driver locking)
+     * - Access driver state before destruction
+     *
+     * Always call the base class implementation at the end of your override:
+     *
+     *   void MyDriver::shutdownPortDriver() override {
+     *       // Stop threads, call virtual methods, etc.
+     *       quitThread = true;
+     *       thread.exitWait();
+     *       // Call base class
+     *       Driver::shutdownPortDriver();
+     *   }
+     */
+    virtual void shutdownPortDriver();
+
     /*! Parse the given `function` and `arguments`.
      *
      * `DeviceAddress` is meant to be subclassed. As records are initialized,

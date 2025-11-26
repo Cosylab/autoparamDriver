@@ -60,6 +60,7 @@ static std::string getDtypName(asynParamType type) {
 void Driver::destroyDriver(void *driver) {
     Driver *drv = static_cast<Driver *>(driver);
     pasynManager->enable(drv->pasynUserSelf, 0);
+    drv->shutdownPortDriver();
     delete drv;
 }
 
@@ -83,13 +84,20 @@ static void addInitHook(Driver *driver, DriverOpts::InitHook hook) {
 }
 
 Driver::Driver(const char *portName, const DriverOpts &params)
-    : asynPortDriver(portName, 1, params.interfaceMask, params.interruptMask,
-                     params.asynFlags, params.autoConnect, params.priority,
-                     params.stackSize),
+    : asynPortDriver(
+          portName, 1, params.interfaceMask, params.interruptMask,
+#ifdef ASYN_DESTRUCTIBLE
+          params.asynFlags | (params.autoDestruct ? ASYN_DESTRUCTIBLE : 0),
+#else
+          params.asynFlags,
+#endif
+          params.autoConnect, params.priority, params.stackSize),
       opts(params) {
+#ifndef ASYN_DESTRUCTIBLE
     if (params.autoDestruct) {
         epicsAtExit(destroyDriver, this);
     }
+#endif
 
     if (params.initHook) {
         addInitHook(this, params.initHook);
@@ -108,6 +116,12 @@ Driver::~Driver() {
         free(m_hijackedInterfaces.back());
         m_hijackedInterfaces.pop_back();
     }
+}
+
+void Driver::shutdownPortDriver() {
+#ifdef ASYN_DESTRUCTIBLE
+    asynPortDriver::shutdownPortDriver();
+#endif
 }
 
 namespace {
