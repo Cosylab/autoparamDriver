@@ -5,6 +5,15 @@
 autoparamDriver Release Notes
 =============================
 
+Development version
+-------------------
+
+* Added support for ``getParam()`` function to read parameter values.
+* Improved port shutdown to use ``ASYN_DESTRUCTIBLE`` when available, with
+  fallback to the existing approach for older asyn versions.
+* The ``shutdowPortDriver()`` function is made available also on older asyn
+  versions, keeping source compatibility.
+
 Version 2.0.0
 -------------
 
