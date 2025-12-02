@@ -91,3 +91,82 @@ driver is constructed:
 * Do no connect automatically at all, but let the user initiate the connection
   as needed, via IOC shell command, a sequence program (using the ``asynCommon``
   or ``asynCommonSyncIO`` interfaces) or other means.
+
+Background threads and cleanup
+-------------------------------
+
+Some devices require a background thread for efficient operation. This section
+explains when background threads are appropriate, how to create them properly,
+and how to ensure they are joined cleanly when the IOC exits.
+
+.. rubric:: When background threads are needed
+
+A background scanning thread is useful when:
+
+* The device needs to be polled periodically to gather state.
+* The device pushes data asynchronously and the driver needs to listen for it.
+* Batch operations are more efficient than per-record access, so the driver
+  fetches data in bulk and distributes it to multiple parameters.
+
+.. rubric:: Creating joinable threads
+
+Background threads must be joinable (not detached) to allow proper cleanup when
+the IOC exits. The ``epicsThread`` C++ class creates joinable threads by
+default, so you should use this class rather than the C API where creating a
+joinable thread is more complicated. Using the ``std::thread`` class is
+acceptable, however, EPICS API should be preferred because it allows you to
+create named threads that can be manipulated using iocsh commands such as
+``epicsThreadShow``.
+
+* Store the ``epicsThread`` object as a member variable of your driver class.
+* Start the thread by calling :cpp:func:`epicsThread::start()` at the end of
+  the driver's constructor, after all other initialization is complete.
+
+.. rubric:: Thread function principles
+
+The thread function should:
+
+* Run a loop that periodically checks a quit flag (a boolean member variable).
+* Exit cleanly by returning from the function when the quit flag is set.
+* Lock the driver before accessing any driver state or calling driver methods.
+
+The :ref:`introduction <iointr>` explains how to use
+:cpp:func:`Autoparam::Driver::getInterruptVariables()` to determine which device
+variables the thread should scan.
+
+.. rubric:: Thread safety and locking
+
+Background threads must lock the driver before calling any driver methods or
+accessing shared state. Use :cpp:func:`asynPortDriver::lock()` and
+:cpp:func:`asynPortDriver::unlock()` for this purpose.
+
+Always lock before calling:
+
+* :cpp:func:`Autoparam::Driver::setParam()`
+* :cpp:func:`asynPortDriver::callParamCallbacks()`
+* :cpp:func:`Autoparam::Driver::doCallbacksArray()`
+
+Also lock when checking the quit flag or accessing any other shared state. Note
+that read and write handlers are already called with the driver locked, so you
+don't need to lock again within handlers, but this is not the case for your
+background thread. Keep the lock duration minimal to avoid blocking record
+processing.
+
+.. rubric:: Joining threads on IOC exit
+
+The driver's destructor runs too late to safely stop background threads because
+virtual functions are no longer available and the object is already partially
+destroyed. To handle this, override :cpp:func:`Autoparam::Driver::shutdownPortDriver()`
+in your derived class.
+
+The cleanup sequence in ``shutdownPortDriver()`` should be:
+
+1. Lock the driver with :cpp:func:`asynPortDriver::lock()`.
+2. Set the quit flag to signal the thread to exit.
+3. Unlock the driver with :cpp:func:`asynPortDriver::unlock()`.
+4. Call :cpp:func:`epicsThread::exitWait()` to join the thread. This blocks
+   until the thread returns from its function.
+5. Call the base class :cpp:func:`Autoparam::Driver::shutdownPortDriver()`.
+
+This method is called automatically when the IOC exits, provided you use
+:cpp:func:`Autoparam::DriverOpts::setAutoDestruct()`.

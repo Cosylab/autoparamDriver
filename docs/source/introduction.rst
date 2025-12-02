@@ -229,6 +229,8 @@ to the device in terms of ``epicsUInt16`` with endianness conversion.
 There are some subtleties regarding working with big 32-bit integers, digital
 I/O and strings that are discussed under :ref:`miscellania`.
 
+.. _iointr:
+
 How does the driver process ``I/O Intr`` records?
 `````````````````````````````````````````````````
 
