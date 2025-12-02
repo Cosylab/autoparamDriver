@@ -403,8 +403,7 @@ class AUTOPARAMDRIVER_API Driver : public asynPortDriver {
      * `epicsUInt32`, it uses the mask value `0xFFFFFFFF`.
      */
     asynStatus getParam(DeviceVariable const &var, epicsUInt32 &value,
-                        epicsUInt32 mask, asynStatus &status,
-                        int &alarmStatus,
+                        epicsUInt32 mask, asynStatus &status, int &alarmStatus,
                         int &alarmSeverity);
 
     /*! Get the value of the parameter represented by `var`.
@@ -602,7 +601,7 @@ class AUTOPARAMDRIVER_API Driver : public asynPortDriver {
     typedef void (*VoidFuncPtr)(void);
     std::map<asynParamType, std::pair<VoidFuncPtr, VoidFuncPtr> >
         m_originalIntrRegister;
-    std::vector<void*> m_hijackedInterfaces;
+    std::vector<void *> m_hijackedInterfaces;
     std::map<DeviceVariable *, int> m_interruptRefcount;
 
     std::map<std::string, Handlers<epicsInt32> > m_Int32HandlerMap;

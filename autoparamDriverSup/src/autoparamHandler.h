@@ -371,7 +371,9 @@ char const *getAsynTypeName(asynParamType type);
  *   - `Array<epicsFloat64>` → `asynParamFloat64Array`
  */
 #ifdef DOXYGEN_RUNNING
-template <typename T> struct AsynType { static const asynParamType value; };
+template <typename T> struct AsynType {
+    static const asynParamType value;
+};
 #else
 template <typename T> struct AsynType;
 #endif
