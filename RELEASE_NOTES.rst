@@ -13,6 +13,8 @@ Development version
   fallback to the existing approach for older asyn versions.
 * The ``shutdowPortDriver()`` function is made available also on older asyn
   versions, keeping source compatibility.
+* The ``Octet`` string wrapper is made safer to use by requiring the passed
+  buffers to include null-termination of the string.
 
 Version 2.0.0
 -------------

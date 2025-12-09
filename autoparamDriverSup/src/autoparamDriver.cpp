@@ -1102,7 +1102,8 @@ asynStatus Driver::readOctetData(asynUser *pasynUser, char *value,
 asynStatus Driver::writeOctetData(asynUser *pasynUser, char const *value,
                                   size_t size) {
     DeviceVariable *var = deviceVariableFromUser(pasynUser);
-    Octet const arrayRef(const_cast<char *>(value), size);
+    Octet const arrayRef(const_cast<char *>(value),
+                         size + 1); // Include null-termination
     Handlers<Octet>::WriteHandler handler =
         getHandlerMap<Octet>().at(var->function()).writeHandler;
     Handlers<Octet>::WriteResult result = handler(*var, arrayRef);

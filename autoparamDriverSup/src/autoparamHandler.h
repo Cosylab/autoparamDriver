@@ -207,6 +207,11 @@ template <typename T> class IsArray {
  * nomenclature. It is an `Array` of `char` and provides convenience function to
  * ensure null-termination required by C strings.
  *
+ * **Note:** To make things safer when wrapping C arrays and raw buffers,
+ * `maxSize` given at `Octet` construction includes the null-termination.
+ * Consequently, the length of the stored string can be up to `maxSize - 1`, and
+ * the `maxSize()` function returns this, smaller, value.
+ *
  * **Note:** Octets sometimes behave like arrays (i.e. in read and write
  * handlers) and sometimes like scalars (i.e. when handling interrupts). This
  * means that you *cannot* use `Autoparam::Driver::doCallbacksArray()` and need
@@ -215,8 +220,29 @@ template <typename T> class IsArray {
  */
 class Octet : public Array<char> {
   public:
-    //! Construct an Octet reference to `value`, setting it's size to `maxSize`.
-    Octet(char *value, size_t maxSize) : Array<char>(value, maxSize) {}
+    /*! Construct an `Octet` reference to `value`, setting its size to
+     * `maxSize - 1`.
+     *
+     * **Note:** `maxSize` must be the total buffer capacity including space
+     * for null-termination. The constructor reserves one byte for the null
+     * terminator, so the maximum string length is `maxSize - 1`.
+     *
+     * **For wrapping destination buffers (to write data into):**
+     *
+     *     char outBuf[10];
+     *     Octet outWrapper(outBuf, 10);  // Can hold strings up to 9 chars
+     *     outWrapper.fillFrom("12345", 5);  // OK: stores "12345" + null
+     *
+     * **For wrapping source strings (to read data from):**
+     *
+     *     char const inBuf[] = "12345";  // 6 bytes: "12345\0"
+     *     Octet inWrapper(const_cast<char*>(inBuf), 6);  // Include null
+     *     // inWrapper.size() returns 5 (character count)
+     *
+     * **Important:** When wrapping an existing string for reading, pass the
+     * buffer size _including_ the null terminator, not just string length.
+     */
+    Octet(char *value, size_t maxSize) : Array<char>(value, maxSize - 1) {}
 
     //! Terminate the string at its current size.
     void terminate() {
@@ -236,10 +262,14 @@ class Octet : public Array<char> {
         fillFrom(string.data(), string.size());
     }
 
-    //! Copy data to the provided buffer, up to `maxSize`, with
-    //! null-termination.
+    /*! Copy data to the provided buffer, up to `maxSize`, with
+     * null-termination.
+     *
+     * **Note:** To make things safer when wrapping C arrays and raw buffers,
+     * `maxSize` includes the null-termination.
+     */
     size_t writeTo(char *data, size_t maxSize) const {
-        size_t size = Array<char>::writeTo(data, maxSize);
+        size_t size = Array<char>::writeTo(data, maxSize - 1);
         data[size] = 0;
         return size;
     }
