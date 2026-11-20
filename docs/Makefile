@@ -28,6 +28,10 @@ clean distclean realclean:
 all inc build install buildInstall rebuild archclean depclean cvsclean runtests tapfiles test-results clean-tests host archuninstall uninstall realuninstall:
 	true
 
+# Documentation has no architecture-specific build outputs.
+clean.%:
+	@:
+
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
